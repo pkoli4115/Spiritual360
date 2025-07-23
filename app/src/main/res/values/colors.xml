@@ -1,0 +1,9 @@
+<!-- File: app/src/main/res/values/colors.xml -->
+<resources>
+    <color name="primary">#6A1B9A</color>
+    <color name="onPrimary">#FFFFFF</color>
+    <color name="primaryContainer">#E1BEE7</color>
+    <color name="secondary">#00897B</color>
+    <color name="background">#FAF5EF</color>
+    <color name="error">#B00020</color>
+</resources>

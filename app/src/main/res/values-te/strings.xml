@@ -1,0 +1,34 @@
+<resources>
+    <!-- Phase 1 -->
+    <string name="app_name">హిందూ పూజా యాప్</string>
+    <string name="login_title">హిందూ పూజా యాప్‌లో లాగిన్ అవ్వండి</string>
+    <string name="google_signin">గూగుల్ తో లాగిన్ అవ్వండి</string>
+    <string name="phone_number">మొబైల్ నంబర్</string>
+    <string name="send_otp">ఓటీపీ పంపండి</string>
+    <string name="verify_otp">ఓటీపీ నిర్ధారించండి</string>
+    <string name="enter_otp">ఓటీపీ నమోదు చేయండి</string>
+    <string name="personal_info">వ్యక్తిగత సమాచారం</string>
+    <string name="your_name">మీ పేరు</string>
+    <string name="father_name">తండ్రి పేరు</string>
+    <string name="mother_name">తల్లి పేరు</string>
+    <string name="gothram">గోత్రం</string>
+    <string name="nakshatram">నక్షత్రం</string>
+    <string name="number_of_children">పిల్లల సంఖ్య</string>
+    <string name="save_continue">భద్రపరచి కొనసాగించండి</string>
+
+    <!-- Phase 2 -->
+    <string name="poojas">పూజలు</string>
+    <string name="vrathams">వ్రతాలు</string>
+    <string name="festivals">పండుగలు</string>
+    <string name="profile">ప్రొఫైల్</string>
+    <string name="settings">సెట్టింగులు</string>
+    <string name="language">భాష</string>
+    <string name="text_zoom">టెక్స్ట్ జూమ్</string>
+    <string name="home_title">హోమ్</string>
+    <string name="menu_poojas_desc">అన్ని హిందూ పూజలు చూడండి</string>
+    <string name="menu_vrathams_desc">అన్ని వ్రతాలు చూడండి</string>
+    <string name="menu_festivals_desc">ప్రధాన పండుగలు చూడండి</string>
+    <string name="menu_profile_desc">మీ ప్రొఫైల్ చూడండి</string>
+    <string name="menu_settings_desc">యాప్ సెట్టింగులు &amp; ప్రాధాన్యతలు</string>
+    <string name="coming_soon">త్వరలో వస్తోంది!</string>
+</resources>

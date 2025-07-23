@@ -1,0 +1,34 @@
+<resources>
+    <!-- Phase 1 -->
+    <string name="app_name">हिन्दू पूजा ऐप</string>
+    <string name="login_title">हिन्दू पूजा ऐप में लॉगिन करें</string>
+    <string name="google_signin">गूगल से लॉगिन करें</string>
+    <string name="phone_number">मोबाइल नंबर</string>
+    <string name="send_otp">ओटीपी भेजें</string>
+    <string name="verify_otp">ओटीपी सत्यापित करें</string>
+    <string name="enter_otp">ओटीपी दर्ज करें</string>
+    <string name="personal_info">व्यक्तिगत जानकारी</string>
+    <string name="your_name">आपका नाम</string>
+    <string name="father_name">पिता का नाम</string>
+    <string name="mother_name">माता का नाम</string>
+    <string name="gothram">गोत्र</string>
+    <string name="nakshatram">नक्षत्र</string>
+    <string name="number_of_children">बच्चों की संख्या</string>
+    <string name="save_continue">सहेजें और जारी रखें</string>
+
+    <!-- Phase 2 -->
+    <string name="poojas">पूजा</string>
+    <string name="vrathams">व्रत</string>
+    <string name="festivals">त्योहार</string>
+    <string name="profile">प्रोफाइल</string>
+    <string name="settings">सेटिंग्स</string>
+    <string name="language">भाषा</string>
+    <string name="text_zoom">टेक्स्ट ज़ूम</string>
+    <string name="home_title">होम</string>
+    <string name="menu_poojas_desc">सभी हिन्दू पूजा देखें</string>
+    <string name="menu_vrathams_desc">सभी व्रत देखें</string>
+    <string name="menu_festivals_desc">प्रमुख त्योहार देखें</string>
+    <string name="menu_profile_desc">अपनी प्रोफाइल देखें</string>
+    <string name="menu_settings_desc">ऐप सेटिंग्स एवं प्राथमिकताएँ</string>
+    <string name="coming_soon">जल्द आ रहा है!</string>
+</resources>
