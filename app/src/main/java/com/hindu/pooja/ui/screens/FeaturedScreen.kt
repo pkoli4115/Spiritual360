@@ -9,7 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun PoojasScreen() {
+fun FeaturedScreen() {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -17,7 +17,7 @@ fun PoojasScreen() {
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = "🙏 Poojas content coming soon!",
+            text = "🌟 Featured content coming soon!",
             style = MaterialTheme.typography.titleMedium
         )
     }

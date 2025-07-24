@@ -6,9 +6,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.hindu.pooja.ui.billing.BillingScreen
 import com.hindu.pooja.ui.login.LoginScreen
 import com.hindu.pooja.ui.login.PhoneLoginScreen
 import com.hindu.pooja.ui.personal.PersonalDetailsScreen
+import com.hindu.pooja.ui.profile.ProfileScreen
+import com.hindu.pooja.ui.screens.FeaturedScreen
 import com.hindu.pooja.ui.screens.HomeScreen
 import com.hindu.pooja.ui.splash.SplashScreen
 import com.hindu.pooja.viewmodel.LoginViewModel
@@ -64,5 +67,21 @@ fun HinduPoojaNavHost(
         composable("home") {
             HomeScreen(navController = navController)
         }
+
+        // ✅ NEW: Profile screen route
+        composable("profile") {
+            ProfileScreen(navController = navController)
+        }
+
+        // ✅ NEW: Billing screen route
+        composable("billing") {
+            BillingScreen()
+        }
+        // ✅ NEW: Featured screen route
+
+        composable("featured") {
+            FeaturedScreen()
+        }
+        }
+
     }
-}
