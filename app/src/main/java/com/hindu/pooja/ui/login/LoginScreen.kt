@@ -8,16 +8,19 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
+import com.hindu.pooja.ui.login.components.AutoScrollImageCarousel
 import com.hindu.pooja.utils.SessionManager
 import com.hindu.pooja.viewmodel.LoginViewModel
 
 @Composable
+
 fun LoginScreen(
     viewModel: LoginViewModel,
     onLoginSuccess: () -> Unit,
@@ -40,9 +43,7 @@ fun LoginScreen(
                     .addOnSuccessListener {
                         SessionManager.saveSession(
                             context = context,
-                            onSuccess = {
-                                onLoginSuccess() // ✅ Navigate to Splash to determine next step
-                            },
+                            onSuccess = { onLoginSuccess() },
                             onError = {
                                 isLoading = false
                                 Toast.makeText(context, "Session save failed", Toast.LENGTH_SHORT).show()
@@ -66,38 +67,64 @@ fun LoginScreen(
         GoogleSignIn.getClient(
             context,
             GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestIdToken("102522233118-tv7ksvbkfdcbnd6nfaful24jgpgaccmr.apps.googleusercontent.com") // ✅ Use your real Web Client ID
+                .requestIdToken("102522233118-tv7ksvbkfdcbnd6nfaful24jgpgaccmr.apps.googleusercontent.com") // ✅ your real client ID
                 .requestEmail()
                 .build()
         )
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text("Login", style = MaterialTheme.typography.headlineMedium)
-        Spacer(modifier = Modifier.height(32.dp))
+    Box(modifier = Modifier.fillMaxSize()) {
+        // 🔁 Auto-scroll full-screen animated background
+        AutoScrollImageCarousel(
+            imageNames = listOf(
+                "datta", "ganesh_family", "lakshmi_vishnu", "family_pooja"
+            ),
+            modifier = Modifier.fillMaxSize()
+        )
 
-        if (isLoading) {
-            CircularProgressIndicator()
-        } else {
-            Button(onClick = {
-                val signInIntent = googleSignInClient.signInIntent
-                launcher.launch(signInIntent)
-            }) {
-                Text("Sign in with Google")
-            }
+        // 🔐 Login content
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Surface(
+                color = Color.White.copy(alpha = 0.8f),
+                shape = MaterialTheme.shapes.medium,
+                tonalElevation = 4.dp
+            ) {
+                Column(
+                    modifier = Modifier
+                        .padding(24.dp)
+                        .fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text("Login to Hindu Pooja", style = MaterialTheme.typography.headlineSmall)
 
-            Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
 
-            Button(onClick = {
-                onPhoneLoginClick()
-            }) {
-                Text("Sign in with Phone (OTP)")
+                    if (isLoading) {
+                        CircularProgressIndicator()
+                    } else {
+                        Button(onClick = {
+                            val signInIntent = googleSignInClient.signInIntent
+                            launcher.launch(signInIntent)
+                        }, modifier = Modifier.fillMaxWidth()) {
+                            Text("Sign in with Google")
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Button(
+                            onClick = { onPhoneLoginClick() },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Sign in with Phone (OTP)")
+                        }
+                    }
+                }
             }
         }
     }
