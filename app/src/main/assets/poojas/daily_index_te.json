@@ -1,0 +1,64 @@
+[
+  {
+    "id": "nitya_pooja",
+    "name": "నిత్య పూజా విధానం",
+    "image": "nithya_pooja.png",
+    "file": "daily/nitya_pooja_te.json"
+  },
+  {
+    "id": "sankata_ganapati_stotram",
+    "name": "సంకట గణపతి స్తోత్రం",
+    "image": "sankasti_ganapathi.png",
+    "file": "daily/sankasti_ganapath_stotram_te.json"
+  },
+  {
+    "id": "hanuman_chalisa_en",
+    "name": "హనుమాన్ చాలీసా",
+    "image": "hanuman_chalisa.png",
+    "file": "daily/hanuman_chalisa_en.json"
+  },
+  
+   {
+    "id": "hanuman_chalisa_te",
+    "name": "హనుమాన్ చాలీసా",
+    "image": "hanuman_chalisa.png",
+    "file": "daily/hanuman_chalisa_te.json"
+  },
+  
+    {
+    "id": "hanuman_chalisa_hi",
+    "name": "హనుమాన్ చాలీసా",
+    "image": "hanuman_chalisa.png",
+    "file": "daily/hanuman_chalisa_hi.json"
+  },
+  
+  
+    {
+    "id": "navagraha_stotram_te",
+    "name": "నవగ్రహ స్తోత్రం",
+    "image": "navagraha_pooja.png",
+    "file": "daily/navagraha_stotram_te.json"
+  },
+  
+    {
+    "id": "navagraha_stotram_hi",
+    "name": "నవగ్రహ స్తోత్రం",
+    "image": "navagraha_pooja.png",
+    "file": "daily/navagraha_stotram_hi.json"
+  },
+      {
+    "id": "sri_rama_raksha_stotram_te",
+    "name": "శ్రీ రామ రక్షా స్తోత్రం",
+    "image": "srirama_raksha_stotram.png",
+    "file": "daily/sri_rama_raksha_stotram_te.json"
+  },
+  
+  
+     {
+    "id": "sri_rama_raksha_stotram_hi",
+    "name": "శ్రీ రామ రక్షా స్తోత్రం",
+    "image": "srirama_raksha_stotram.png",
+    "file": "daily/sri_rama_raksha_stotram_hi.json"
+  }
+  
+]

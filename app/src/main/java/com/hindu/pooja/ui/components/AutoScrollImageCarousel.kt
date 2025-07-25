@@ -1,4 +1,5 @@
 package com.hindu.pooja.ui.login.components
+import androidx.compose.ui.layout.ContentScale
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
@@ -10,6 +11,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import com.hindu.pooja.R
+
 
 @Composable
 fun AutoScrollImageCarousel(
@@ -37,7 +39,7 @@ fun AutoScrollImageCarousel(
             modifier = Modifier
                 .fillMaxSize()
                 .alpha(alphaAnim)
-        )
+            )
     }
 }
 

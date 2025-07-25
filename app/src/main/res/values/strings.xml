@@ -31,8 +31,8 @@
     <string name="menu_profile_desc">View your profile</string>
     <string name="menu_settings_desc">Configure app &amp; preferences</string>
     <string name="coming_soon">Coming soon!</string>
-    <string name="nav_home">Home</string>
-    <string name="nav_featured">Featured</string>
-    <string name="nav_profile">Profile</string>
-
+    <string name="nav_home" translatable="false">Home</string>
+    <string name="nav_featured" translatable="false">Featured</string>
+    <string name="nav_kids" translatable="false">Kids</string>
+    <string name="nav_profile" translatable="false">Profile</string>
 </resources>
