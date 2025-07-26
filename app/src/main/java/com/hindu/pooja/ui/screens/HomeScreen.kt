@@ -80,6 +80,20 @@ fun HomeScreen(navController: NavController) {
                     )
                 }
             }
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+                androidx.compose.material3.Button(
+                    onClick = {
+                        navController.navigate("find_it_game/hidden_objects_shiva_scene.json")
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp)
+                ) {
+                    Text("🎯 Try Devotional Find-It Game")
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+            }
 
             categoryData.forEach { (title, poojaList) ->
                 item {

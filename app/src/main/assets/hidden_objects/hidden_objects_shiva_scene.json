@@ -1,0 +1,14 @@
+{
+  "sceneImage": "shiva",
+  "title": "Shiva Meditation Scene",
+  "hintLimit": 3,
+  "timeLimitSeconds": 60,
+  "objects": [
+    { "name": "Snake", "x": 280, "y": 150 },
+    { "name": "Trishul", "x": 620, "y": 180 },
+    { "name": "Shiva Linga", "x": 630, "y": 300 },
+    { "name": "Tiger Skin", "x": 360, "y": 400 },
+    { "name": "Rudraksha", "x": 300, "y": 120 },
+    { "name": "Third Eye", "x": 340, "y": 80 }
+  ]
+}

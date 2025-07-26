@@ -66,6 +66,18 @@ dependencies {
     implementation 'androidx.core:core-ktx:1.12.0'
     implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.2'
     implementation 'androidx.compose.material:material:1.6.1'
+    implementation "com.google.accompanist:accompanist-flowlayout:0.30.1"
+
+// Firebase
+    implementation platform('com.google.firebase:firebase-bom:32.7.0')
+    implementation 'com.google.firebase:firebase-auth'
+    implementation 'com.google.firebase:firebase-firestore'
+
+// DataStore for XP saving
+    implementation "androidx.datastore:datastore-preferences:1.0.0"
+
+// Kotlin Coroutines
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3"
 
 
     // Compose BOM (October 2023)
