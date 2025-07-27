@@ -13,6 +13,8 @@ import androidx.navigation.navArgument
 import com.hindu.pooja.ui.kids.findit.FindItGameScreen
 import com.hindu.pooja.ui.screens.*
 import java.net.URLDecoder
+import com.hindu.pooja.ui.screens.PoojaDetailScreen
+
 
 @Composable
 fun HinduPoojaNavHost(
@@ -53,7 +55,7 @@ fun HinduPoojaNavHost(
         ) { backStackEntry ->
             val encodedFile = backStackEntry.arguments?.getString("fileName") ?: ""
             val fileName = URLDecoder.decode(encodedFile, "UTF-8")
-            PoojaDetailScreen(navController = navController, fileName = fileName)
+            PoojaDetailScreen(fileName = fileName)
         }
 
         // Find-It Game screen (unchanged)

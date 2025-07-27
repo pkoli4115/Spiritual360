@@ -1,120 +1,117 @@
 package com.hindu.pooja.ui.screens
 
+import android.content.Context
+import androidx.compose.foundation.*
+import androidx.compose.foundation.gestures.TransformableState
+import androidx.compose.foundation.gestures.rememberTransformableState
+import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import com.hindu.pooja.data.PoojaContentLoader
 import com.hindu.pooja.model.PoojaDetail
-import com.hindu.pooja.model.Katha
-import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun PoojaDetailScreen(
-    navController: NavController,
-    fileName: String // Pass the file name like "daily/hanuman_chalisa.json"
+    fileName: String
 ) {
     val context = LocalContext.current
-
     var poojaDetail by remember { mutableStateOf<PoojaDetail?>(null) }
+
+    var scale by remember { mutableStateOf(1f) }
+    val transformState = rememberTransformableState { zoomChange, _, _ ->
+        scale = (scale * zoomChange).coerceIn(1f, 3f)
+    }
 
     LaunchedEffect(fileName) {
         poojaDetail = PoojaContentLoader.loadPoojaContent(context, fileName)
     }
 
-    poojaDetail?.let { detail ->
-        LazyColumn(
+    val verticalScroll = rememberScrollState()
+    val horizontalScroll = rememberScrollState()
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
+        Box(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp)
+                .weight(1f)
+                .transformable(transformState)
+                .padding(12.dp)
+                .horizontalScroll(horizontalScroll)
+                .verticalScroll(verticalScroll)
         ) {
-            item {
+            Column(
+                modifier = Modifier
+                    .graphicsLayer(scaleX = scale, scaleY = scale)
+                    .fillMaxWidth()
+            ) {
                 Text(
-                    text = detail.name,
-                    style = MaterialTheme.typography.headlineMedium,
-                    modifier = Modifier.padding(bottom = 12.dp)
+                    text = poojaDetail?.name ?: "Pooja",
+                    style = MaterialTheme.typography.headlineMedium
                 )
-                if (detail.content.isNotBlank()) {
-                    Text(
-                        text = detail.content,
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.padding(bottom = 12.dp)
-                    )
-                }
-            }
 
-            // Slokas section
-            detail.slokas?.takeIf { it.isNotEmpty() }?.let { slokas ->
-                item {
-                    Text(
-                        text = "Slokas",
-                        style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
-                }
-                items(slokas) { sloka ->
-                    Text(
-                        text = sloka,
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.padding(bottom = 6.dp)
-                    )
-                }
-            }
+                Spacer(modifier = Modifier.height(12.dp))
 
-            // Kathalu section
-            detail.kathalu?.takeIf { it.isNotEmpty() }?.let { kathalu ->
-                item {
-                    Text(
-                        text = "Katha / Stories",
-                        style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
-                }
-                items(kathalu) { katha ->
-                    if (katha.title.isNotBlank()) {
-                        Text(
-                            text = katha.title,
-                            style = MaterialTheme.typography.titleMedium,
-                            modifier = Modifier.padding(top = 8.dp)
-                        )
+                when {
+                    poojaDetail == null -> {
+                        Text("⏳ Loading...", style = MaterialTheme.typography.bodyLarge)
                     }
-                    if (katha.content.isNotBlank()) {
-                        Text(
-                            text = katha.content,
-                            style = MaterialTheme.typography.bodyLarge,
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
-                    }
-                }
-            }
 
-            // Verses section
-            detail.verses?.takeIf { it.isNotEmpty() }?.let { verses ->
-                item {
-                    Text(
-                        text = "Verses",
-                        style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
-                }
-                items(verses) { verse ->
-                    Text(
-                        text = verse,
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.padding(bottom = 6.dp)
-                    )
+                    poojaDetail?.slokas?.isEmpty() == true &&
+                            poojaDetail?.verses?.isEmpty() == true &&
+                            poojaDetail?.kathalu?.isEmpty() == true &&
+                            poojaDetail?.content?.isEmpty() == true -> {
+                        Text("❌ No content found in this pooja.", style = MaterialTheme.typography.bodyLarge)
+                    }
+
+                    else -> {
+                        poojaDetail?.slokas?.forEach { sloka ->
+                            Text("🔸 $sloka", style = MaterialTheme.typography.bodyLarge)
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+
+                        poojaDetail?.verses?.forEach { verse ->
+                            Text("🔹 $verse", style = MaterialTheme.typography.bodyLarge)
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+
+                        poojaDetail?.content?.forEach { (title, section) ->
+                            Text("🪔 $title", style = MaterialTheme.typography.titleMedium)
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(section, style = MaterialTheme.typography.bodyLarge)
+                            Spacer(modifier = Modifier.height(12.dp))
+                        }
+
+                        poojaDetail?.kathalu?.forEach { katha ->
+                            Text("📖 ${katha.title}", style = MaterialTheme.typography.titleMedium)
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(katha.content, style = MaterialTheme.typography.bodyLarge)
+                            Spacer(modifier = Modifier.height(12.dp))
+                        }
+                    }
                 }
             }
         }
-    } ?: run {
-        // Loading or not found
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
-            Text(text = "Loading...", style = MaterialTheme.typography.bodyMedium)
+
+        // Zoom controls
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .padding(8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text("🔍 Zoom: ${"%.1f".format(scale)}x")
+            Button(onClick = { scale = 1f }) {
+                Text("Reset Zoom")
+            }
         }
     }
 }

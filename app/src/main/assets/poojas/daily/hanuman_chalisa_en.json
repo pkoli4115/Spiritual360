@@ -1,11 +1,11 @@
 {
 "id": "hanuman_chalisa_en",
-"name\_en": "Hanuman Chalisa",
+"name_en": "Hanuman Chalisa",
 "language": "en",
 "category": "stotram",
 "addedDate": "2025-07-24",
 "content": {
-"verses": \[
+"verses": [
 { "line": 1, "text": "Shri Guru Charan Saroj Raj, Nij Man Mukur Sudhari" },
 { "line": 2, "text": "Barnaun Raghubar Bimal Jasu, Jo Dayaku Phal Chari" },
 { "line": 3, "text": "Buddhiheen Tanu Janike, Sumirau Pavan Kumar" },

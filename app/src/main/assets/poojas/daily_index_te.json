@@ -1,12 +1,12 @@
 [
   {
-    "id": "nitya_pooja",
+    "id": "nitya_pooja_vidhanam_te",
     "name": "నిత్య పూజా విధానం",
     "image": "nithya_pooja.png",
-    "file": "daily/nitya_pooja_te.json"
+    "file": "daily/nitya_pooja_vidhanam_te.json"
   },
   {
-    "id": "sankata_ganapati_stotram",
+    "id": "sankasti_ganapath_stotram_te",
     "name": "సంకట గణపతి స్తోత్రం",
     "image": "sankasti_ganapathi.png",
     "file": "daily/sankasti_ganapath_stotram_te.json",
