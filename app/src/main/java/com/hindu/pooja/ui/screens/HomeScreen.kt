@@ -5,8 +5,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -21,6 +20,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.hindu.pooja.R
 import com.hindu.pooja.data.PoojaLoader
 import com.hindu.pooja.ui.components.HomeSection
+import com.hindu.pooja.ui.navigation.Screen
 import kotlinx.coroutines.delay
 
 @Composable
@@ -45,14 +45,12 @@ fun HomeScreen(navController: NavController) {
         }
     }
 
-    // Simulate loading state for shimmer effect
     LaunchedEffect(Unit) {
         delay(1000)
         isLoading = false
     }
 
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-        // Background image
         Image(
             painter = painterResource(id = R.drawable.home_screen),
             contentDescription = null,
@@ -80,9 +78,10 @@ fun HomeScreen(navController: NavController) {
                     )
                 }
             }
+
             item {
                 Spacer(modifier = Modifier.height(8.dp))
-                androidx.compose.material3.Button(
+                Button(
                     onClick = {
                         navController.navigate("find_it_game/hidden_objects_shiva_scene.json")
                     },
@@ -100,13 +99,26 @@ fun HomeScreen(navController: NavController) {
                     if (isLoading) {
                         ShimmerPlaceholderRow()
                     } else {
+                        val filteredItems = if (title == "Daily Poojas") {
+                            poojaList.filter { pooja -> pooja.scrollable == true }
+                        } else {
+                            poojaList
+                        }
+
                         HomeSection(
                             sectionTitle = title,
-                            items = poojaList,
+                            items = filteredItems,
                             isSelected = (title == selectedCategory),
                             onItemClick = { item ->
                                 selectedCategory = title
                                 navController.navigate("poojaDetail/${item.file}")
+                            },
+                            onViewAllClick = {
+                                val route = when (title) {
+                                    "Daily Poojas" -> Screen.Poojas.createRoute("daily_index_te.json")
+                                    else -> "unknown_list" // other sections not implemented yet
+                                }
+                                navController.navigate(route)
                             }
                         )
                     }

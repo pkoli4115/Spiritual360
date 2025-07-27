@@ -1,95 +1,120 @@
 package com.hindu.pooja.ui.screens
 
-import android.content.Context
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavBackStackEntry
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
-import com.hindu.pooja.model.PoojaIndexItem
-import java.io.InputStreamReader
+import androidx.navigation.NavController
+import com.hindu.pooja.data.PoojaContentLoader
+import com.hindu.pooja.model.PoojaDetail
+import com.hindu.pooja.model.Katha
+import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun PoojaDetailScreen(
-    poojaId: String,
-    navEntry: NavBackStackEntry
+    navController: NavController,
+    fileName: String // Pass the file name like "daily/hanuman_chalisa.json"
 ) {
     val context = LocalContext.current
-    val pooja by remember(poojaId) {
-        mutableStateOf(loadPoojaById(context, poojaId))
+
+    var poojaDetail by remember { mutableStateOf<PoojaDetail?>(null) }
+
+    LaunchedEffect(fileName) {
+        poojaDetail = PoojaContentLoader.loadPoojaContent(context, fileName)
     }
 
-    if (pooja == null) {
-        Text(
-            text = "Pooja not found.",
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.padding(32.dp)
-        )
-        return
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp)
-    ) {
-        Text(text = pooja!!.name, style = MaterialTheme.typography.headlineMedium)
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        val imageResId = remember(pooja!!.image) {
-            context.resources.getIdentifier(
-                pooja!!.image.substringBeforeLast("."), // remove .png if present
-                "drawable",
-                context.packageName
-            )
-        }
-
-        Image(
-            painter = painterResource(id = imageResId),
-            contentDescription = pooja!!.name,
+    poojaDetail?.let { detail ->
+        LazyColumn(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp)
-        )
+                .fillMaxSize()
+                .padding(16.dp)
+        ) {
+            item {
+                Text(
+                    text = detail.name,
+                    style = MaterialTheme.typography.headlineMedium,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
+                if (detail.content.isNotBlank()) {
+                    Text(
+                        text = detail.content,
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    )
+                }
+            }
 
+            // Slokas section
+            detail.slokas?.takeIf { it.isNotEmpty() }?.let { slokas ->
+                item {
+                    Text(
+                        text = "Slokas",
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                }
+                items(slokas) { sloka ->
+                    Text(
+                        text = sloka,
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.padding(bottom = 6.dp)
+                    )
+                }
+            }
 
-        Spacer(modifier = Modifier.height(16.dp))
+            // Kathalu section
+            detail.kathalu?.takeIf { it.isNotEmpty() }?.let { kathalu ->
+                item {
+                    Text(
+                        text = "Katha / Stories",
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                }
+                items(kathalu) { katha ->
+                    if (katha.title.isNotBlank()) {
+                        Text(
+                            text = katha.title,
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
+                    }
+                    if (katha.content.isNotBlank()) {
+                        Text(
+                            text = katha.content,
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                    }
+                }
+            }
 
-        // Placeholder: You can extend this to show steps, kathas, mantras, etc.
-        Text(
-            text = "Detailed pooja content coming soon...",
-            style = MaterialTheme.typography.bodyMedium
-        )
+            // Verses section
+            detail.verses?.takeIf { it.isNotEmpty() }?.let { verses ->
+                item {
+                    Text(
+                        text = "Verses",
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                }
+                items(verses) { verse ->
+                    Text(
+                        text = verse,
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.padding(bottom = 6.dp)
+                    )
+                }
+            }
+        }
+    } ?: run {
+        // Loading or not found
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
+            Text(text = "Loading...", style = MaterialTheme.typography.bodyMedium)
+        }
     }
-}
-
-fun loadPoojaById(context: Context, poojaId: String): PoojaIndexItem? {
-    val files = listOf(
-        "daily_weekly_te.json",
-        "vrathams_te.json",
-        "festival_te.json",
-        "sahasranamas_te.json",
-        "kids_te.json"
-    )
-    for (file in files) {
-        try {
-            val inputStream = context.assets.open("poojas/$file")
-            val reader = InputStreamReader(inputStream)
-            val type = object : TypeToken<List<PoojaIndexItem>>() {}.type
-            val poojas: List<PoojaIndexItem> = Gson().fromJson(reader, type)
-            val matched = poojas.firstOrNull { it.id == poojaId }
-            if (matched != null) return matched
-        } catch (_: Exception) { }
-    }
-    return null
 }

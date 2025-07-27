@@ -9,7 +9,8 @@
     "id": "sankata_ganapati_stotram",
     "name": "సంకట గణపతి స్తోత్రం",
     "image": "sankasti_ganapathi.png",
-    "file": "daily/sankasti_ganapath_stotram_te.json"
+    "file": "daily/sankasti_ganapath_stotram_te.json",
+    "scrollable": true
   },
   {
     "id": "hanuman_chalisa_en",
@@ -22,7 +23,8 @@
     "id": "hanuman_chalisa_te",
     "name": "హనుమాన్ చాలీసా",
     "image": "hanuman_chalisa.png",
-    "file": "daily/hanuman_chalisa_te.json"
+    "file": "daily/hanuman_chalisa_te.json",
+	"scrollable": true
   },
   
     {
@@ -37,7 +39,10 @@
     "id": "navagraha_stotram_te",
     "name": "నవగ్రహ స్తోత్రం",
     "image": "navagraha_pooja.png",
-    "file": "daily/navagraha_stotram_te.json"
+    "file": "daily/navagraha_stotram_te.json",
+	    "scrollable": true
+
+	
   },
   
     {
@@ -50,7 +55,9 @@
     "id": "sri_rama_raksha_stotram_te",
     "name": "శ్రీ రామ రక్షా స్తోత్రం",
     "image": "srirama_raksha_stotram.png",
-    "file": "daily/sri_rama_raksha_stotram_te.json"
+    "file": "daily/sri_rama_raksha_stotram_te.json",
+	    "scrollable": true
+
   },
   
   

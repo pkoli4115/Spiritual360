@@ -2,20 +2,18 @@ package com.hindu.pooja.data
 
 import android.content.Context
 import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
-import com.hindu.pooja.model.PoojaIndexItem
+import com.hindu.pooja.model.PoojaDetail
 import java.io.InputStreamReader
 
-object PoojaLoader {
-    fun loadPoojaIndex(context: Context, fileName: String): List<PoojaIndexItem> {
+object PoojaContentLoader {
+    fun loadPoojaContent(context: Context, fileName: String): PoojaDetail? {
         return try {
             val inputStream = context.assets.open("poojas/$fileName")
             val reader = InputStreamReader(inputStream)
-            val type = object : TypeToken<List<PoojaIndexItem>>() {}.type
-            Gson().fromJson(reader, type)
+            Gson().fromJson(reader, PoojaDetail::class.java)
         } catch (e: Exception) {
             e.printStackTrace()
-            emptyList()
+            null
         }
     }
 }

@@ -1,100 +1,77 @@
 package com.hindu.pooja.ui.navigation
 
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.hindu.pooja.ui.billing.BillingScreen
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.hindu.pooja.ui.kids.findit.FindItGameScreen
-import com.hindu.pooja.ui.kids.findit.GameResultScreen
-import com.hindu.pooja.ui.login.LoginScreen
-import com.hindu.pooja.ui.login.PhoneLoginScreen
-import com.hindu.pooja.ui.personal.PersonalDetailsScreen
-import com.hindu.pooja.ui.profile.ProfileScreen
-import com.hindu.pooja.ui.screens.FeaturedScreen
-import com.hindu.pooja.ui.screens.HomeScreen
-import com.hindu.pooja.ui.splash.SplashScreen
-import com.hindu.pooja.viewmodel.LoginViewModel
+import com.hindu.pooja.ui.screens.*
+import java.net.URLDecoder
 
 @Composable
 fun HinduPoojaNavHost(
-    navController: NavHostController,
+    navController: androidx.navigation.NavHostController = rememberNavController(),
     modifier: Modifier = Modifier
 ) {
     NavHost(
         navController = navController,
-        startDestination = "splash",
+        startDestination = Screen.Home.route,
         modifier = modifier
     ) {
-        composable("splash") {
-            SplashScreen(navController = navController)
+        composable(Screen.Home.route) {
+            HomeScreen(navController)
+        }
+        composable(Screen.Profile.route) {
+            ProfileScreen(baseViewModel = hiltViewModel())
+        }
+        composable(Screen.Featured.route) {
+            TextScreen("Featured")
+        }
+        composable(Screen.Kids.route) {
+            TextScreen("Kids Zone")
         }
 
-        composable("login") {
-            LoginScreen(
-                viewModel = hiltViewModel<LoginViewModel>(),
-                onLoginSuccess = {
-                    navController.navigate("splash") { // ✅ Re-check session and profile
-                        popUpTo("login") { inclusive = true }
-                    }
-                },
-                onPhoneLoginClick = {
-                    navController.navigate("phoneLogin")
-                }
-            )
+        // Full list of poojas in a section
+        composable(
+            route = Screen.Poojas.route,
+            arguments = listOf(navArgument("fileName") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val fileName = backStackEntry.arguments?.getString("fileName") ?: ""
+            PoojasScreen(navController = navController, fileName = fileName)
         }
 
-        composable("phoneLogin") {
-            PhoneLoginScreen(
-                onOtpVerified = {
-                    navController.navigate("splash") { // ✅ Use splash logic after OTP too
-                        popUpTo("phoneLogin") { inclusive = true }
-                    }
-                }
-            )
+        // Pooja detail screen with URL decoding
+        composable(
+            route = Screen.PoojaDetail.route,
+            arguments = listOf(navArgument("fileName") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val encodedFile = backStackEntry.arguments?.getString("fileName") ?: ""
+            val fileName = URLDecoder.decode(encodedFile, "UTF-8")
+            PoojaDetailScreen(navController = navController, fileName = fileName)
         }
 
-        composable("personalDetails") {
-            PersonalDetailsScreen(
-                onSubmitSuccess = {
-                    navController.navigate("home") {
-                        popUpTo("personalDetails") { inclusive = true }
-                    }
-                }
-            )
+        // Find-It Game screen (unchanged)
+        composable(
+            route = Screen.FindItGame.route,
+            arguments = listOf(navArgument("levelFile") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val levelFile = backStackEntry.arguments?.getString("levelFile") ?: ""
+            FindItGameScreen(levelFile = levelFile, navController = navController)
         }
-
-        composable("home") {
-            HomeScreen(navController = navController)
-        }
-
-        // ✅ NEW: Profile screen route
-        composable("profile") {
-            ProfileScreen(navController = navController)
-        }
-
-        // ✅ NEW: Billing screen route
-        composable("billing") {
-            BillingScreen()
-        }
-        // ✅ NEW: Featured screen route
-
-        composable("featured") {
-            FeaturedScreen()
-        }
-
-        composable("find_it_game/{levelFile}") {
-            val levelFile = it.arguments?.getString("levelFile") ?: "hidden_objects_shiva_scene.json"
-            FindItGameScreen(navController = navController, levelFile = levelFile)
-        }
-
-        composable("game_result/{levelName}") {
-            val levelName = it.arguments?.getString("levelName") ?: "Unknown"
-            GameResultScreen(levelName = levelName, navController = navController)
-        }
-
     }
+}
 
-    }
+@Composable
+fun TextScreen(label: String) {
+    androidx.compose.material3.Text(
+        text = label,
+        style = androidx.compose.material3.MaterialTheme.typography.headlineSmall,
+        modifier = Modifier.padding(32.dp)
+    )
+}

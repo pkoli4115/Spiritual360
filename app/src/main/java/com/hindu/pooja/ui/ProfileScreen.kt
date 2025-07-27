@@ -21,7 +21,6 @@ import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.hindu.pooja.R
 import com.hindu.pooja.ui.navigation.Screen
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
