@@ -55,7 +55,7 @@ fun HinduPoojaNavHost(
         ) { backStackEntry ->
             val encodedFile = backStackEntry.arguments?.getString("fileName") ?: ""
             val fileName = URLDecoder.decode(encodedFile, "UTF-8")
-            PoojaDetailScreen(fileName = fileName)
+            PoojaDetailScreen(navController = navController, fileName = fileName)
         }
 
         // Find-It Game screen (unchanged)
