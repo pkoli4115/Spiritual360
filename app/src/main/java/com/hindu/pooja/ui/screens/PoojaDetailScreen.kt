@@ -1,18 +1,22 @@
 package com.hindu.pooja.ui.screens
 
 import android.speech.tts.TextToSpeech
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.detectTransformGestures
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -23,17 +27,16 @@ import java.util.*
 @Composable
 fun PoojaDetailScreen(
     navController: NavController,
-    fileName: String
+    fileName: String,
+    imageName: String? = null
 ) {
     val context = LocalContext.current
     var poojaDetail by remember { mutableStateOf<PoojaDetail?>(null) }
 
-    // Zoom
     var scale by remember { mutableStateOf(1f) }
     val verticalScrollState = rememberScrollState()
     val horizontalScrollState = rememberScrollState()
 
-    // TTS
     // TTS
     var tts: TextToSpeech? by remember { mutableStateOf(null) }
     var isSpeaking by remember { mutableStateOf(false) }
@@ -57,46 +60,67 @@ fun PoojaDetailScreen(
             engine?.shutdown()
         }
     }
-
-    // Load content
     LaunchedEffect(fileName) {
         poojaDetail = PoojaContentLoader.loadPoojaContent(context, fileName)
     }
 
     poojaDetail?.let { detail ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .pointerInput(Unit) {
-                    detectTransformGestures { _, _, zoom, _ ->
-                        scale = (scale * zoom).coerceIn(0.8f, 3f)
-                    }
-                }
-        ) {
+        val backgroundImage = remember(imageName) {
+            context.resources.getIdentifier(
+                imageName?.substringBefore('.') ?: "home_screen",
+                "drawable",
+                context.packageName
+            )
+        }
+
+        Box(modifier = Modifier.fillMaxSize()) {
+            Image(
+                painter = painterResource(id = backgroundImage),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+
             Box(
                 modifier = Modifier
-                    .graphicsLayer(scaleX = scale, scaleY = scale)
-                    .verticalScroll(verticalScrollState)
-                    .horizontalScroll(horizontalScrollState)
-                    .align(Alignment.TopStart) // prevent blank top space
-                    .padding(16.dp)
+                    .fillMaxSize()
+                    .pointerInput(Unit) {
+                        detectTransformGestures { _, _, zoom, _ ->
+                            scale = (scale * zoom).coerceIn(0.8f, 3f)
+                        }
+                    }
             ) {
-                Column {
-                    Text(
-                        text = detail.name,
-                        style = MaterialTheme.typography.headlineMedium,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 12.dp)
-                    )
-
-                    detail.content?.forEach { (title, contentText) ->
-                        Text(
-                            text = "$title\n$contentText",
-                            style = MaterialTheme.typography.bodyLarge,
-                            modifier = Modifier.padding(bottom = 8.dp)
+                Box(
+                    modifier = Modifier
+                        .verticalScroll(verticalScrollState)
+                        .horizontalScroll(horizontalScrollState)
+                        .padding(16.dp)
+                ) {
+                    Box(
+                        modifier = Modifier.graphicsLayer(
+                            scaleX = scale,
+                            scaleY = scale,
+                            transformOrigin = TransformOrigin.Center
                         )
+                    ) {
+                        Column {
+                            Text(
+                                text = detail.name,
+                                style = MaterialTheme.typography.headlineMedium,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 12.dp)
+                            )
+
+                            detail.content?.forEach { (title, contentText) ->
+                                Text(
+                                    text = "$title\n$contentText",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    modifier = Modifier.padding(bottom = 8.dp)
+                                )
+                            }
+                        }
                     }
                 }
             }

@@ -15,5 +15,6 @@ data class Pooja(
 data class Katha(
     val order: Int,
     val title: String,
-    val content: String
+    val content: String,
+    val image: String? = null
 )
