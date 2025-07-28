@@ -111,7 +111,7 @@ fun HomeScreen(navController: NavController) {
                             isSelected = (title == selectedCategory),
                             onItemClick = { item ->
                                 selectedCategory = title
-                                navController.navigate("poojaDetail/${item.file}")
+                                navController.navigate(Screen.PoojaDetail.createRoute(item.file))
                             },
                             onViewAllClick = {
                                 val route = when (title) {
