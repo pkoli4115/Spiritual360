@@ -2,6 +2,7 @@ package com.hindu.pooja.ui.screens
 
 import android.speech.tts.TextToSpeech
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
@@ -60,6 +61,7 @@ fun PoojaDetailScreen(
             engine?.shutdown()
         }
     }
+
     LaunchedEffect(fileName) {
         poojaDetail = PoojaContentLoader.loadPoojaContent(context, fileName)
     }
@@ -74,6 +76,7 @@ fun PoojaDetailScreen(
         }
 
         Box(modifier = Modifier.fillMaxSize()) {
+            // Background image
             Image(
                 painter = painterResource(id = backgroundImage),
                 contentDescription = null,
@@ -81,9 +84,17 @@ fun PoojaDetailScreen(
                 contentScale = ContentScale.Crop
             )
 
+            // Gesture + Zoom + Scroll container
             Box(
                 modifier = Modifier
                     .fillMaxSize()
+                    .pointerInput(Unit) {
+                        detectTapGestures(
+                            onDoubleTap = {
+                                scale = 1f // Reset zoom
+                            }
+                        )
+                    }
                     .pointerInput(Unit) {
                         detectTransformGestures { _, _, zoom, _ ->
                             scale = (scale * zoom).coerceIn(0.8f, 3f)
@@ -125,6 +136,7 @@ fun PoojaDetailScreen(
                 }
             }
 
+            // TTS Toggle Button
             Button(
                 onClick = {
                     if (isSpeaking) {
