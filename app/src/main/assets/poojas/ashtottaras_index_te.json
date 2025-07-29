@@ -1,44 +1,44 @@
 [
-  {
-    "id": "ganesha_ashtottara_te",
-    "name": "గణేశ అష్టోత్తరం",
+    {
+    "id": "sriganesh_ashtottara_te",
+    "name": "గణేశ అష్టోత్తర శతనామావళి",
     "image": "ganesh_ashtottara_te.png",
-    "file": "ashtottaras/ganesha_ashtottara_te.json",
+    "file": "ashtottara/sriganesh_ashtottara.json",
     "scrollable": true
   },
   {
     "id": "durga_ashtottara_te",
     "name": "శ్రీ దుర్గా అష్టోత్తర శతనామావళి",
     "image": "durga_ashtottara_te.png",
-    "file": "daily/durga_ashtottara_te.json",
+    "file": "ashtottara/durga_ashtottara_te.json",
     "scrollable": true
   },
   {
     "id": "lakshmi_ashtottara_te",
     "name": "లక్ష్మీ అష్టోత్తర శతనామావళి",
     "image": "lakshmi_ashtottara_te.png",
-    "file": "daily/lakshmi_ashtottara_te.json",
+    "file": "ashtottara/lakshmi_ashtottara_te.json",
     "scrollable": true
   },
   {
     "id": "saraswati_ashtottara_te",
     "name": "సరస్వతీ అష్టోత్తర శతనామావళి",
     "image": "saraswati_ashtottara_te.png",
-    "file": "daily/saraswati_ashtottara_te.json",
+    "file": "ashtottara/saraswati_ashtottara_te.json",
     "scrollable": true
   },
   {
     "id": "dattatreya_stotram_narada",
     "name": "శ్రీ దత్తాత్రేయ స్తోత్రం (నారద కృతం)",
-    "image": "saraswati_ashtottara_te.png",
-    "file": "daily/dattatreya_stotram_narada.json",
+    "image": "dattatreya.png",
+    "file": "ashtottara/dattatreya_stotram_narada.json",
     "scrollable": true
   },
   {
     "id": "adi_varahi_stotram",
     "name": "ఆది వారాహీ స్తోత్రం",
-    "image": "saraswati_ashtottara_te.png",
-    "file": "daily/dattatreya_stotram_narada.json",
+    "image": "varahidevi.png",
+    "file": "ashtottara/dattatreya_stotram_narada.json",
     "scrollable": true
   }
 ]
