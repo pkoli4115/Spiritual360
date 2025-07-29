@@ -14,7 +14,7 @@
   },
   {
     "id": "hanuman_chalisa_en",
-    "name": "హనుమాన్ చాలీసా",
+    "name": "Hanuman Chalisa",
     "image": "hanuman_chalisa.png",
     "file": "daily/hanuman_chalisa_en.json"
   },
@@ -29,7 +29,7 @@
   
     {
     "id": "hanuman_chalisa_hi",
-    "name": "హనుమాన్ చాలీసా",
+    "name": "हनुमान चालीसा",
     "image": "hanuman_chalisa.png",
     "file": "daily/hanuman_chalisa_hi.json"
   },
@@ -47,7 +47,7 @@
   
     {
     "id": "navagraha_stotram_hi",
-    "name": "నవగ్రహ స్తోత్రం",
+    "name": "नवग्रह स्तोत्र",
     "image": "navagraha_pooja.png",
     "file": "daily/navagraha_stotram_hi.json"
   },
@@ -63,7 +63,7 @@
   
      {
     "id": "sri_rama_raksha_stotram_hi",
-    "name": "శ్రీ రామ రక్షా స్తోత్రం",
+    "name": "श्री राम रक्षा स्तोत्रम्",
     "image": "srirama_raksha_stotram.png",
     "file": "daily/sri_rama_raksha_stotram_hi.json"
   }

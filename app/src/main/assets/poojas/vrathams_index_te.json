@@ -2,17 +2,15 @@
   {
     "id": "satyanarayana_vratham",
     "name": "శ్రీ సత్యనారాయణ వ్రతం",
-    "image": "nithya_pooja.png",
-    "file": "vrathams/satyanarayana_vratham.json"
-	"scrollable": true
-
+    "image": "satyanarayana_pooja.png",
+    "file": "vrathams/satyanarayana_vratham.json",
+    "scrollable": true
   },
   {
     "id": "varalakshmi_vratam",
     "name": "వరలక్ష్మీ వ్రతం",
-    "image": "sankasti_ganapathi.png",
+    "image": "lakshmi_vishnu.png",
     "file": "vrathams/varalakshmi_vratam.json",
     "scrollable": true
   }
-  
 ]
