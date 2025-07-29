@@ -121,6 +121,7 @@ fun HomeScreen(navController: NavController) {
                                 val route = when (title) {
                                     "Daily Poojas" -> Screen.Poojas.createRoute("daily_index_te.json")
                                     "Vrathams / Nomulu" -> Screen.Vrathams.createRoute("vrathams_index_te.json")
+                                    "Ashtottaras" -> Screen.Ashtottaras.createRoute("ashtottaras_index_te.json")
                                     else -> "unknown_list"
                                 }
                                 navController.navigate(route)

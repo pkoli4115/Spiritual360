@@ -41,7 +41,7 @@ fun HinduPoojaNavHost(
             TextScreen("Kids Zone")
         }
 
-        // Full list of daily poojas
+        // Full list of poojas in a section
         composable(
             route = Screen.Poojas.route,
             arguments = listOf(navArgument("fileName") { type = NavType.StringType })
@@ -50,7 +50,7 @@ fun HinduPoojaNavHost(
             PoojasScreen(navController = navController, fileName = fileName)
         }
 
-        // Full list of vrathams/nomulu
+        // Vrathams screen
         composable(
             route = Screen.Vrathams.route,
             arguments = listOf(navArgument("fileName") { type = NavType.StringType })
@@ -59,7 +59,16 @@ fun HinduPoojaNavHost(
             VrathamsScreen(navController = navController, fileName = fileName)
         }
 
-        // Pooja detail screen with decoded filename
+        // 🆕 Ashtottaras screen
+        composable(
+            route = Screen.Ashtottaras.route,
+            arguments = listOf(navArgument("fileName") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val fileName = backStackEntry.arguments?.getString("fileName") ?: ""
+            AshtottarasScreen(navController = navController, fileName = fileName)
+        }
+
+        // Pooja detail screen with URL decoding
         composable(
             route = Screen.PoojaDetail.route,
             arguments = listOf(navArgument("fileName") { type = NavType.StringType })
@@ -69,7 +78,7 @@ fun HinduPoojaNavHost(
             PoojaDetailScreen(navController = navController, fileName = fileName)
         }
 
-        // Devotional game screen
+        // Find-It Game screen
         composable(
             route = Screen.FindItGame.route,
             arguments = listOf(navArgument("levelFile") { type = NavType.StringType })
