@@ -36,7 +36,7 @@ fun PoojasScreen(
         )
 
         LazyColumn {
-            items(items = poojaList) { pooja ->
+            items(poojaList) { pooja ->
                 val imageResId = context.resources.getIdentifier(
                     pooja.image.substringBeforeLast('.'),
                     "drawable",
@@ -51,7 +51,7 @@ fun PoojasScreen(
                             navController.navigate(Screen.PoojaDetail.createRoute(encodedFile))
                         }
                 ) {
-                    Row(modifier = Modifier.padding(all = 12.dp)) {
+                    Row(modifier = Modifier.padding(12.dp)) {
                         Image(
                             painter = painterResource(id = imageResId),
                             contentDescription = pooja.name,

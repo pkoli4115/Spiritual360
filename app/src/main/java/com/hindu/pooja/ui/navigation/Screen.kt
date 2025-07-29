@@ -1,4 +1,5 @@
 package com.hindu.pooja.ui.navigation
+
 import android.net.Uri
 
 sealed class Screen(val route: String) {
@@ -14,10 +15,13 @@ sealed class Screen(val route: String) {
         fun createRoute(fileName: String): String = "poojas/$fileName"
     }
 
+    object Vrathams : Screen("vrathams/{fileName}") {
+        fun createRoute(fileName: String): String = "vrathams/$fileName"
+    }
+
     object PoojaDetail : Screen("pooja_detail/{fileName}") {
         fun createRoute(fileName: String): String = "pooja_detail/${Uri.encode(fileName)}"
     }
-
 
     object FindItGame : Screen("find_it_game/{levelFile}") {
         fun createRoute(levelFile: String) = "find_it_game/$levelFile"

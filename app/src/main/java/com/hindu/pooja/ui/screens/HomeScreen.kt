@@ -111,12 +111,17 @@ fun HomeScreen(navController: NavController) {
                             isSelected = (title == selectedCategory),
                             onItemClick = { item ->
                                 selectedCategory = title
-                                navController.navigate(Screen.PoojaDetail.createRoute(item.file))
+                                navController.navigate(
+                                    Screen.PoojaDetail.createRoute(
+                                        fileName = item.file
+                                    )
+                                )
                             },
                             onViewAllClick = {
                                 val route = when (title) {
                                     "Daily Poojas" -> Screen.Poojas.createRoute("daily_index_te.json")
-                                    else -> "unknown_list" // other sections not implemented yet
+                                    "Vrathams / Nomulu" -> Screen.Vrathams.createRoute("vrathams_index_te.json")
+                                    else -> "unknown_list"
                                 }
                                 navController.navigate(route)
                             }

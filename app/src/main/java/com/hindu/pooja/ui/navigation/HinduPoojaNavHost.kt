@@ -15,7 +15,6 @@ import com.hindu.pooja.ui.screens.*
 import java.net.URLDecoder
 import com.hindu.pooja.ui.screens.PoojaDetailScreen
 
-
 @Composable
 fun HinduPoojaNavHost(
     navController: androidx.navigation.NavHostController = rememberNavController(),
@@ -29,17 +28,20 @@ fun HinduPoojaNavHost(
         composable(Screen.Home.route) {
             HomeScreen(navController)
         }
+
         composable(Screen.Profile.route) {
             ProfileScreen(baseViewModel = hiltViewModel())
         }
+
         composable(Screen.Featured.route) {
             TextScreen("Featured")
         }
+
         composable(Screen.Kids.route) {
             TextScreen("Kids Zone")
         }
 
-        // Full list of poojas in a section
+        // Full list of daily poojas
         composable(
             route = Screen.Poojas.route,
             arguments = listOf(navArgument("fileName") { type = NavType.StringType })
@@ -48,7 +50,16 @@ fun HinduPoojaNavHost(
             PoojasScreen(navController = navController, fileName = fileName)
         }
 
-        // Pooja detail screen with URL decoding
+        // Full list of vrathams/nomulu
+        composable(
+            route = Screen.Vrathams.route,
+            arguments = listOf(navArgument("fileName") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val fileName = backStackEntry.arguments?.getString("fileName") ?: ""
+            VrathamsScreen(navController = navController, fileName = fileName)
+        }
+
+        // Pooja detail screen with decoded filename
         composable(
             route = Screen.PoojaDetail.route,
             arguments = listOf(navArgument("fileName") { type = NavType.StringType })
@@ -58,7 +69,7 @@ fun HinduPoojaNavHost(
             PoojaDetailScreen(navController = navController, fileName = fileName)
         }
 
-        // Find-It Game screen (unchanged)
+        // Devotional game screen
         composable(
             route = Screen.FindItGame.route,
             arguments = listOf(navArgument("levelFile") { type = NavType.StringType })

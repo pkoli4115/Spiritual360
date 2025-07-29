@@ -6,13 +6,12 @@ import com.google.gson.JsonObject
 import com.google.gson.reflect.TypeToken
 import com.hindu.pooja.model.Katha
 import com.hindu.pooja.model.PoojaDetail
+import com.hindu.pooja.model.PoojaIndexItem
 
 object PoojaContentLoader {
 
     fun loadPoojaContent(context: Context, fileName: String): PoojaDetail? {
         return try {
-            println("🔍 Attempting to load: assets/poojas/$fileName")
-
             val jsonString = context.assets.open("poojas/$fileName")
                 .bufferedReader().use { it.readText() }
 
@@ -45,8 +44,6 @@ object PoojaContentLoader {
                 )
             } else null
 
-            println("✅ Loaded: $fileName (slokas=${slokas?.size}, verses=${verses?.size}, kathalu=${kathalu?.size}, sections=${mapContent?.size})")
-
             PoojaDetail(
                 id = id,
                 name = name,
@@ -59,9 +56,19 @@ object PoojaContentLoader {
                 kathalu = kathalu
             )
         } catch (e: Exception) {
-            println("❌ Error loading pooja: $fileName")
             e.printStackTrace()
             null
+        }
+    }
+
+    fun loadPoojaIndex(context: Context, fileName: String): List<PoojaIndexItem> {
+        return try {
+            val json = context.assets.open("poojas/$fileName")
+                .bufferedReader().use { it.readText() }
+            Gson().fromJson(json, object : TypeToken<List<PoojaIndexItem>>() {}.type)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emptyList()
         }
     }
 }
