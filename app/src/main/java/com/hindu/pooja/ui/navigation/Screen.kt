@@ -10,6 +10,8 @@ sealed class Screen(val route: String) {
     object Login : Screen("login")
     object Settings : Screen("settings")
     object Kids : Screen("kids")
+    object PersonalDetails : Screen("personal_details")
+    object EditProfile : Screen("edit_profile") // ✅ NEW
 
     object Poojas : Screen("poojas/{fileName}") {
         fun createRoute(fileName: String): String = "poojas/$fileName"
@@ -18,12 +20,13 @@ sealed class Screen(val route: String) {
     object Vrathams : Screen("vrathams/{fileName}") {
         fun createRoute(fileName: String): String = "vrathams/$fileName"
     }
+
     object Ashtottaras : Screen("ashtottaras/{fileName}") {
         fun createRoute(fileName: String): String = "ashtottaras/$fileName"
     }
 
     object PoojaDetail : Screen("pooja_detail/{fileName}") {
-        fun createRoute(fileName: String): String = "pooja_detail/${Uri.encode(fileName)}"
+        fun createRoute(fileName: String) = "pooja_detail/${Uri.encode(fileName)}"
     }
 
     object FindItGame : Screen("find_it_game/{levelFile}") {

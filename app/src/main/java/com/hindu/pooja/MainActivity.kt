@@ -4,16 +4,17 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.*
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
 import androidx.core.view.WindowCompat
+import androidx.navigation.compose.rememberNavController
 import com.hindu.pooja.ui.navigation.BottomNavItem
 import com.hindu.pooja.ui.navigation.BottomNavigationBar
 import com.hindu.pooja.ui.navigation.HinduPoojaNavHost
 import com.hindu.pooja.ui.theme.HinduPoojaTheme
 import dagger.hilt.android.AndroidEntryPoint
-import androidx.navigation.compose.rememberNavController
-import androidx.compose.ui.Modifier
+import com.hindu.pooja.R
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -38,11 +39,9 @@ fun HinduPoojaAppContent() {
             BottomNavItem("profile", R.drawable.ic_profile, R.string.nav_profile)
         )
 
-
         val currentBackStackEntry by navController.currentBackStackEntryFlow
             .collectAsState(initial = navController.currentBackStackEntry)
         val currentRoute = currentBackStackEntry?.destination?.route
-
 
         val showBottomBar = currentRoute in bottomNavItems.map { it.route }
 

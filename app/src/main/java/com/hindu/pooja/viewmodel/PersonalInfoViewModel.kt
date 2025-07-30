@@ -1,141 +1,145 @@
 package com.hindu.pooja.viewmodel
 
-import android.util.Log
-import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.toMutableStateList
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.gson.Gson
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.io.BufferedReader
-import java.io.InputStreamReader
-import java.net.HttpURLConnection
-import java.net.URL
+import com.hindu.pooja.data.CountryStateProvider
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import javax.inject.Inject
 
-data class Country(val name: String)
-data class State(val name: String)
-data class CountriesResponse(val data: List<Country>)
-data class StatesResponse(val data: StatesData)
-data class StatesData(val name: String, val states: List<State>)
+@HiltViewModel
+class PersonalInfoViewModel @Inject constructor() : ViewModel() {
 
-class PersonalInfoViewModel : ViewModel() {
+    // Name
+    var firstName by mutableStateOf("")
+    var middleName by mutableStateOf("")
+    var lastName by mutableStateOf("")
 
-    var fullName by mutableStateOf("")
     var fatherName by mutableStateOf("")
     var motherName by mutableStateOf("")
+
+    // Contact
     var email by mutableStateOf("")
     var phone by mutableStateOf("")
-    var maritalStatus by mutableStateOf("Unmarried")
+    var countryCode by mutableStateOf("+91") // Default India
+
+    // Marital
+    var maritalStatus by mutableStateOf("")
     var spouseName by mutableStateOf("")
     var hasChildren by mutableStateOf(false)
-    var numberOfChildren by mutableStateOf("0")
-    var childNames by mutableStateOf<List<String>>(emptyList())
+    var numberOfChildren by mutableStateOf("")
+    var childNames = mutableStateListOf<String>()
+
+    // Astro
     var gothram by mutableStateOf("")
     var nakshatram by mutableStateOf("")
+    var birthDate by mutableStateOf("")
+    var birthTime by mutableStateOf("")
+    var birthPlace by mutableStateOf("")
+
+    // Address
     var addressLine1 by mutableStateOf("")
     var addressLine2 by mutableStateOf("")
     var addressLine3 by mutableStateOf("")
     var selectedCountry by mutableStateOf("")
     var selectedState by mutableStateOf("")
+    var city by mutableStateOf("")
+    var pincode by mutableStateOf("")
 
-    var countries by mutableStateOf<List<String>>(emptyList())
-    var states by mutableStateOf<List<String>>(emptyList())
-    var isCountriesLoading by mutableStateOf(false)
-    var isStatesLoading by mutableStateOf(false)
+    private val _allCountries = MutableStateFlow<List<String>>(emptyList())
+    val allCountries: StateFlow<List<String>> = _allCountries
+
+    private val _allStates = MutableStateFlow<List<String>>(emptyList())
+    val allStates: StateFlow<List<String>> = _allStates
+
+    private val _saveSuccess = MutableStateFlow<Boolean?>(null)
+    val saveSuccess: StateFlow<Boolean?> = _saveSuccess
 
     var isSaving by mutableStateOf(false)
-    var saveSuccess by mutableStateOf<Boolean?>(null)
 
-    private val auth = FirebaseAuth.getInstance()
-    private val db = FirebaseFirestore.getInstance()
+    fun resetSaveState() {
+        _saveSuccess.value = null
+    }
+
+    fun isEmailOrPhoneProvided(): Boolean {
+        return email.isNotBlank() || phone.isNotBlank()
+    }
+
+    fun isValidPincode(): Boolean {
+        return pincode.length in 4..8
+    }
+
+    fun isValidEmail(): Boolean {
+        return email.isBlank() || android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
+    }
+
+    fun isValidDate(): Boolean {
+        val regex = Regex("""\d{2}-\d{2}-\d{4}""")
+        return birthDate.matches(regex)
+    }
+
+    fun isFormValid(): Boolean {
+        return firstName.isNotBlank() &&
+                lastName.isNotBlank() &&
+                fatherName.isNotBlank() &&
+                motherName.isNotBlank() &&
+                isEmailOrPhoneProvided() &&
+                isValidEmail() &&
+                maritalStatus.isNotBlank() &&
+                (maritalStatus != "Married" || spouseName.isNotBlank()) &&
+                gothram.isNotBlank() &&
+                nakshatram.isNotBlank() &&
+                birthDate.isNotBlank() && isValidDate() &&
+                birthTime.isNotBlank() &&
+                birthPlace.isNotBlank() &&
+                addressLine1.isNotBlank() &&
+                selectedCountry.isNotBlank() &&
+                selectedState.isNotBlank() &&
+                city.isNotBlank() &&
+                isValidPincode()
+    }
 
     fun fetchCountries() {
-        isCountriesLoading = true
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val url = URL("https://countriesnow.space/api/v0.1/countries/positions")
-                val connection = url.openConnection() as HttpURLConnection
-                connection.requestMethod = "GET"
-                val reader = BufferedReader(InputStreamReader(connection.inputStream))
-                val response = reader.readText()
-                reader.close()
-
-                val countriesResponse = Gson().fromJson(response, CountriesResponse::class.java)
-                val countryNames = countriesResponse.data.map { it.name }.sorted()
-
-                withContext(Dispatchers.Main) {
-                    countries = countryNames
-                }
-            } catch (e: Exception) {
-                Log.e("FetchCountries", "Error: ${e.localizedMessage}")
-            } finally {
-                withContext(Dispatchers.Main) {
-                    isCountriesLoading = false
-                }
-            }
-        }
+        _allCountries.value = CountryStateProvider.getAllCountries()
     }
 
-    fun fetchStates(countryName: String) {
-        isStatesLoading = true
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val url = URL("https://countriesnow.space/api/v0.1/countries/states")
-                val connection = url.openConnection() as HttpURLConnection
-                connection.requestMethod = "POST"
-                connection.doOutput = true
-                connection.setRequestProperty("Content-Type", "application/json")
-
-                val body = """{"country":"$countryName"}"""
-                connection.outputStream.use { it.write(body.toByteArray()) }
-
-                val reader = BufferedReader(InputStreamReader(connection.inputStream))
-                val response = reader.readText()
-                reader.close()
-
-                val statesResponse = Gson().fromJson(response, StatesResponse::class.java)
-                val stateNames = statesResponse.data.states.map { it.name }.sorted()
-
-                withContext(Dispatchers.Main) {
-                    states = stateNames
-                }
-            } catch (e: Exception) {
-                Log.e("FetchStates", "Error: ${e.localizedMessage}")
-            } finally {
-                withContext(Dispatchers.Main) {
-                    isStatesLoading = false
-                }
-            }
-        }
+    fun fetchStates(country: String) {
+        _allStates.value = CountryStateProvider.getStatesForCountry(country)
     }
 
-    fun onNumberOfChildrenChanged(countStr: String) {
-        numberOfChildren = countStr
-        val count = countStr.toIntOrNull() ?: 0
-        childNames = List(count) { index ->
+    fun onNumberOfChildrenChanged(newCount: String) {
+        numberOfChildren = newCount
+        val count = newCount.toIntOrNull() ?: 0
+        childNames = MutableList(count) { index ->
             childNames.getOrNull(index) ?: ""
-        }
+        }.toMutableStateList()
     }
 
     fun onChildNameChanged(index: Int, name: String) {
-        childNames = childNames.toMutableList().also {
-            if (index < it.size) it[index] = name
+        if (index in childNames.indices) {
+            childNames[index] = name
         }
     }
 
     fun savePersonalInfo() {
+        val user = FirebaseAuth.getInstance().currentUser ?: return
         isSaving = true
-        val uid = auth.currentUser?.uid ?: return
 
-        val data = hashMapOf(
-            "fullName" to fullName,
+        val profile = hashMapOf(
+            "firstName" to firstName,
+            "middleName" to middleName,
+            "lastName" to lastName,
             "fatherName" to fatherName,
             "motherName" to motherName,
             "email" to email,
-            "phone" to phone,
+            "phone" to "$countryCode$phone",
             "maritalStatus" to maritalStatus,
             "spouseName" to spouseName,
             "hasChildren" to hasChildren,
@@ -143,54 +147,29 @@ class PersonalInfoViewModel : ViewModel() {
             "childNames" to childNames,
             "gothram" to gothram,
             "nakshatram" to nakshatram,
+            "birthDate" to birthDate,
+            "birthTime" to birthTime,
+            "birthPlace" to birthPlace,
             "addressLine1" to addressLine1,
             "addressLine2" to addressLine2,
             "addressLine3" to addressLine3,
             "country" to selectedCountry,
-            "state" to selectedState
+            "state" to selectedState,
+            "city" to city,
+            "pincode" to pincode
         )
 
-        db.collection("userProfiles").document(uid)
-            .set(data)
+        FirebaseFirestore.getInstance()
+            .collection("userProfiles")
+            .document(user.uid)
+            .set(profile)
             .addOnSuccessListener {
                 isSaving = false
-                saveSuccess = true
+                _saveSuccess.value = true
             }
             .addOnFailureListener {
                 isSaving = false
-                saveSuccess = false
-                Log.e("Firestore", "Save failed: ${it.localizedMessage}")
-            }
-    }
-
-    fun loadExistingProfile(onLoaded: () -> Unit = {}) {
-        val uid = auth.currentUser?.uid ?: return
-        db.collection("userProfiles").document(uid).get()
-            .addOnSuccessListener { document ->
-                document?.let {
-                    fullName = it.getString("fullName") ?: ""
-                    fatherName = it.getString("fatherName") ?: ""
-                    motherName = it.getString("motherName") ?: ""
-                    email = it.getString("email") ?: ""
-                    phone = it.getString("phone") ?: ""
-                    maritalStatus = it.getString("maritalStatus") ?: "Unmarried"
-                    spouseName = it.getString("spouseName") ?: ""
-                    hasChildren = it.getBoolean("hasChildren") ?: false
-                    numberOfChildren = it.getString("numberOfChildren") ?: "0"
-                    childNames = it.get("childNames") as? List<String> ?: emptyList()
-                    gothram = it.getString("gothram") ?: ""
-                    nakshatram = it.getString("nakshatram") ?: ""
-                    addressLine1 = it.getString("addressLine1") ?: ""
-                    addressLine2 = it.getString("addressLine2") ?: ""
-                    addressLine3 = it.getString("addressLine3") ?: ""
-                    selectedCountry = it.getString("country") ?: ""
-                    selectedState = it.getString("state") ?: ""
-
-                    if (selectedCountry.isNotEmpty()) {
-                        fetchStates(selectedCountry)
-                    }
-                    onLoaded()
-                }
+                _saveSuccess.value = false
             }
     }
 }

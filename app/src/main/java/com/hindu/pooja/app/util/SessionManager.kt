@@ -11,9 +11,6 @@ object SessionManager {
     private val auth = FirebaseAuth.getInstance()
     private val firestore = FirebaseFirestore.getInstance()
 
-    /**
-     * Save the current device session to Firestore under /activeSessions/{uid}
-     */
     fun saveSession(
         context: Context,
         onSuccess: () -> Unit,
@@ -38,10 +35,6 @@ object SessionManager {
             .addOnFailureListener { onError(it) }
     }
 
-    /**
-     * Check if the current device matches the stored session
-     * If not, sign the user out and call onInvalid()
-     */
     fun checkSession(
         context: Context,
         onValid: () -> Unit,
@@ -60,7 +53,6 @@ object SessionManager {
             .get()
             .addOnSuccessListener { document ->
                 val storedDeviceId = document.getString("deviceId")
-
                 if (storedDeviceId == currentDeviceId) {
                     onValid()
                 } else {
@@ -72,5 +64,9 @@ object SessionManager {
                 auth.signOut()
                 onInvalid()
             }
+    }
+
+    fun clear() {
+        auth.signOut()
     }
 }
