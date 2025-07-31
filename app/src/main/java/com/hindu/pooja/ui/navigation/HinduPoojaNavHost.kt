@@ -18,6 +18,7 @@ import com.hindu.pooja.ui.login.LoginScreen
 import com.hindu.pooja.ui.personal.EditProfileScreen
 import com.hindu.pooja.ui.personal.PersonalDetailsScreen
 import com.hindu.pooja.ui.screens.*
+import com.hindu.pooja.viewmodel.ProfileViewModel
 import java.net.URLDecoder
 
 @Composable
@@ -25,9 +26,12 @@ fun HinduPoojaNavHost(
     navController: NavHostController,
     modifier: Modifier = Modifier
 ) {
+    // Inject ProfileViewModel ONCE here for all screens that need it!
+    val profileViewModel: ProfileViewModel = hiltViewModel()
+
     NavHost(
         navController = navController,
-        startDestination = Screen.Login.route, // 🔐 Start with login
+        startDestination = Screen.Login.route,
         modifier = modifier
     ) {
         // 🔐 Login
@@ -40,9 +44,9 @@ fun HinduPoojaNavHost(
             )
         }
 
-        // 🏠 Home
+        // 🏠 Home (passes profileViewModel)
         composable(Screen.Home.route) {
-            HomeScreen(navController)
+            HomeScreen(navController, profileViewModel)
         }
 
         // ⭐ Featured
@@ -55,9 +59,9 @@ fun HinduPoojaNavHost(
             TextScreen("Kids Zone Coming Soon")
         }
 
-        // 👤 Profile
+        // 👤 Profile (passes profileViewModel, optional—remove if not needed)
         composable(Screen.Profile.route) {
-            ProfileScreen(navController)
+            ProfileScreen(navController = navController)
         }
 
         // ✏️ Edit Profile

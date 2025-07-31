@@ -5,6 +5,7 @@ data class PoojaIndexItem(
     val name: String,
     val image: String,
     val file: String,
-    val category: String, // ✅ Add this line
-    val scrollable: Boolean = false // ✅ Optional, used in HomeScreen.kt
+    val category: String? = null,           // <-- Now optional
+    val isPremium: Boolean = false,
+    val scrollable: Boolean = false
 )

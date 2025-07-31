@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.hindu.pooja.R
 import com.hindu.pooja.model.PoojaIndexItem
 import com.hindu.pooja.model.getDrawableIdFromThumbnail
 import kotlinx.coroutines.delay
@@ -25,6 +26,7 @@ fun HomeSection(
     sectionTitle: String,
     items: List<PoojaIndexItem>,
     isSelected: Boolean = false,
+    autoScroll: Boolean = false, // 👈 Add this!
     onItemClick: (PoojaIndexItem) -> Unit,
     onViewAllClick: () -> Unit
 ) {
@@ -51,31 +53,50 @@ fun HomeSection(
             }
         }
 
-        if (sectionTitle == "Daily Poojas") {
+        // 🔁 Generic autoScroll logic
+        if (autoScroll) {
             AutoScrollSectionRow(items = items, onItemClick = onItemClick)
         } else {
             LazyRow(modifier = Modifier.padding(vertical = 8.dp)) {
                 items(items) { item ->
                     val context = LocalContext.current
                     val imageResId = getDrawableIdFromThumbnail(item.image, context)
-                    Card(
+                    Box(
                         modifier = Modifier
-                            .padding(8.dp)
+                            .padding(end = 8.dp)
                             .width(140.dp)
+                            .height(180.dp)
                             .clickable { onItemClick(item) }
                     ) {
-                        Column(modifier = Modifier.padding(8.dp)) {
-                            Image(
-                                painter = painterResource(id = imageResId),
-                                contentDescription = item.name,
+                        Card(
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            Column(modifier = Modifier.padding(8.dp)) {
+                                Image(
+                                    painter = painterResource(id = imageResId),
+                                    contentDescription = item.name,
+                                    modifier = Modifier
+                                        .height(100.dp)
+                                        .fillMaxWidth(),
+                                    contentScale = androidx.compose.ui.layout.ContentScale.Fit // never cropped!
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = item.name,
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                        }
+                        // 👑 Crown Badge for premium items
+                        if (item.isPremium) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_crown),
+                                contentDescription = "Premium",
+                                tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier
-                                    .height(100.dp)
-                                    .fillMaxWidth()
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = item.name,
-                                style = MaterialTheme.typography.bodySmall
+                                    .size(24.dp)
+                                    .align(Alignment.TopEnd)
+                                    .offset(x = (-8).dp, y = 8.dp)
                             )
                         }
                     }
@@ -92,8 +113,6 @@ fun AutoScrollSectionRow(
 ) {
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
-
-    // 🔁 Repeat items to fake infinite scroll
     val repeatedItems = remember { List(100) { items[it % items.size] } }
 
     LaunchedEffect(Unit) {
@@ -104,7 +123,6 @@ fun AutoScrollSectionRow(
                 if (nextIndex < repeatedItems.size - 1) {
                     listState.animateScrollToItem(nextIndex)
                 } else {
-                    // Smooth scroll reset to start
                     listState.scrollToItem(0)
                 }
             }
@@ -119,25 +137,41 @@ fun AutoScrollSectionRow(
             val item = repeatedItems[index]
             val context = LocalContext.current
             val imageResId = getDrawableIdFromThumbnail(item.image, context)
-
-            Card(
+            Box(
                 modifier = Modifier
                     .padding(horizontal = 8.dp)
                     .width(180.dp)
+                    .height(180.dp)
                     .clickable { onItemClick(item) }
             ) {
-                Column(modifier = Modifier.padding(8.dp)) {
-                    Image(
-                        painter = painterResource(id = imageResId),
-                        contentDescription = item.name,
+                Card(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    Column(modifier = Modifier.padding(8.dp)) {
+                        Image(
+                            painter = painterResource(id = imageResId),
+                            contentDescription = item.name,
+                            modifier = Modifier
+                                .height(100.dp)
+                                .fillMaxWidth(),
+                            contentScale = androidx.compose.ui.layout.ContentScale.Fit
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = item.name,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+                if (item.isPremium) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_crown),
+                        contentDescription = "Premium",
+                        tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier
-                            .height(100.dp)
-                            .fillMaxWidth()
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = item.name,
-                        style = MaterialTheme.typography.bodySmall
+                            .size(24.dp)
+                            .align(Alignment.TopEnd)
+                            .offset(x = (-8).dp, y = 8.dp)
                     )
                 }
             }

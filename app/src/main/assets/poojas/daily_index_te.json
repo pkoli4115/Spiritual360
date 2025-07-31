@@ -3,6 +3,7 @@
     "id": "nitya_pooja_vidhanam_te",
     "name": "నిత్య పూజా విధానం",
     "image": "nithya_pooja.png",
+    "scrollable": true,
     "file": "daily/nitya_pooja_vidhanam_te.json"
   },
   {
@@ -10,12 +11,16 @@
     "name": "సంకట గణపతి స్తోత్రం",
     "image": "sankasti_ganapathi.png",
     "file": "daily/sankasti_ganapath_stotram_te.json",
-    "scrollable": true
+    "scrollable": true,
+	"isPremium": true
+
   },
   {
     "id": "hanuman_chalisa_en",
     "name": "Hanuman Chalisa",
     "image": "hanuman_chalisa.png",
+	"scrollable": true,
+	"isPremium": true,
     "file": "daily/hanuman_chalisa_en.json"
   },
   
@@ -23,6 +28,7 @@
     "id": "hanuman_chalisa_te",
     "name": "హనుమాన్ చాలీసా",
     "image": "hanuman_chalisa.png",
+	"isPremium": true,
     "file": "daily/hanuman_chalisa_te.json",
 	"scrollable": true
   },
@@ -31,6 +37,7 @@
     "id": "hanuman_chalisa_hi",
     "name": "हनुमान चालीसा",
     "image": "hanuman_chalisa.png",
+    "scrollable": true,
     "file": "daily/hanuman_chalisa_hi.json"
   },
   
@@ -40,7 +47,7 @@
     "name": "నవగ్రహ స్తోత్రం",
     "image": "navagraha_pooja.png",
     "file": "daily/navagraha_stotram_te.json",
-	    "scrollable": true
+	"scrollable": true
 
 	
   },
@@ -56,7 +63,7 @@
     "name": "శ్రీ రామ రక్షా స్తోత్రం",
     "image": "srirama_raksha_stotram.png",
     "file": "daily/sri_rama_raksha_stotram_te.json",
-	    "scrollable": true
+    "scrollable": true
 
   },
   

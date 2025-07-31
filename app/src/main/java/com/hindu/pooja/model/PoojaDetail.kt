@@ -9,7 +9,10 @@ data class PoojaDetail(
     val content: Map<String, String>? = null,
     val slokas: List<String>? = null,
     val verses: List<String>? = null,
-    val kathalu: List<Katha>? = null
+    val kathalu: List<Katha>? = null,
+    // 👑 Premium & Scrollable flags (add these lines)
+    val isPremium: Boolean = false,
+    val scrollable: Boolean = false
 )
 
 data class Katha(

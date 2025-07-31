@@ -4,7 +4,9 @@
     "name": "శ్రీ సత్యనారాయణ వ్రతం",
     "image": "satyanarayana_pooja.png",
     "file": "vrathams/satyanarayana_vratham.json",
-    "scrollable": true
+    "scrollable": true,
+	"isPremium": true
+
   },
   {
     "id": "varalakshmi_vratam_te",

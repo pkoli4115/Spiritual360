@@ -19,12 +19,17 @@ import androidx.navigation.NavController
 import com.google.firebase.auth.FirebaseAuth
 import com.hindu.pooja.R
 import com.hindu.pooja.data.PoojaLoader
+import com.hindu.pooja.model.PoojaIndexItem
 import com.hindu.pooja.ui.components.HomeSection
 import com.hindu.pooja.ui.navigation.Screen
+import com.hindu.pooja.viewmodel.ProfileViewModel
 import kotlinx.coroutines.delay
 
 @Composable
-fun HomeScreen(navController: NavController) {
+fun HomeScreen(
+    navController: NavController,
+    profileViewModel: ProfileViewModel
+) {
     val context = LocalContext.current
     val userName = FirebaseAuth.getInstance().currentUser?.displayName ?: "User"
 
@@ -36,8 +41,16 @@ fun HomeScreen(navController: NavController) {
         "Ashtottaras" to "ashtottaras_index_te.json"
     )
 
+    // ✅ List all sections that should auto-scroll here!
+    val autoScrollSections = setOf("Daily Poojas", "Ashtottaras")
+    // Add/remove section titles as needed. All others will use standard scroll.
+
     var selectedCategory by remember { mutableStateOf("Daily Poojas") }
     var isLoading by remember { mutableStateOf(true) }
+    var showUpgradeDialog by remember { mutableStateOf(false) }
+    var pendingItem: PoojaIndexItem? by remember { mutableStateOf(null) }
+
+    val isUserPremium by profileViewModel.isPremium.collectAsState()
 
     val categoryData = remember {
         categories.map { (title, fileName) ->
@@ -94,28 +107,43 @@ fun HomeScreen(navController: NavController) {
                 Spacer(modifier = Modifier.height(8.dp))
             }
 
+            // Only render non-empty sections to avoid blank space!
             categoryData.forEach { (title, poojaList) ->
-                item {
-                    if (isLoading) {
-                        ShimmerPlaceholderRow()
-                    } else {
-                        val filteredItems = if (title == "Daily Poojas") {
-                            poojaList.filter { pooja -> pooja.scrollable == true }
-                        } else {
-                            poojaList
-                        }
+                val filteredItems = if (title == "Daily Poojas") {
+                    poojaList.filter { it.scrollable == true }
+                } else {
+                    poojaList
+                }
 
+                val autoScroll = autoScrollSections.contains(title)
+
+                if (!isLoading && filteredItems.isNotEmpty()) {
+                    item {
                         HomeSection(
                             sectionTitle = title,
                             items = filteredItems,
                             isSelected = (title == selectedCategory),
+                            autoScroll = autoScroll, // 👈 NEW!
                             onItemClick = { item ->
                                 selectedCategory = title
-                                navController.navigate(
-                                    Screen.PoojaDetail.createRoute(
-                                        fileName = item.file
+                                if (item.isPremium) {
+                                    if (isUserPremium) {
+                                        navController.navigate(
+                                            Screen.PoojaDetail.createRoute(
+                                                fileName = item.file
+                                            )
+                                        )
+                                    } else {
+                                        showUpgradeDialog = true
+                                        pendingItem = item
+                                    }
+                                } else {
+                                    navController.navigate(
+                                        Screen.PoojaDetail.createRoute(
+                                            fileName = item.file
+                                        )
                                     )
-                                )
+                                }
                             },
                             onViewAllClick = {
                                 val route = when (title) {
@@ -127,10 +155,30 @@ fun HomeScreen(navController: NavController) {
                                 navController.navigate(route)
                             }
                         )
+                        Spacer(modifier = Modifier.height(16.dp))
                     }
-                    Spacer(modifier = Modifier.height(16.dp))
+                } else if (isLoading) {
+                    item { ShimmerPlaceholderRow() }
                 }
             }
+        }
+
+        // Upgrade dialog
+        if (showUpgradeDialog) {
+            AlertDialog(
+                onDismissRequest = { showUpgradeDialog = false },
+                title = { Text("Premium Content") },
+                text = { Text("This pooja is for premium members. Upgrade to access all premium content!") },
+                confirmButton = {
+                    Button(onClick = {
+                        showUpgradeDialog = false
+                        navController.navigate("billing")
+                    }) { Text("Upgrade Now") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showUpgradeDialog = false }) { Text("Cancel") }
+                }
+            )
         }
     }
 }
