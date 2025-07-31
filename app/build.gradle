@@ -58,80 +58,64 @@ android {
 }
 
 dependencies {
-    // Core
-    implementation "androidx.compose.foundation:foundation:1.5.4"
-    implementation 'androidx.compose.ui:ui:1.5.4'
-    implementation 'androidx.compose.ui:ui-tooling-preview:1.5.4'
-    implementation 'androidx.compose.material3:material3:1.1.2'
-    implementation 'androidx.core:core-ktx:1.12.0'
-    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.2'
-    implementation 'androidx.compose.material:material:1.6.1'
-    implementation "com.google.accompanist:accompanist-flowlayout:0.30.1"
-    implementation("io.coil-kt:coil-compose:2.4.0")
-
-// Firebase
-    implementation platform('com.google.firebase:firebase-bom:32.7.0')
-    implementation 'com.google.firebase:firebase-auth'
-    implementation 'com.google.firebase:firebase-firestore'
-
-    // Countires & States
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
-
-// DataStore for XP saving
-    implementation "androidx.datastore:datastore-preferences:1.0.0"
-
-// Kotlin Coroutines
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3"
-
-
-    // Compose BOM (October 2023)
+    // --- Compose Core & Material3 ---
     implementation platform('androidx.compose:compose-bom:2023.10.01')
     implementation 'androidx.compose.ui:ui'
-    implementation 'androidx.compose.ui:ui-text'
-    implementation 'androidx.compose.ui:ui-text-android:1.5.4'
-    implementation 'androidx.compose.ui:ui-text:1.5.4'
     implementation 'androidx.compose.ui:ui-tooling-preview'
-    implementation 'androidx.compose.ui:ui-tooling'
     implementation 'androidx.compose.material3:material3'
     implementation 'androidx.compose.material:material-icons-extended'
     implementation 'androidx.activity:activity-compose:1.8.2'
+    implementation "androidx.compose.foundation:foundation"
+    implementation 'androidx.compose.ui:ui-tooling'
 
-    // Navigation
-    implementation 'androidx.navigation:navigation-compose:2.7.7'
+    // --- Firebase ---
+    implementation platform('com.google.firebase:firebase-bom:32.7.0')
+    implementation 'com.google.firebase:firebase-auth-ktx'
+    implementation 'com.google.firebase:firebase-firestore-ktx'
+    implementation 'com.google.firebase:firebase-storage-ktx'
+    implementation 'com.google.firebase:firebase-analytics-ktx'
+    implementation 'com.google.firebase:firebase-crashlytics-ktx'
+    implementation 'com.google.firebase:firebase-perf-ktx'
 
-    // ViewModel
-    implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0'
+    // --- Google Sign-In ---
+    implementation 'com.google.android.gms:play-services-auth:20.7.0'
 
-    // Hilt DI
+    // --- Hilt DI ---
     implementation 'com.google.dagger:hilt-android:2.50'
     kapt 'com.google.dagger:hilt-compiler:2.50'
     implementation 'androidx.hilt:hilt-navigation-compose:1.1.0'
 
-    // Kotlin Serialization
-    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3'
-    implementation "org.jetbrains.kotlin:kotlin-stdlib"
+    // --- Navigation ---
+    implementation 'androidx.navigation:navigation-compose:2.7.7'
 
-    // Coroutines + Firebase await
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
+    // --- ViewModel + Lifecycle ---
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.2'
+
+    // --- Coil (image loading) ---
+    implementation("io.coil-kt:coil-compose:2.4.0")
+
+    // --- Coroutines/Flow ---
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3'
 
-    // Firebase Core + Auth + Firestore + Storage
-    implementation 'com.google.firebase:firebase-auth-ktx:22.3.0'
-    implementation 'com.google.firebase:firebase-firestore:24.10.0'
-    implementation 'com.google.firebase:firebase-storage-ktx:20.3.0'
-    implementation 'com.google.firebase:firebase-analytics-ktx:21.6.2'
-    implementation 'com.google.firebase:firebase-crashlytics-ktx:18.6.3'
-    implementation 'com.google.firebase:firebase-perf-ktx:20.5.2'
+    // --- DataStore (optional, for XP saving etc) ---
+    implementation "androidx.datastore:datastore-preferences:1.0.0"
 
-    // Google Sign-In
-    implementation 'com.google.android.gms:play-services-auth:20.7.0'
-
-    // Security
+    // --- Security (optional, for encrypted prefs) ---
     implementation 'androidx.security:security-crypto:1.1.0-alpha03'
 
-    // Gson (optional JSON)
+    // --- Accompanist (for flow layouts etc) ---
+    implementation "com.google.accompanist:accompanist-flowlayout:0.30.1"
+
+    // --- Gson (optional) ---
     implementation 'com.google.code.gson:gson:2.10.1'
+
+    // --- Kotlin Serialization (optional, for API/JSON parsing) ---
+    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3'
+
+    // --- OkHttp (for country/state API if used) ---
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
 }
 
 apply plugin: 'com.google.gms.google-services'

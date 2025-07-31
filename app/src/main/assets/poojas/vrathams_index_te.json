@@ -7,10 +7,10 @@
     "scrollable": true
   },
   {
-    "id": "varalakshmi_vratam",
+    "id": "varalakshmi_vratam_te",
     "name": "వరలక్ష్మీ వ్రతం",
     "image": "lakshmi_vishnu.png",
-    "file": "vrathams/varalakshmi_vratam.json",
+    "file": "vrathams/varalakshmi_vratam_te.json",
     "scrollable": true
   }
 ]

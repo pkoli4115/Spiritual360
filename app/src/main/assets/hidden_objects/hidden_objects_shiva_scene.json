@@ -1,14 +1,47 @@
 {
-  "sceneImage": "shiva",
-  "title": "Shiva Meditation Scene",
-  "hintLimit": 3,
-  "timeLimitSeconds": 60,
+  "level_id": "shiva_scene_1",
+  "level_name": "Shiva Meditation Scene",
+  "image": "shiva_scene.png",
   "objects": [
-    { "name": "Snake", "x": 280, "y": 150 },
-    { "name": "Trishul", "x": 620, "y": 180 },
-    { "name": "Shiva Linga", "x": 630, "y": 300 },
-    { "name": "Tiger Skin", "x": 360, "y": 400 },
-    { "name": "Rudraksha", "x": 300, "y": 120 },
-    { "name": "Third Eye", "x": 340, "y": 80 }
+    {
+      "id": "cow",
+      "name": "Cow",
+      "hint": "Find the sacred cow standing near Shiva.",
+      "x": 0.11,
+      "y": 0.77,
+      "found": false
+    },
+    {
+      "id": "trishul",
+      "name": "Trishul",
+      "hint": "Look for Shiva's golden trident.",
+      "x": 0.08,
+      "y": 0.23,
+      "found": false
+    },
+    {
+      "id": "bird",
+      "name": "Bird",
+      "hint": "A bird is flying above Shiva's head.",
+      "x": 0.76,
+      "y": 0.09,
+      "found": false
+    },
+    {
+      "id": "rudraksh",
+      "name": "Rudraksh",
+      "hint": "Rudraksha beads are worn around Shiva's neck and arms.",
+      "x": 0.51,
+      "y": 0.32,
+      "found": false
+    },
+    {
+      "id": "snake",
+      "name": "Snake",
+      "hint": "The snake is coiled around Shiva's neck.",
+      "x": 0.40,
+      "y": 0.20,
+      "found": false
+    }
   ]
 }

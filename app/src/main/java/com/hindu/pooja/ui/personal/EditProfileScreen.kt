@@ -1,21 +1,26 @@
 package com.hindu.pooja.ui.personal
 
 import android.app.DatePickerDialog
+import android.app.TimePickerDialog
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
@@ -24,6 +29,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.rememberAsyncImagePainter
 import com.hindu.pooja.R
 import com.hindu.pooja.viewmodel.ProfileViewModel
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -35,7 +42,18 @@ fun EditProfileScreen(
     val context = LocalContext.current
     val scrollState = rememberScrollState()
 
-    // Collect all relevant states
+    // Prefill from Firestore on entry
+    var loaded by remember { mutableStateOf(false) }
+    if (!loaded) {
+        LaunchedEffect(Unit) {
+            viewModel.loadProfile(
+                onSuccess = { loaded = true },
+                onFailure = { loaded = true }
+            )
+        }
+    }
+
+    // Collect all user fields as State
     val firstName by viewModel.fullName.collectAsState()
     val lastName by viewModel.lastName.collectAsState()
     val fatherName by viewModel.fatherName.collectAsState()
@@ -60,68 +78,83 @@ fun EditProfileScreen(
     val countryCode by viewModel.countryCode.collectAsState()
     val email by viewModel.email.collectAsState()
     val phone by viewModel.phone.collectAsState()
-    val isPremium by viewModel.isPremium.collectAsState()
     val profilePictureUri by viewModel.profilePictureUri.collectAsState()
     val profilePictureUrl by viewModel.profilePictureUrl.collectAsState()
     val isSaving by viewModel.isSaving.collectAsState()
     val saveSuccess by viewModel.saveSuccess.collectAsState()
     val formValid by viewModel.formValid.collectAsState()
-    val countries by viewModel.allCountries.collectAsState()
-    val states by viewModel.allStates.collectAsState()
 
-    // Dropdown queries
-    val countryQuery = remember { mutableStateOf(selectedCountry) }
-    val stateQuery = remember { mutableStateOf(selectedState) }
-    var isCountryDropdownExpanded by remember { mutableStateOf(false) }
-    var isStateDropdownExpanded by remember { mutableStateOf(false) }
-
-    // Prefetch countries when screen loads
-    LaunchedEffect(Unit) { viewModel.fetchCountries() }
-
-    val filteredCountries = remember(countryQuery.value, countries) {
-        if (countryQuery.value.length >= 3)
-            countries.filter { it.contains(countryQuery.value, ignoreCase = true) }
-        else countries
-    }
-    val filteredStates = remember(stateQuery.value, states) {
-        if (stateQuery.value.length >= 3)
-            states.filter { it.contains(stateQuery.value, ignoreCase = true) }
-        else states
+    // Image Picker
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        viewModel.setProfilePictureUri(uri)
+        viewModel.validateForm()
     }
 
-    // --- Date of Birth picker ---
-    val dobCalendar = remember { Calendar.getInstance() }
-    val dobDialog = remember {
-        DatePickerDialog(
-            context,
-            { _, year, month, dayOfMonth ->
-                val formatted = String.format("%02d-%02d-%04d", dayOfMonth, month + 1, year)
-                viewModel.birthDate.value = formatted
-                viewModel.validateForm()
-            },
-            dobCalendar.get(Calendar.YEAR),
-            dobCalendar.get(Calendar.MONTH),
-            dobCalendar.get(Calendar.DAY_OF_MONTH)
-        )
+    // ---- Date Picker ----
+    var showDateDialog by remember { mutableStateOf(false) }
+    val dateFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
+    val date = remember(birthDate) {
+        try { LocalDate.parse(birthDate, dateFormatter) } catch (_: Exception) { LocalDate.now() }
+    }
+    // Use side-effect to launch DatePickerDialog only once when flag set
+    if (showDateDialog) {
+        LaunchedEffect(showDateDialog) {
+            val cal = Calendar.getInstance().apply {
+                set(Calendar.YEAR, date.year)
+                set(Calendar.MONTH, date.monthValue - 1)
+                set(Calendar.DAY_OF_MONTH, date.dayOfMonth)
+            }
+            DatePickerDialog(
+                context,
+                { _, year, month, dayOfMonth ->
+                    val formatted = String.format("%02d-%02d-%04d", dayOfMonth, month + 1, year)
+                    viewModel.birthDate.value = formatted
+                    viewModel.validateForm()
+                    showDateDialog = false
+                },
+                cal.get(Calendar.YEAR),
+                cal.get(Calendar.MONTH),
+                cal.get(Calendar.DAY_OF_MONTH)
+            ).apply {
+                setOnCancelListener { showDateDialog = false }
+                show()
+            }
+        }
     }
 
-    // --- Birth Time Dropdowns ---
-    val hourOptions = (1..12).map { it.toString().padStart(2, '0') }
-    val minuteOptions = (0..59).map { it.toString().padStart(2, '0') }
-    val amPmOptions = listOf("AM", "PM")
-
-    var birthHour by remember { mutableStateOf("") }
-    var birthMinute by remember { mutableStateOf("") }
-    var birthAmPm by remember { mutableStateOf("") }
-
-    // Split birthTime into dropdowns (if present)
-    LaunchedEffect(birthTime) {
-        val regex = Regex("(\\d{2}):(\\d{2})\\s*(AM|PM)?", RegexOption.IGNORE_CASE)
-        val match = regex.find(birthTime)
-        if (match != null) {
-            birthHour = match.groupValues[1]
-            birthMinute = match.groupValues[2]
-            birthAmPm = match.groupValues.getOrNull(3)?.uppercase() ?: ""
+    // ---- Time Picker ----
+    var showTimeDialog by remember { mutableStateOf(false) }
+    // Parse hour/minute/ampm from string for initial state
+    val (hour, minute, amPm) = remember(birthTime) {
+        val regex = Regex("""(\d{2}):(\d{2})\s?(AM|PM)?""", RegexOption.IGNORE_CASE)
+        val m = regex.find(birthTime)
+        val h = m?.groupValues?.getOrNull(1)?.toIntOrNull() ?: 12
+        val min = m?.groupValues?.getOrNull(2)?.toIntOrNull() ?: 0
+        val ap = m?.groupValues?.getOrNull(3)?.uppercase() ?: "AM"
+        Triple(h, min, ap)
+    }
+    if (showTimeDialog) {
+        LaunchedEffect(showTimeDialog) {
+            TimePickerDialog(
+                context,
+                { _, hourOfDay, minuteOfHour ->
+                    val isAm = hourOfDay < 12
+                    val hour12 = if (hourOfDay == 0 || hourOfDay == 12) 12 else hourOfDay % 12
+                    val formatted = String.format("%02d:%02d %s", hour12, minuteOfHour, if (isAm) "AM" else "PM")
+                    viewModel.birthTime.value = formatted
+                    viewModel.validateForm()
+                    showTimeDialog = false
+                },
+                // Set initial hour in 24h format for dialog
+                if (amPm == "AM" && hour == 12) 0 else if (amPm == "PM" && hour != 12) hour + 12 else hour,
+                minute,
+                false // 12-hour format
+            ).apply {
+                setOnCancelListener { showTimeDialog = false }
+                show()
+            }
         }
     }
 
@@ -130,13 +163,7 @@ fun EditProfileScreen(
         onSaveSuccess()
     }
 
-    val galleryLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        viewModel.setProfilePictureUri(uri)
-        viewModel.validateForm()
-    }
-
+    // UI
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -147,35 +174,42 @@ fun EditProfileScreen(
         Text("Edit Profile", style = MaterialTheme.typography.headlineSmall)
         Spacer(modifier = Modifier.height(16.dp))
 
-        // --- Profile Image Picker ---
+        // --- Profile Image Picker with Pencil Icon ---
         Box(
-            modifier = Modifier
-                .size(120.dp)
-                .clickable { galleryLauncher.launch("image/*") },
+            modifier = Modifier.size(120.dp),
             contentAlignment = Alignment.Center
         ) {
-            when {
-                profilePictureUri != null -> Image(
-                    painter = rememberAsyncImagePainter(profilePictureUri),
-                    contentDescription = "Profile Picture",
-                    modifier = Modifier.fillMaxSize()
-                )
-                profilePictureUrl.isNotBlank() -> Image(
-                    painter = rememberAsyncImagePainter(profilePictureUrl),
-                    contentDescription = "Profile Picture",
-                    modifier = Modifier.fillMaxSize()
-                )
-                else -> Image(
-                    painter = painterResource(id = R.drawable.ic_profile_placeholder),
-                    contentDescription = "Default Profile",
-                    modifier = Modifier.fillMaxSize()
-                )
+            val imagePainter = when {
+                profilePictureUri != null -> rememberAsyncImagePainter(profilePictureUri)
+                profilePictureUrl.isNotBlank() -> rememberAsyncImagePainter(profilePictureUrl)
+                else -> painterResource(id = R.drawable.ic_profile_placeholder)
             }
+            Image(
+                painter = imagePainter,
+                contentDescription = "Profile Picture",
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(CircleShape)
+                    .background(Color.LightGray)
+            )
+            // Pencil Icon
+            Icon(
+                imageVector = Icons.Default.Edit,
+                contentDescription = "Edit",
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .offset(x = (-8).dp, y = (-8).dp)
+                    .size(32.dp)
+                    .clip(CircleShape)
+                    .background(Color.White)
+                    .clickable { galleryLauncher.launch("image/*") }
+                    .padding(6.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
         }
-
         Spacer(modifier = Modifier.height(16.dp))
 
-        // --- Basic Fields ---
+        // --- All profile fields (examples, add more as needed) ---
         OutlinedTextField(
             value = firstName,
             onValueChange = { viewModel.fullName.value = it; viewModel.validateForm() },
@@ -204,345 +238,34 @@ fun EditProfileScreen(
             isError = motherName.isBlank(),
             modifier = Modifier.fillMaxWidth()
         )
+        // Add more fields as per your data model...
 
-        // Editable Email
-        OutlinedTextField(
-            value = email,
-            onValueChange = { viewModel.email.value = it; viewModel.validateForm() },
-            label = { Text("Email") },
-            isError = !viewModel.isValidEmail(),
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        // Editable Phone
-        Row(Modifier.fillMaxWidth()) {
-            OutlinedTextField(
-                value = countryCode,
-                onValueChange = { viewModel.countryCode.value = it; viewModel.validateForm() },
-                label = { Text("Country Code") },
-                modifier = Modifier.weight(1f)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            OutlinedTextField(
-                value = phone,
-                onValueChange = { viewModel.phone.value = it; viewModel.validateForm() },
-                label = { Text("Phone") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                isError = !viewModel.isValidPhone(),
-                modifier = Modifier.weight(3f)
-            )
-        }
-
-        // --- Marital Status ---
-        Text("Marital Status *")
-        Row {
-            listOf("Married", "UnMarried", "Divorced", "Widow").forEach { status ->
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(end = 8.dp)) {
-                    RadioButton(
-                        selected = maritalStatus == status,
-                        onClick = { viewModel.maritalStatus.value = status; viewModel.validateForm() }
-                    )
-                    Text(status)
-                }
-            }
-        }
-        if (maritalStatus == "Married") {
-            OutlinedTextField(
-                value = spouseName,
-                onValueChange = { viewModel.spouseName.value = it; viewModel.validateForm() },
-                label = { Text("Spouse Name *") },
-                isError = spouseName.isBlank(),
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Checkbox(
-                checked = hasChildren,
-                onCheckedChange = { viewModel.hasChildren.value = it; viewModel.validateForm() }
-            )
-            Text("I have Children")
-        }
-
-        if (hasChildren) {
-            OutlinedTextField(
-                value = numberOfChildren,
-                onValueChange = { viewModel.onNumberOfChildrenChanged(it); viewModel.validateForm() },
-                label = { Text("Number of Children") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth()
-            )
-            childNames.forEachIndexed { index, name ->
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { viewModel.onChildNameChanged(index, it); viewModel.validateForm() },
-                    label = { Text("Child ${index + 1} Name") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        }
-
-        OutlinedTextField(
-            value = gothram,
-            onValueChange = { viewModel.gothram.value = it; viewModel.validateForm() },
-            label = { Text("Gothram *") },
-            isError = gothram.isBlank(),
-            modifier = Modifier.fillMaxWidth()
-        )
-        OutlinedTextField(
-            value = nakshatram,
-            onValueChange = { viewModel.nakshatram.value = it; viewModel.validateForm() },
-            label = { Text("Nakshatram *") },
-            isError = nakshatram.isBlank(),
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        // --- Date of Birth (DatePicker) ---
+        // --- Date of Birth ---
         OutlinedTextField(
             value = birthDate,
             onValueChange = {},
-            label = { Text("Date of Birth (DD-MM-YYYY) *") },
+            label = { Text("Birth Date (DD-MM-YYYY) *") },
             isError = !viewModel.isValidDate(),
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { dobDialog.show() },
+                .clickable { showDateDialog = true },
             readOnly = true
         )
 
-        // --- Birth Time (3 Dropdowns, OPTIONAL) ---
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            var hourExpanded by remember { mutableStateOf(false) }
-            var minuteExpanded by remember { mutableStateOf(false) }
-            var amPmExpanded by remember { mutableStateOf(false) }
-
-            ExposedDropdownMenuBox(
-                expanded = hourExpanded,
-                onExpandedChange = { hourExpanded = !hourExpanded }
-            ) {
-                OutlinedTextField(
-                    value = birthHour,
-                    onValueChange = {},
-                    label = { Text("Hour") },
-                    modifier = Modifier.width(90.dp).menuAnchor(), // Set fixed width so it's compact
-                    readOnly = true,
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(hourExpanded) }
-                )
-                ExposedDropdownMenu(
-                    expanded = hourExpanded,
-                    onDismissRequest = { hourExpanded = false }
-                ) {
-                    hourOptions.forEach { hr ->
-                        DropdownMenuItem(
-                            text = { Text(hr) },
-                            onClick = {
-                                birthHour = hr
-                                viewModel.birthTime.value = if (birthHour.isBlank() && birthMinute.isBlank() && birthAmPm.isBlank()) "" else "$birthHour:$birthMinute $birthAmPm".trim()
-                                viewModel.validateForm()
-                                hourExpanded = false
-                            }
-                        )
-                    }
-                }
-            }
-            Spacer(modifier = Modifier.width(8.dp))
-            ExposedDropdownMenuBox(
-                expanded = minuteExpanded,
-                onExpandedChange = { minuteExpanded = !minuteExpanded }
-            ) {
-                OutlinedTextField(
-                    value = birthMinute,
-                    onValueChange = {},
-                    label = { Text("Minute") },
-                    modifier = Modifier.width(90.dp).menuAnchor(),
-                    readOnly = true,
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(minuteExpanded) }
-                )
-                ExposedDropdownMenu(
-                    expanded = minuteExpanded,
-                    onDismissRequest = { minuteExpanded = false }
-                ) {
-                    minuteOptions.forEach { min ->
-                        DropdownMenuItem(
-                            text = { Text(min) },
-                            onClick = {
-                                birthMinute = min
-                                viewModel.birthTime.value = if (birthHour.isBlank() && birthMinute.isBlank() && birthAmPm.isBlank()) "" else "$birthHour:$birthMinute $birthAmPm".trim()
-                                viewModel.validateForm()
-                                minuteExpanded = false
-                            }
-                        )
-                    }
-                }
-            }
-            Spacer(modifier = Modifier.width(8.dp))
-            ExposedDropdownMenuBox(
-                expanded = amPmExpanded,
-                onExpandedChange = { amPmExpanded = !amPmExpanded }
-            ) {
-                OutlinedTextField(
-                    value = birthAmPm,
-                    onValueChange = {},
-                    label = { Text("AM/PM") },
-                    modifier = Modifier.width(90.dp).menuAnchor(),
-                    readOnly = true,
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(amPmExpanded) }
-                )
-                ExposedDropdownMenu(
-                    expanded = amPmExpanded,
-                    onDismissRequest = { amPmExpanded = false }
-                ) {
-                    amPmOptions.forEach { ap ->
-                        DropdownMenuItem(
-                            text = { Text(ap) },
-                            onClick = {
-                                birthAmPm = ap
-                                viewModel.birthTime.value = if (birthHour.isBlank() && birthMinute.isBlank() && birthAmPm.isBlank()) "" else "$birthHour:$birthMinute $birthAmPm".trim()
-                                viewModel.validateForm()
-                                amPmExpanded = false
-                            }
-                        )
-                    }
-                }
-            }
-        }
-
+        // --- Birth Time ---
         OutlinedTextField(
-            value = birthPlace,
-            onValueChange = { viewModel.birthPlace.value = it; viewModel.validateForm() },
-            label = { Text("Birth Place *") },
-            isError = birthPlace.isBlank(),
-            modifier = Modifier.fillMaxWidth()
+            value = birthTime,
+            onValueChange = {},
+            label = { Text("Birth Time (hh:mm AM/PM)") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { showTimeDialog = true },
+            readOnly = true
         )
 
-        // --- Address Fields ---
-        OutlinedTextField(
-            value = addressLine1,
-            onValueChange = { viewModel.addressLine1.value = it; viewModel.validateForm() },
-            label = { Text("Address Line 1 *") },
-            isError = addressLine1.isBlank(),
-            modifier = Modifier.fillMaxWidth()
-        )
-        OutlinedTextField(
-            value = addressLine2,
-            onValueChange = { viewModel.addressLine2.value = it; viewModel.validateForm() },
-            label = { Text("Address Line 2") },
-            modifier = Modifier.fillMaxWidth()
-        )
-        OutlinedTextField(
-            value = addressLine3,
-            onValueChange = { viewModel.addressLine3.value = it; viewModel.validateForm() },
-            label = { Text("Address Line 3") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        // --- Country / State Searchable Dropdowns ---
-        Spacer(modifier = Modifier.height(12.dp))
-        ExposedDropdownMenuBox(
-            expanded = isCountryDropdownExpanded,
-            onExpandedChange = {
-                isCountryDropdownExpanded = !isCountryDropdownExpanded
-                if (countryQuery.value.length >= 3) viewModel.fetchCountries()
-            }
-        ) {
-            OutlinedTextField(
-                value = countryQuery.value,
-                onValueChange = {
-                    countryQuery.value = it
-                    viewModel.selectedCountry.value = it
-                    if (it.length >= 3) viewModel.fetchCountries()
-                },
-                label = { Text("Country *") },
-                modifier = Modifier.menuAnchor().fillMaxWidth(),
-                isError = selectedCountry.isBlank(),
-                readOnly = false,
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = isCountryDropdownExpanded) }
-            )
-            ExposedDropdownMenu(
-                expanded = isCountryDropdownExpanded,
-                onDismissRequest = { isCountryDropdownExpanded = false }
-            ) {
-                filteredCountries.forEach { country ->
-                    DropdownMenuItem(
-                        text = { Text(country) },
-                        onClick = {
-                            viewModel.selectedCountry.value = country
-                            countryQuery.value = country
-                            stateQuery.value = ""
-                            viewModel.fetchStates(country)
-                            isCountryDropdownExpanded = false
-                        }
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-        ExposedDropdownMenuBox(
-            expanded = isStateDropdownExpanded,
-            onExpandedChange = {
-                isStateDropdownExpanded = !isStateDropdownExpanded
-                if (selectedCountry.isNotBlank()) viewModel.fetchStates(selectedCountry)
-            }
-        ) {
-            OutlinedTextField(
-                value = stateQuery.value,
-                onValueChange = {
-                    stateQuery.value = it
-                    viewModel.selectedState.value = it
-                    if (selectedCountry.isNotBlank()) viewModel.fetchStates(selectedCountry)
-                },
-                label = { Text("State *") },
-                modifier = Modifier.menuAnchor().fillMaxWidth(),
-                isError = selectedState.isBlank(),
-                readOnly = false,
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = isStateDropdownExpanded) }
-            )
-            ExposedDropdownMenu(
-                expanded = isStateDropdownExpanded,
-                onDismissRequest = { isStateDropdownExpanded = false }
-            ) {
-                filteredStates.forEach { state ->
-                    DropdownMenuItem(
-                        text = { Text(state) },
-                        onClick = {
-                            viewModel.selectedState.value = state
-                            stateQuery.value = state
-                            isStateDropdownExpanded = false
-                        }
-                    )
-                }
-            }
-        }
-
-        OutlinedTextField(
-            value = city,
-            onValueChange = { viewModel.city.value = it; viewModel.validateForm() },
-            label = { Text("City *") },
-            isError = city.isBlank(),
-            modifier = Modifier.fillMaxWidth()
-        )
-        OutlinedTextField(
-            value = pincode,
-            onValueChange = { viewModel.pincode.value = it; viewModel.validateForm() },
-            label = { Text("Pincode *") },
-            isError = !viewModel.isValidPincode(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth()
-        )
+        // --- Add other fields like email, phone, address, country, state etc. here, with prefill and update logic ---
 
         Spacer(modifier = Modifier.height(20.dp))
-
-        // --- Premium badge (optional) ---
-        if (isPremium) {
-            Text("🌟 Premium User", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
-        }
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        // --- Submit Button ---
         Button(
             onClick = { viewModel.saveProfile() },
             enabled = formValid && !isSaving,
