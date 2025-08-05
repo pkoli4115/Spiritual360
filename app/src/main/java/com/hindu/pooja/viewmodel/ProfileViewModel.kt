@@ -2,14 +2,11 @@ package com.hindu.pooja.viewmodel
 
 import android.net.Uri
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.hindu.pooja.model.User
+import com.google.firebase.storage.FirebaseStorage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 import java.util.regex.Pattern
 import javax.inject.Inject
 
@@ -41,7 +38,7 @@ class ProfileViewModel @Inject constructor() : ViewModel() {
     val selectedState = MutableStateFlow("")
     val city = MutableStateFlow("")
     val pincode = MutableStateFlow("")
-    val countryCode = MutableStateFlow("+91") // Default India
+    val countryCode = MutableStateFlow("+91")
     val email = MutableStateFlow("")
     val phone = MutableStateFlow("")
     val isPremium = MutableStateFlow(false)
@@ -49,7 +46,6 @@ class ProfileViewModel @Inject constructor() : ViewModel() {
     // Profile Photo
     val profilePictureUrl = MutableStateFlow("")
     val profilePictureUri = MutableStateFlow<Uri?>(null)
-    // Add at top with other StateFlows:
     val allCountries = MutableStateFlow<List<String>>(emptyList())
     val allStates = MutableStateFlow<List<String>>(emptyList())
 
@@ -132,11 +128,11 @@ class ProfileViewModel @Inject constructor() : ViewModel() {
             if (index < list.size) list[index] = value
         }
     }
+
     fun logout() {
         auth.signOut()
     }
 
-    // --- Photo Upload Placeholder ---
     fun setProfilePictureUri(uri: Uri?) {
         profilePictureUri.value = uri
     }
@@ -185,9 +181,39 @@ class ProfileViewModel @Inject constructor() : ViewModel() {
             .addOnFailureListener { onFailure() }
     }
 
-    fun saveProfile(onSuccess: () -> Unit = {}, onFailure: () -> Unit = {}) {
+    /**
+     * Use this for both photo and other fields update!
+     */
+    fun saveProfileWithPhoto(onSuccess: () -> Unit = {}, onFailure: () -> Unit = {}) {
         val user = auth.currentUser ?: return onFailure()
         isSaving.value = true
+        val photoUri = profilePictureUri.value
+
+        if (photoUri != null) {
+            val storageRef = FirebaseStorage.getInstance()
+                .reference.child("profile_pictures/${user.uid}/profile.jpg")
+
+            storageRef.putFile(photoUri)
+                .addOnSuccessListener {
+                    storageRef.downloadUrl.addOnSuccessListener { url ->
+                        profilePictureUrl.value = url.toString()
+                        saveProfile(onSuccess, onFailure)
+                    }.addOnFailureListener {
+                        isSaving.value = false
+                        onFailure()
+                    }
+                }
+                .addOnFailureListener {
+                    isSaving.value = false
+                    onFailure()
+                }
+        } else {
+            saveProfile(onSuccess, onFailure)
+        }
+    }
+
+    fun saveProfile(onSuccess: () -> Unit = {}, onFailure: () -> Unit = {}) {
+        val user = auth.currentUser ?: return onFailure()
         val data = mapOf(
             "fullName" to fullName.value,
             "lastName" to lastName.value,

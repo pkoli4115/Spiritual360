@@ -29,6 +29,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.rememberAsyncImagePainter
 import com.hindu.pooja.R
 import com.hindu.pooja.viewmodel.ProfileViewModel
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.*
@@ -41,6 +42,7 @@ fun EditProfileScreen(
 ) {
     val context = LocalContext.current
     val scrollState = rememberScrollState()
+    val coroutineScope = rememberCoroutineScope()
 
     // Prefill from Firestore on entry
     var loaded by remember { mutableStateOf(false) }
@@ -84,12 +86,17 @@ fun EditProfileScreen(
     val saveSuccess by viewModel.saveSuccess.collectAsState()
     val formValid by viewModel.formValid.collectAsState()
 
+    // Snackbar for upload progress or errors
+    val snackbarHostState = remember { SnackbarHostState() }
+
     // Image Picker
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        viewModel.setProfilePictureUri(uri)
-        viewModel.validateForm()
+        if (uri != null) {
+            viewModel.setProfilePictureUri(uri)
+            viewModel.validateForm()
+        }
     }
 
     // ---- Date Picker ----
@@ -98,7 +105,6 @@ fun EditProfileScreen(
     val date = remember(birthDate) {
         try { LocalDate.parse(birthDate, dateFormatter) } catch (_: Exception) { LocalDate.now() }
     }
-    // Use side-effect to launch DatePickerDialog only once when flag set
     if (showDateDialog) {
         LaunchedEffect(showDateDialog) {
             val cal = Calendar.getInstance().apply {
@@ -126,7 +132,6 @@ fun EditProfileScreen(
 
     // ---- Time Picker ----
     var showTimeDialog by remember { mutableStateOf(false) }
-    // Parse hour/minute/ampm from string for initial state
     val (hour, minute, amPm) = remember(birthTime) {
         val regex = Regex("""(\d{2}):(\d{2})\s?(AM|PM)?""", RegexOption.IGNORE_CASE)
         val m = regex.find(birthTime)
@@ -147,10 +152,9 @@ fun EditProfileScreen(
                     viewModel.validateForm()
                     showTimeDialog = false
                 },
-                // Set initial hour in 24h format for dialog
                 if (amPm == "AM" && hour == 12) 0 else if (amPm == "PM" && hour != 12) hour + 12 else hour,
                 minute,
-                false // 12-hour format
+                false
             ).apply {
                 setOnCancelListener { showTimeDialog = false }
                 show()
@@ -164,115 +168,133 @@ fun EditProfileScreen(
     }
 
     // UI
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(scrollState)
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text("Edit Profile", style = MaterialTheme.typography.headlineSmall)
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // --- Profile Image Picker with Pencil Icon ---
-        Box(
-            modifier = Modifier.size(120.dp),
-            contentAlignment = Alignment.Center
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .verticalScroll(scrollState)
+                .padding(16.dp)
+                .fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            val imagePainter = when {
-                profilePictureUri != null -> rememberAsyncImagePainter(profilePictureUri)
-                profilePictureUrl.isNotBlank() -> rememberAsyncImagePainter(profilePictureUrl)
-                else -> painterResource(id = R.drawable.ic_profile_placeholder)
+            Text("Edit Profile", style = MaterialTheme.typography.headlineSmall)
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // --- Profile Image Picker with Pencil Icon ---
+            Box(
+                modifier = Modifier.size(120.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                val imagePainter = when {
+                    profilePictureUri != null -> rememberAsyncImagePainter(profilePictureUri)
+                    profilePictureUrl.isNotBlank() -> rememberAsyncImagePainter(profilePictureUrl)
+                    else -> painterResource(id = R.drawable.ic_profile_placeholder)
+                }
+                Image(
+                    painter = imagePainter,
+                    contentDescription = "Profile Picture",
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(CircleShape)
+                        .background(Color.LightGray)
+                )
+                // Pencil Icon
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = "Edit",
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .offset(x = (-8).dp, y = (-8).dp)
+                        .size(32.dp)
+                        .clip(CircleShape)
+                        .background(Color.White)
+                        .clickable { galleryLauncher.launch("image/*") }
+                        .padding(6.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
             }
-            Image(
-                painter = imagePainter,
-                contentDescription = "Profile Picture",
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clip(CircleShape)
-                    .background(Color.LightGray)
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // --- All profile fields (examples, add more as needed) ---
+            OutlinedTextField(
+                value = firstName,
+                onValueChange = { viewModel.fullName.value = it; viewModel.validateForm() },
+                label = { Text("First Name *") },
+                isError = firstName.isBlank(),
+                modifier = Modifier.fillMaxWidth()
             )
-            // Pencil Icon
-            Icon(
-                imageVector = Icons.Default.Edit,
-                contentDescription = "Edit",
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .offset(x = (-8).dp, y = (-8).dp)
-                    .size(32.dp)
-                    .clip(CircleShape)
-                    .background(Color.White)
-                    .clickable { galleryLauncher.launch("image/*") }
-                    .padding(6.dp),
-                tint = MaterialTheme.colorScheme.primary
+            OutlinedTextField(
+                value = lastName,
+                onValueChange = { viewModel.lastName.value = it; viewModel.validateForm() },
+                label = { Text("Last Name *") },
+                isError = lastName.isBlank(),
+                modifier = Modifier.fillMaxWidth()
             )
+            OutlinedTextField(
+                value = fatherName,
+                onValueChange = { viewModel.fatherName.value = it; viewModel.validateForm() },
+                label = { Text("Father's Name *") },
+                isError = fatherName.isBlank(),
+                modifier = Modifier.fillMaxWidth()
+            )
+            OutlinedTextField(
+                value = motherName,
+                onValueChange = { viewModel.motherName.value = it; viewModel.validateForm() },
+                label = { Text("Mother's Name *") },
+                isError = motherName.isBlank(),
+                modifier = Modifier.fillMaxWidth()
+            )
+            // Date of Birth
+            OutlinedTextField(
+                value = birthDate,
+                onValueChange = {},
+                label = { Text("Birth Date (DD-MM-YYYY) *") },
+                isError = !viewModel.isValidDate(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { showDateDialog = true },
+                readOnly = true
+            )
+            // Birth Time
+            OutlinedTextField(
+                value = birthTime,
+                onValueChange = {},
+                label = { Text("Birth Time (hh:mm AM/PM)") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { showTimeDialog = true },
+                readOnly = true
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+            Button(
+                onClick = {
+                    viewModel.saveProfileWithPhoto(
+                        onSuccess = {
+                            coroutineScope.launch {
+                                snackbarHostState.showSnackbar("Profile saved successfully!")
+                            }
+                        },
+                        onFailure = {
+                            coroutineScope.launch {
+                                snackbarHostState.showSnackbar("Failed to save profile/photo")
+                            }
+                        }
+                    )
+                },
+                enabled = formValid && !isSaving,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                if (isSaving) CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                else Text("Save Profile")
+            }
         }
-        Spacer(modifier = Modifier.height(16.dp))
 
-        // --- All profile fields (examples, add more as needed) ---
-        OutlinedTextField(
-            value = firstName,
-            onValueChange = { viewModel.fullName.value = it; viewModel.validateForm() },
-            label = { Text("First Name *") },
-            isError = firstName.isBlank(),
-            modifier = Modifier.fillMaxWidth()
-        )
-        OutlinedTextField(
-            value = lastName,
-            onValueChange = { viewModel.lastName.value = it; viewModel.validateForm() },
-            label = { Text("Last Name *") },
-            isError = lastName.isBlank(),
-            modifier = Modifier.fillMaxWidth()
-        )
-        OutlinedTextField(
-            value = fatherName,
-            onValueChange = { viewModel.fatherName.value = it; viewModel.validateForm() },
-            label = { Text("Father's Name *") },
-            isError = fatherName.isBlank(),
-            modifier = Modifier.fillMaxWidth()
-        )
-        OutlinedTextField(
-            value = motherName,
-            onValueChange = { viewModel.motherName.value = it; viewModel.validateForm() },
-            label = { Text("Mother's Name *") },
-            isError = motherName.isBlank(),
-            modifier = Modifier.fillMaxWidth()
-        )
-        // Add more fields as per your data model...
-
-        // --- Date of Birth ---
-        OutlinedTextField(
-            value = birthDate,
-            onValueChange = {},
-            label = { Text("Birth Date (DD-MM-YYYY) *") },
-            isError = !viewModel.isValidDate(),
+        // Snackbar for feedback
+        SnackbarHost(
+            hostState = snackbarHostState,
             modifier = Modifier
-                .fillMaxWidth()
-                .clickable { showDateDialog = true },
-            readOnly = true
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 24.dp)
         )
-
-        // --- Birth Time ---
-        OutlinedTextField(
-            value = birthTime,
-            onValueChange = {},
-            label = { Text("Birth Time (hh:mm AM/PM)") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { showTimeDialog = true },
-            readOnly = true
-        )
-
-        // --- Add other fields like email, phone, address, country, state etc. here, with prefill and update logic ---
-
-        Spacer(modifier = Modifier.height(20.dp))
-        Button(
-            onClick = { viewModel.saveProfile() },
-            enabled = formValid && !isSaving,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            if (isSaving) CircularProgressIndicator(modifier = Modifier.size(20.dp))
-            else Text("Save Profile")
-        }
     }
 }
