@@ -15,6 +15,7 @@ import androidx.navigation.navArgument
 import com.hindu.pooja.ui.kids.findit.FindItGameScreen
 import com.hindu.pooja.ui.kids.findit.GameResultScreen
 import com.hindu.pooja.ui.login.LoginScreen
+import com.hindu.pooja.ui.login.PhoneLoginScreen
 import com.hindu.pooja.ui.personal.EditProfileScreen
 import com.hindu.pooja.ui.personal.PersonalDetailsScreen
 import com.hindu.pooja.ui.screens.*
@@ -39,7 +40,18 @@ fun HinduPoojaNavHost(
             LoginScreen(
                 navController = navController,
                 onPhoneLoginClick = {
-                    // TODO: Implement phone login screen
+                    navController.navigate(Screen.PhoneLogin.route)   // <-- 2. NAVIGATE TO PHONELOGIN
+                }
+            )
+        }
+
+        // 📱 Phone Login screen
+        composable(Screen.PhoneLogin.route) {    // <-- 3. ADD THIS
+            PhoneLoginScreen(
+                onOtpVerified = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
+                    }
                 }
             )
         }
@@ -91,7 +103,6 @@ fun HinduPoojaNavHost(
                 onRestoreClick = { /* will implement later */ }
             )
         }
-
 
         // 📚 Poojas
         composable(

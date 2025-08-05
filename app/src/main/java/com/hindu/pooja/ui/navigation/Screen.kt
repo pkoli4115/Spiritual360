@@ -24,6 +24,7 @@ sealed class Screen(val route: String) {
     object Ashtottaras : Screen("ashtottaras/{fileName}") {
         fun createRoute(fileName: String): String = "ashtottaras/$fileName"
     }
+    object PhoneLogin : Screen("phone_login")
 
     object PoojaDetail : Screen("pooja_detail/{fileName}") {
         fun createRoute(fileName: String) = "pooja_detail/${Uri.encode(fileName)}"
