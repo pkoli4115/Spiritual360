@@ -96,13 +96,16 @@ fun HinduPoojaNavHost(
             )
         }
 
-        // 💳 Billing screen placeholder
+        // 💳 Billing screen with new logic
         composable(Screen.Billing.route) {
             BillingScreen(
-                onPurchaseClick = { /* will implement later */ },
-                onRestoreClick = { /* will implement later */ }
+                onPremiumUnlocked = {
+                    // You can show a dialog, set a premium flag, or just go back
+                    navController.popBackStack() // Or navigate to Home, etc.
+                }
             )
         }
+
 
         // 📚 Poojas
         composable(

@@ -53,8 +53,21 @@ class ProfileViewModel @Inject constructor() : ViewModel() {
     val allCountries = MutableStateFlow<List<String>>(emptyList())
     val allStates = MutableStateFlow<List<String>>(emptyList())
 
+    // --- Firestore Real-Time Listener for Premium ---
+    init {
+        val userId = auth.currentUser?.uid
+        if (userId != null) {
+            firestore.collection("userProfiles")
+                .document(userId)
+                .addSnapshotListener { doc, _ ->
+                    if (doc != null && doc.exists()) {
+                        isPremium.value = doc.getBoolean("isPremium") ?: false
+                    }
+                }
+        }
+    }
+
     fun fetchCountries() {
-        // Replace CountryStateProvider with your real provider/api as needed
         allCountries.value = com.hindu.pooja.data.CountryStateProvider.getAllCountries()
     }
     fun fetchStates(country: String) {
