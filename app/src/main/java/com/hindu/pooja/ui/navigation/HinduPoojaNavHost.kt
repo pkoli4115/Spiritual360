@@ -86,8 +86,12 @@ fun HinduPoojaNavHost(
 
         // 💳 Billing screen placeholder
         composable(Screen.Billing.route) {
-            TextScreen("Billing screen will be added here")
+            BillingScreen(
+                onPurchaseClick = { /* will implement later */ },
+                onRestoreClick = { /* will implement later */ }
+            )
         }
+
 
         // 📚 Poojas
         composable(

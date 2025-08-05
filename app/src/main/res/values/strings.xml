@@ -1,7 +1,7 @@
 <resources>
     <!-- Phase 1 -->
-    <string name="app_name">Hindu Pooja App</string>
-    <string name="login_title">Login to Hindu Pooja App</string>
+    <string name="app_name">Spiritual360</string>
+    <string name="login_title">Login to Spiritual360</string>
     <string name="google_signin">Sign in with Google</string>
     <string name="phone_number">Mobile Number</string>
     <string name="send_otp">Send OTP</string>

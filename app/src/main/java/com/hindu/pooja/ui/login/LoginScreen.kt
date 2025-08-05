@@ -131,7 +131,7 @@ fun LoginScreen(
                     .fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("Login to Hindu Pooja", style = MaterialTheme.typography.headlineSmall)
+                Text("Login to Spiritual360", style = MaterialTheme.typography.headlineSmall)
                 Spacer(modifier = Modifier.height(24.dp))
 
                 if (isLoading) {

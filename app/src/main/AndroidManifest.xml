@@ -5,7 +5,7 @@
     <application
         android:name=".HinduPoojaApp"
         android:allowBackup="true"
-        android:label="Hindu Pooja App"
+        android:label="Spiritual360"
         android:icon="@mipmap/ic_launcher"
         android:theme="@style/Theme.HinduPoojaApp">
 
