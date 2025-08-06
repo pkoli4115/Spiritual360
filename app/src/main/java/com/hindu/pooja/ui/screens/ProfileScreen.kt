@@ -16,8 +16,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
@@ -58,6 +61,17 @@ fun ProfileScreen(
         viewModel.setProfilePictureUri(uri)
         viewModel.saveProfile()
     }
+
+    // ---- Version Info ----
+    val context = LocalContext.current
+    val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+    val versionName = packageInfo.versionName ?: "N/A"
+    val versionCode = if (android.os.Build.VERSION.SDK_INT >= 28) {
+        packageInfo.longVersionCode.toInt()
+    } else {
+        packageInfo.versionCode
+    }
+    val versionText = "App Version: $versionName ($versionCode)"
 
     Column(
         modifier = Modifier
@@ -141,5 +155,16 @@ fun ProfileScreen(
                 Text("Logout")
             }
         }
+
+        // ---- App Version Info at the Bottom ----
+        Spacer(modifier = Modifier.weight(1f))
+        Divider(modifier = Modifier.padding(vertical = 8.dp))
+        Text(
+            text = versionText,
+            fontSize = 14.sp,
+            color = Color.Gray,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }

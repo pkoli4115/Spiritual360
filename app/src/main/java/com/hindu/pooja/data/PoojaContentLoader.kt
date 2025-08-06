@@ -1,6 +1,7 @@
 package com.hindu.pooja.data
 
 import android.content.Context
+import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.google.gson.reflect.TypeToken
@@ -11,9 +12,12 @@ import com.hindu.pooja.model.PoojaIndexItem
 object PoojaContentLoader {
 
     fun loadPoojaContent(context: Context, fileName: String): PoojaDetail? {
+        val TAG = "PoojaContentLoader"
         return try {
+            Log.d(TAG, "Attempting to open pooja asset: poojas/$fileName")
             val jsonString = context.assets.open("poojas/$fileName")
                 .bufferedReader().use { it.readText() }
+            Log.d(TAG, "Loaded asset: poojas/$fileName, size=${jsonString.length}")
 
             val gson = Gson()
             val json = gson.fromJson(jsonString, JsonObject::class.java)
@@ -44,6 +48,7 @@ object PoojaContentLoader {
                 )
             } else null
 
+            Log.d(TAG, "Parsed PoojaDetail: id=$id, name=$name, language=$language, category=$category, addedDate=$addedDate")
             PoojaDetail(
                 id = id,
                 name = name,
@@ -56,18 +61,21 @@ object PoojaContentLoader {
                 kathalu = kathalu
             )
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Error loading/parsing pooja asset: poojas/$fileName", e)
             null
         }
     }
 
     fun loadPoojaIndex(context: Context, fileName: String): List<PoojaIndexItem> {
+        val TAG = "PoojaContentLoader"
         return try {
+            Log.d(TAG, "Attempting to open pooja index asset: poojas/$fileName")
             val json = context.assets.open("poojas/$fileName")
                 .bufferedReader().use { it.readText() }
+            Log.d(TAG, "Loaded pooja index asset: poojas/$fileName, size=${json.length}")
             Gson().fromJson(json, object : TypeToken<List<PoojaIndexItem>>() {}.type)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Error loading/parsing pooja index asset: poojas/$fileName", e)
             emptyList()
         }
     }
