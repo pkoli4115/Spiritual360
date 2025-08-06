@@ -1,5 +1,7 @@
 package com.hindu.pooja.viewmodel
 
+
+import com.hindu.pooja.util.CryptoManager
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import com.google.firebase.auth.FirebaseAuth
@@ -147,32 +149,37 @@ class ProfileViewModel @Inject constructor() : ViewModel() {
         firestore.collection("userProfiles").document(userId).get()
             .addOnSuccessListener { doc ->
                 if (doc.exists()) {
-                    fullName.value = doc.getString("fullName") ?: ""
-                    lastName.value = doc.getString("lastName") ?: ""
-                    fatherName.value = doc.getString("fatherName") ?: ""
-                    motherName.value = doc.getString("motherName") ?: ""
-                    spouseName.value = doc.getString("spouseName") ?: ""
+                    fun tryDecrypt(value: String?): String =
+                        if (!value.isNullOrBlank()) {
+                            try { CryptoManager.decrypt(value) } catch (e: Exception) { value }
+                        } else ""
+
+                    fullName.value = tryDecrypt(doc.getString("fullName"))
+                    lastName.value = tryDecrypt(doc.getString("lastName"))
+                    fatherName.value = tryDecrypt(doc.getString("fatherName"))
+                    motherName.value = tryDecrypt(doc.getString("motherName"))
+                    spouseName.value = tryDecrypt(doc.getString("spouseName"))
                     maritalStatus.value = doc.getString("maritalStatus") ?: ""
                     hasChildren.value = doc.getBoolean("hasChildren") ?: false
                     numberOfChildren.value = doc.getString("numberOfChildren") ?: ""
-                    childNames.value = (doc.get("childNames") as? List<*>)?.map { it.toString() } ?: emptyList()
+                    childNames.value = (doc.get("childNames") as? List<*>)?.map { tryDecrypt(it?.toString() ?: "") } ?: emptyList()
                     gothram.value = doc.getString("gothram") ?: ""
                     nakshatram.value = doc.getString("nakshatram") ?: ""
-                    birthDate.value = doc.getString("birthDate") ?: ""
+                    birthDate.value = tryDecrypt(doc.getString("birthDate"))
                     birthTime.value = doc.getString("birthTime") ?: ""
-                    birthPlace.value = doc.getString("birthPlace") ?: ""
-                    addressLine1.value = doc.getString("addressLine1") ?: ""
-                    addressLine2.value = doc.getString("addressLine2") ?: ""
-                    addressLine3.value = doc.getString("addressLine3") ?: ""
-                    selectedCountry.value = doc.getString("country") ?: ""
-                    selectedState.value = doc.getString("state") ?: ""
-                    city.value = doc.getString("city") ?: ""
+                    birthPlace.value = tryDecrypt(doc.getString("birthPlace"))
+                    addressLine1.value = tryDecrypt(doc.getString("addressLine1"))
+                    addressLine2.value = tryDecrypt(doc.getString("addressLine2"))
+                    addressLine3.value = tryDecrypt(doc.getString("addressLine3"))
+                    selectedCountry.value = tryDecrypt(doc.getString("country"))
+                    selectedState.value = tryDecrypt(doc.getString("state"))
+                    city.value = tryDecrypt(doc.getString("city"))
                     pincode.value = doc.getString("pincode") ?: ""
                     countryCode.value = doc.getString("countryCode") ?: "+91"
-                    email.value = doc.getString("email") ?: auth.currentUser?.email.orEmpty()
-                    phone.value = doc.getString("phone") ?: ""
+                    email.value = tryDecrypt(doc.getString("email"))
+                    phone.value = tryDecrypt(doc.getString("phone"))
                     isPremium.value = doc.getBoolean("isPremium") ?: false
-                    profilePictureUrl.value = doc.getString("profilePictureUrl") ?: ""
+                    profilePictureUrl.value = tryDecrypt(doc.getString("profilePictureUrl"))
                     onSuccess()
                 } else {
                     onFailure()
@@ -215,32 +222,32 @@ class ProfileViewModel @Inject constructor() : ViewModel() {
     fun saveProfile(onSuccess: () -> Unit = {}, onFailure: () -> Unit = {}) {
         val user = auth.currentUser ?: return onFailure()
         val data = mapOf(
-            "fullName" to fullName.value,
-            "lastName" to lastName.value,
-            "fatherName" to fatherName.value,
-            "motherName" to motherName.value,
-            "spouseName" to spouseName.value,
+            "fullName" to CryptoManager.encrypt(fullName.value),
+            "lastName" to CryptoManager.encrypt(lastName.value),
+            "fatherName" to CryptoManager.encrypt(fatherName.value),
+            "motherName" to CryptoManager.encrypt(motherName.value),
+            "spouseName" to CryptoManager.encrypt(spouseName.value),
             "maritalStatus" to maritalStatus.value,
             "hasChildren" to hasChildren.value,
             "numberOfChildren" to numberOfChildren.value,
-            "childNames" to childNames.value,
+            "childNames" to childNames.value.map { CryptoManager.encrypt(it) },
             "gothram" to gothram.value,
             "nakshatram" to nakshatram.value,
-            "birthDate" to birthDate.value,
+            "birthDate" to CryptoManager.encrypt(birthDate.value),
             "birthTime" to birthTime.value,
-            "birthPlace" to birthPlace.value,
-            "addressLine1" to addressLine1.value,
-            "addressLine2" to addressLine2.value,
-            "addressLine3" to addressLine3.value,
-            "country" to selectedCountry.value,
-            "state" to selectedState.value,
-            "city" to city.value,
+            "birthPlace" to CryptoManager.encrypt(birthPlace.value),
+            "addressLine1" to CryptoManager.encrypt(addressLine1.value),
+            "addressLine2" to CryptoManager.encrypt(addressLine2.value),
+            "addressLine3" to CryptoManager.encrypt(addressLine3.value),
+            "country" to CryptoManager.encrypt(selectedCountry.value),
+            "state" to CryptoManager.encrypt(selectedState.value),
+            "city" to CryptoManager.encrypt(city.value),
             "pincode" to pincode.value,
             "countryCode" to countryCode.value,
-            "email" to email.value,
-            "phone" to phone.value,
+            "email" to CryptoManager.encrypt(email.value),
+            "phone" to CryptoManager.encrypt(phone.value),
             "isPremium" to isPremium.value,
-            "profilePictureUrl" to profilePictureUrl.value
+            "profilePictureUrl" to CryptoManager.encrypt(profilePictureUrl.value)
         )
         firestore.collection("userProfiles").document(user.uid)
             .set(data)
