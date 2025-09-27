@@ -1,15 +1,28 @@
+<!-- File: app/src/main/AndroidManifest.xml -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.hindu.pooja">
+
+    <!-- Optional but helpful on Android 11+ so the UPI chooser can see apps -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="upi" />
+        </intent>
+    </queries>
+
+    <!-- Network access for Firebase, Facebook, etc. -->
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:name=".HinduPoojaApp"
         android:allowBackup="true"
-        android:label="Spiritual360"
+        android:label="@string/app_name"
         android:icon="@mipmap/ic_launcher"
         android:theme="@style/Theme.HinduPoojaApp">
 
-        <activity android:name=".MainActivity"
+        <!-- Main launcher activity -->
+        <activity
+            android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -17,6 +30,36 @@
             </intent-filter>
         </activity>
 
-    </application>
+        <!-- Facebook SDK configuration -->
+        <meta-data
+            android:name="com.facebook.sdk.ApplicationId"
+            android:value="@string/facebook_app_id" />
+        <meta-data
+            android:name="com.facebook.sdk.ClientToken"
+            android:value="@string/facebook_client_token" />
 
+        <!-- Facebook Content Provider (appId appended at end) -->
+        <provider
+            android:name="com.facebook.FacebookContentProvider"
+            android:authorities="com.facebook.app.FacebookContentProvider1145171540885194"
+            android:exported="true" />
+
+        <!-- Facebook Login Activities -->
+        <activity
+            android:name="com.facebook.FacebookActivity"
+            android:exported="false"
+            android:configChanges="keyboard|keyboardHidden|screenLayout|screenSize|orientation" />
+
+        <activity
+            android:name="com.facebook.CustomTabActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <!-- Must match strings.xml: fb{APP_ID}, e.g. fb1145171540885194 -->
+                <data android:scheme="@string/fb_login_protocol_scheme" />
+            </intent-filter>
+        </activity>
+    </application>
 </manifest>

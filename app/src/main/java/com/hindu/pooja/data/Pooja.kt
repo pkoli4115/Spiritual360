@@ -8,7 +8,15 @@ data class Pooja(
     val name: String,
     val language: String,
     val content: Map<String, String>,
-    val kathalu: List<Katha>
+    val kathalu: List<Katha>,
+    val fullName: String = "",
+    val email: String = "",
+    val phone: String = "",
+    val photoUrl: String? = null,
+    // optional metadata
+    val loginProvider: String? = null,
+    val createdAt: Long = 0L,
+    val updatedAt: Long = 0L
 )
 
 @Serializable

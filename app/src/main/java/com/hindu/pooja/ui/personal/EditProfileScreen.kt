@@ -1,3 +1,4 @@
+// app/src/main/java/com/hindu/pooja/ui/personal/EditProfileScreen.kt
 package com.hindu.pooja.ui.personal
 
 import android.net.Uri
@@ -5,118 +6,126 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
+import com.hindu.pooja.R
 import com.hindu.pooja.viewmodel.ProfileViewModel
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditProfileScreen(
-    viewModel: ProfileViewModel = hiltViewModel(),
-    onSaveSuccess: () -> Unit
+    navController: NavController,
+    viewModel: ProfileViewModel = hiltViewModel()
 ) {
-    val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
-
-    var loaded by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) {
-        if (!loaded) {
-            viewModel.loadProfile(onSuccess = { loaded = true }, onFailure = { loaded = true })
-        }
-    }
-
     val fullName by viewModel.fullName.collectAsState()
     val email by viewModel.email.collectAsState()
     val phone by viewModel.phone.collectAsState()
-    val pid by viewModel.profileId.collectAsState()
-    val photoUrl by viewModel.profilePictureUrl.collectAsState()
-    val isSaving by viewModel.isSaving.collectAsState()
-    val saveSuccess by viewModel.saveSuccess.collectAsState()
-    val formValid by viewModel.formValid.collectAsState()
+    val photo by viewModel.profilePictureUrl.collectAsState()
+    val isSaving by viewModel.isLoading.collectAsState()
     val err by viewModel.lastError.collectAsState()
+    val saveSuccess by viewModel.saveSuccess.collectAsState()
 
-    if (saveSuccess) { viewModel.resetSaveState(); onSaveSuccess() }
+    LaunchedEffect(saveSuccess) {
+        if (saveSuccess) {
+            viewModel.resetSaveSuccess()
+            navController.popBackStack()
+        }
+    }
 
-    val ctx = androidx.compose.ui.platform.LocalContext.current
-    val galleryLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
+    val gallery = rememberLauncherForActivityResult(
+        ActivityResultContracts.GetContent()
     ) { uri: Uri? -> viewModel.setProfilePictureUri(uri) }
 
-    Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) { padding ->
+    Scaffold(topBar = { SmallTopAppBar(title = { Text("Edit Profile") }) }) { padding ->
         Column(
-            modifier = Modifier
+            Modifier
                 .fillMaxSize()
                 .padding(padding)
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Edit Profile", style = MaterialTheme.typography.headlineSmall)
+            val painter = if (!photo.isNullOrBlank())
+                rememberAsyncImagePainter(model = photo)
+            else painterResource(R.drawable.ic_profile_placeholder)
+
+            Image(
+                painter = painter,
+                contentDescription = "Profile photo",
+                modifier = Modifier
+                    .size(120.dp)
+                    .clip(CircleShape),
+                contentScale = ContentScale.Crop
+            )
+            TextButton(onClick = { gallery.launch("image/*") }) { Text("Change photo") }
+
             Spacer(Modifier.height(12.dp))
-            Text("Profile ID: $pid", style = MaterialTheme.typography.titleSmall)
-            Spacer(Modifier.height(16.dp))
 
-            if (photoUrl.isNotBlank() || viewModel.profilePictureUri.value != null) {
-                Image(
-                    painter = rememberAsyncImagePainter(
-                        viewModel.profilePictureUri.value ?: photoUrl
-                    ),
-                    contentDescription = "Profile Picture",
-                    modifier = Modifier.size(100.dp)
-                )
-                Spacer(Modifier.height(8.dp))
-            }
-            OutlinedButton(onClick = { galleryLauncher.launch("image/*") }) {
-                Text("Change Photo")
-            }
-
-            Spacer(Modifier.height(16.dp))
             OutlinedTextField(
                 value = fullName,
-                onValueChange = { viewModel.fullName.value = it; viewModel.validateForm() },
+                onValueChange = { viewModel.setFullName(it) },
                 label = { Text("Name *") },
-                isError = fullName.isBlank(),
+                singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
+
             Spacer(Modifier.height(8.dp))
+
             OutlinedTextField(
                 value = email,
-                onValueChange = { viewModel.email.value = it; viewModel.validateForm() },
-                label = { Text("Email") },
+                onValueChange = { viewModel.setEmail(it) },
+                label = { Text("Email *") },
+                singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
             )
+
             Spacer(Modifier.height(8.dp))
+
             OutlinedTextField(
                 value = phone,
-                onValueChange = { viewModel.phone.value = it; viewModel.validateForm() },
+                onValueChange = { viewModel.setPhone(it) },
                 label = { Text("Mobile") },
+                singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
             )
 
-            if (!err.isNullOrBlank()) {
-                Spacer(Modifier.height(12.dp))
-                Text(err!!, color = MaterialTheme.colorScheme.error)
+            err?.let {
+                Spacer(Modifier.height(8.dp))
+                Text(it, color = MaterialTheme.colorScheme.error)
             }
 
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(16.dp))
+
             Button(
-                onClick = {
-                    viewModel.saveProfileWithPhoto(
-                        context = ctx,
-                        onSuccess = { scope.launch { snackbarHostState.showSnackbar("Saved!") } },
-                        onFailure = { scope.launch { snackbarHostState.showSnackbar(err ?: "Save failed") } }
-                    )
-                },
-                enabled = formValid && !isSaving,
+                onClick = { viewModel.saveProfile() },
+                enabled = !isSaving && viewModel.validateForm(),
                 modifier = Modifier.fillMaxWidth()
-            ) { if (isSaving) CircularProgressIndicator(modifier = Modifier.size(20.dp)) else Text("Save") }
+            ) {
+                if (isSaving) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text("Save")
+                }
+            }
         }
     }
 }

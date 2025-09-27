@@ -1,5 +1,6 @@
 package com.hindu.pooja
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -16,14 +17,39 @@ import com.hindu.pooja.ui.theme.HinduPoojaTheme
 import dagger.hilt.android.AndroidEntryPoint
 import com.hindu.pooja.R
 
+// Facebook
+import com.facebook.FacebookSdk
+import com.facebook.appevents.AppEventsLogger
+import com.facebook.CallbackManager
+
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    companion object {
+        // ✅ Shared CallbackManager instance for FB login
+        lateinit var fbCallbackManager: CallbackManager
+            private set
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
+
+        // Facebook SDK init
+        FacebookSdk.sdkInitialize(applicationContext)
+        AppEventsLogger.activateApp(application)
+
+        fbCallbackManager = CallbackManager.Factory.create()
+
         setContent {
             HinduPoojaAppContent()
         }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        // ✅ Forward to shared callback manager
+        fbCallbackManager.onActivityResult(requestCode, resultCode, data)
     }
 }
 

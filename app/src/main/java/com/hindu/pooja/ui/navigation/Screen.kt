@@ -5,13 +5,16 @@ import android.net.Uri
 sealed class Screen(val route: String) {
     object Home : Screen("home")
     object Profile : Screen("profile")
-    object Billing : Screen("billing")
     object Featured : Screen("featured")
     object Login : Screen("login")
     object Settings : Screen("settings")
     object Kids : Screen("kids")
     object PersonalDetails : Screen("personal_details")
-    object EditProfile : Screen("edit_profile") // ✅ NEW
+    object EditProfile : Screen("edit_profile")
+    object FirstTimeProfile : Screen("first_time_profile")
+    object Splash : Screen("splash")
+
+    object PhoneLogin : Screen("phone_login")
 
     object Poojas : Screen("poojas/{fileName}") {
         fun createRoute(fileName: String): String = "poojas/$fileName"
@@ -24,7 +27,6 @@ sealed class Screen(val route: String) {
     object Ashtottaras : Screen("ashtottaras/{fileName}") {
         fun createRoute(fileName: String): String = "ashtottaras/$fileName"
     }
-    object PhoneLogin : Screen("phone_login")
 
     object PoojaDetail : Screen("pooja_detail/{fileName}") {
         fun createRoute(fileName: String) = "pooja_detail/${Uri.encode(fileName)}"
@@ -37,6 +39,4 @@ sealed class Screen(val route: String) {
     object GameResult : Screen("game_result/{levelName}") {
         fun createRoute(levelName: String) = "game_result/$levelName"
     }
-
-    object Splash : Screen("splash")
 }
