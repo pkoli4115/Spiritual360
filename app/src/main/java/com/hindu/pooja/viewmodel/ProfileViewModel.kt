@@ -1,6 +1,7 @@
 package com.hindu.pooja.viewmodel
 
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
@@ -17,7 +18,7 @@ import javax.inject.Inject
 import kotlin.random.Random
 
 data class DonationRecord(
-    val id: String = "",                 // transaction reference we create
+    val id: String = "",                 // transaction reference (document id)
     val upiId: String = "",
     val payeeName: String = "",
     val amount: String = "",
@@ -33,10 +34,15 @@ data class DonationRecord(
 @HiltViewModel
 class ProfileViewModel @Inject constructor() : ViewModel() {
 
+    companion object {
+        private const val TAG = "ProfileVM"
+        private const val USERS_COLLECTION = "userProfiles" // or "users" if you’ve migrated
+        private const val DONATION_LIMIT = 20
+    }
+
     // --- Firebase ---
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
     private val db: FirebaseFirestore = FirebaseFirestore.getInstance()
-    private val USERS = "userProfiles" // keep using this collection as in your login flow
 
     // --- UI state ---
     private val _isLoading = MutableStateFlow(false)
@@ -83,7 +89,7 @@ class ProfileViewModel @Inject constructor() : ViewModel() {
         _lastError.value = null
         _loginProvider.value = providerName(user)
 
-        db.collection(USERS)
+        db.collection(USERS_COLLECTION)
             .document(user.uid)
             .get()
             .addOnSuccessListener { doc ->
@@ -136,7 +142,7 @@ class ProfileViewModel @Inject constructor() : ViewModel() {
             "loginProvider" to _loginProvider.value
         )
 
-        db.collection(USERS)
+        db.collection(USERS_COLLECTION)
             .document(user.uid)
             .set(data)
             .addOnSuccessListener {
@@ -163,36 +169,67 @@ class ProfileViewModel @Inject constructor() : ViewModel() {
         }
     }
 
-    // ---------- Donations listener ----------
-    fun startDonationsListener() {
-        val uid = auth.currentUser?.uid ?: return
+    // ---------- Donations listener (SUCCESS only) ----------
+    fun startDonationsListener(serverFilter: Boolean = true) {
+        val uid = auth.currentUser?.uid ?: run {
+            Log.w(TAG, "startDonationsListener: no user")
+            return
+        }
+
         donationsListener?.remove()
-        donationsListener = db.collection(USERS).document(uid)
-            .collection("donations")
-            .orderBy("createdAtMs", Query.Direction.DESCENDING)
-            .limit(20)
-            .addSnapshotListener { snap, err ->
-                if (err != null) {
+
+        val base = db.collection(USERS_COLLECTION).document(uid).collection("donations")
+        val query = if (serverFilter) {
+            // Fast path (needs composite index: status ASC / createdAtMs DESC).
+            Log.d(TAG, "Donations: server filter status=SUCCESS + orderBy(createdAtMs DESC)")
+            base.whereEqualTo("status", "SUCCESS")
+                .orderBy("createdAtMs", Query.Direction.DESCENDING)
+                .limit(DONATION_LIMIT.toLong())
+        } else {
+            // Fallback (no index needed): fetch recent and filter in app.
+            Log.d(TAG, "Donations: fallback query (client-side filter)")
+            base.orderBy("createdAtMs", Query.Direction.DESCENDING)
+                .limit((DONATION_LIMIT * 3).toLong())
+        }
+
+        donationsListener = query.addSnapshotListener { snap, err ->
+            if (err != null) {
+                Log.w(TAG, "Donations listen failed (index missing?).", err)
+                if (serverFilter) {
+                    // Remove current listener and retry without the server filter.
+                    donationsListener?.remove()
+                    donationsListener = null
+                    startDonationsListener(serverFilter = false)
+                } else {
                     _lastError.value = err.localizedMessage
-                    return@addSnapshotListener
                 }
-                val list = snap?.documents?.map { d ->
-                    DonationRecord(
-                        id = d.getString("id") ?: d.id,
-                        upiId = d.getString("upiId") ?: "",
-                        payeeName = d.getString("payeeName") ?: "",
-                        amount = d.getString("amount") ?: "",
-                        note = d.getString("note") ?: "",
-                        status = d.getString("status") ?: "UNKNOWN",
-                        txnId = d.getString("txnId"),
-                        approvalRefNo = d.getString("approvalRefNo"),
-                        provider = d.getString("provider"),
-                        createdAtMs = d.getLong("createdAtMs") ?: 0L,
-                        updatedAtMs = d.getLong("updatedAtMs") ?: 0L
-                    )
-                } ?: emptyList()
-                _donations.value = list
+                return@addSnapshotListener
             }
+
+            val all = snap?.documents?.map { d ->
+                DonationRecord(
+                    id = d.getString("id") ?: d.id,
+                    upiId = d.getString("upiId") ?: "",
+                    payeeName = d.getString("payeeName") ?: "",
+                    amount = d.getString("amount") ?: "",
+                    note = d.getString("note") ?: "",
+                    status = d.getString("status") ?: "UNKNOWN",
+                    txnId = d.getString("txnId"),
+                    approvalRefNo = d.getString("approvalRefNo"),
+                    provider = d.getString("provider"),
+                    createdAtMs = d.getLong("createdAtMs") ?: 0L,
+                    updatedAtMs = d.getLong("updatedAtMs") ?: 0L
+                )
+            }.orEmpty()
+
+            val successOnly =
+                if (serverFilter) all
+                else all.filter { it.status.equals("SUCCESS", ignoreCase = true) }
+                    .take(DONATION_LIMIT)
+
+            Log.d(TAG, "Donations listen -> successOnly=${successOnly.size}")
+            _donations.value = successOnly
+        }
     }
 
     override fun onCleared() {
