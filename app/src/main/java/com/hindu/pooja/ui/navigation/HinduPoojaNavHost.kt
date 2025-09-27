@@ -1,3 +1,4 @@
+// app/src/main/java/com/hindu/pooja/ui/navigation/HinduPoojaNavHost.kt
 package com.hindu.pooja.ui.navigation
 
 import androidx.compose.foundation.layout.padding
@@ -8,16 +9,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
-import androidx.navigation.NavType
+// NEW:
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import androidx.navigation.NavType
 import com.hindu.pooja.ui.kids.findit.FindItGameScreen
 import com.hindu.pooja.ui.kids.findit.GameResultScreen
 import com.hindu.pooja.ui.login.LoginScreen
-import com.hindu.pooja.ui.login.PhoneLoginScreen
 import com.hindu.pooja.ui.personal.EditProfileScreen
-import com.hindu.pooja.ui.personal.PersonalDetailsScreen
+// NEW:
+import com.hindu.pooja.ui.personal.FirstTimeProfileScreen
 import com.hindu.pooja.ui.screens.*
 import com.hindu.pooja.viewmodel.ProfileViewModel
 import java.net.URLDecoder
@@ -27,7 +29,6 @@ fun HinduPoojaNavHost(
     navController: NavHostController,
     modifier: Modifier = Modifier
 ) {
-    // Inject ProfileViewModel ONCE here for all screens that need it!
     val profileViewModel: ProfileViewModel = hiltViewModel()
 
     NavHost(
@@ -35,79 +36,32 @@ fun HinduPoojaNavHost(
         startDestination = Screen.Login.route,
         modifier = modifier
     ) {
-        // 🔐 Login
         composable(Screen.Login.route) {
-            LoginScreen(
+            LoginScreen(navController = navController)
+        }
+
+        // NEW: first-time profile capture (Name, Email-from-Google, Mobile)
+        composable("first_profile") {
+            FirstTimeProfileScreen(
                 navController = navController,
-                onPhoneLoginClick = {
-                    navController.navigate(Screen.PhoneLogin.route)   // <-- 2. NAVIGATE TO PHONELOGIN
-                }
+                onCompletedRoute = Screen.Home.route
             )
         }
 
-        // 📱 Phone Login screen
-        composable(Screen.PhoneLogin.route) {    // <-- 3. ADD THIS
-            PhoneLoginScreen(
-                onOtpVerified = {
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Login.route) { inclusive = true }
-                    }
-                }
-            )
-        }
-
-        // 🏠 Home (passes profileViewModel)
         composable(Screen.Home.route) {
             HomeScreen(navController, profileViewModel)
         }
 
-        // ⭐ Featured
-        composable(Screen.Featured.route) {
-            TextScreen("Featured")
-        }
+        composable(Screen.Featured.route) { TextScreen("Featured") }
+        composable(Screen.Kids.route) { TextScreen("Kids Zone Coming Soon") }
+        composable(Screen.Profile.route) { ProfileScreen(navController = navController) }
+        composable(Screen.EditProfile.route) { EditProfileScreen(onSaveSuccess = { navController.popBackStack() }) }
 
-        // 👶 Kids
-        composable(Screen.Kids.route) {
-            TextScreen("Kids Zone Coming Soon")
-        }
-
-        // 👤 Profile (passes profileViewModel, optional—remove if not needed)
-        composable(Screen.Profile.route) {
-            ProfileScreen(navController = navController)
-        }
-
-        // ✏️ Edit Profile
-        composable(Screen.EditProfile.route) {
-            EditProfileScreen(
-                onSaveSuccess = {
-                    navController.popBackStack()
-                }
-            )
-        }
-
-        // 👤 First-time user details
-        composable(Screen.PersonalDetails.route) {
-            PersonalDetailsScreen(
-                onSubmitSuccess = {
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.PersonalDetails.route) { inclusive = true }
-                    }
-                }
-            )
-        }
-
-        // 💳 Billing screen with new logic
+        // Billing kept as-is per your request
         composable(Screen.Billing.route) {
-            BillingScreen(
-                onPremiumUnlocked = {
-                    // You can show a dialog, set a premium flag, or just go back
-                    navController.popBackStack() // Or navigate to Home, etc.
-                }
-            )
+            BillingScreen(onPremiumUnlocked = { navController.popBackStack() })
         }
 
-
-        // 📚 Poojas
         composable(
             route = Screen.Poojas.route,
             arguments = listOf(navArgument("fileName") { type = NavType.StringType })
@@ -116,7 +70,6 @@ fun HinduPoojaNavHost(
             PoojasScreen(navController = navController, fileName = fileName)
         }
 
-        // 📚 Vrathams
         composable(
             route = Screen.Vrathams.route,
             arguments = listOf(navArgument("fileName") { type = NavType.StringType })
@@ -125,7 +78,6 @@ fun HinduPoojaNavHost(
             VrathamsScreen(navController = navController, fileName = fileName)
         }
 
-        // 📚 Ashtottaras
         composable(
             route = Screen.Ashtottaras.route,
             arguments = listOf(navArgument("fileName") { type = NavType.StringType })
@@ -134,7 +86,6 @@ fun HinduPoojaNavHost(
             AshtottarasScreen(navController = navController, fileName = fileName)
         }
 
-        // 📖 Pooja Detail
         composable(
             route = Screen.PoojaDetail.route,
             arguments = listOf(navArgument("fileName") { type = NavType.StringType })
@@ -144,7 +95,6 @@ fun HinduPoojaNavHost(
             PoojaDetailScreen(navController = navController, fileName = fileName)
         }
 
-        // 🎮 Find-It Game
         composable(
             route = Screen.FindItGame.route,
             arguments = listOf(navArgument("levelFile") { type = NavType.StringType })
@@ -153,7 +103,6 @@ fun HinduPoojaNavHost(
             FindItGameScreen(levelFile = levelFile, navController = navController)
         }
 
-        // 🏆 Game Result
         composable(
             route = Screen.GameResult.route,
             arguments = listOf(navArgument("levelName") { type = NavType.StringType })
@@ -162,10 +111,7 @@ fun HinduPoojaNavHost(
             GameResultScreen(levelName = levelName, navController = navController)
         }
 
-        // ⚙️ Settings
-        composable(Screen.Settings.route) {
-            TextScreen("Settings screen will be added here")
-        }
+        composable(Screen.Settings.route) { TextScreen("Settings screen will be added here") }
     }
 }
 

@@ -1,3 +1,4 @@
+// File: app/src/main/java/com/hindu/pooja/ui/screens/HomeScreen.kt
 package com.hindu.pooja.ui.screens
 
 import androidx.compose.animation.core.*
@@ -43,14 +44,9 @@ fun HomeScreen(
 
     // ✅ List all sections that should auto-scroll here!
     val autoScrollSections = setOf("Daily Poojas", "Ashtottaras")
-    // Add/remove section titles as needed. All others will use standard scroll.
 
     var selectedCategory by remember { mutableStateOf("Daily Poojas") }
     var isLoading by remember { mutableStateOf(true) }
-    var showUpgradeDialog by remember { mutableStateOf(false) }
-    var pendingItem: PoojaIndexItem? by remember { mutableStateOf(null) }
-
-    val isUserPremium by profileViewModel.isPremium.collectAsState()
 
     val categoryData = remember {
         categories.map { (title, fileName) ->
@@ -123,27 +119,12 @@ fun HomeScreen(
                             sectionTitle = title,
                             items = filteredItems,
                             isSelected = (title == selectedCategory),
-                            autoScroll = autoScroll, // 👈 NEW!
+                            autoScroll = autoScroll,
                             onItemClick = { item ->
                                 selectedCategory = title
-                                if (item.isPremium) {
-                                    if (isUserPremium) {
-                                        navController.navigate(
-                                            Screen.PoojaDetail.createRoute(
-                                                fileName = item.file
-                                            )
-                                        )
-                                    } else {
-                                        showUpgradeDialog = true
-                                        pendingItem = item
-                                    }
-                                } else {
-                                    navController.navigate(
-                                        Screen.PoojaDetail.createRoute(
-                                            fileName = item.file
-                                        )
-                                    )
-                                }
+                                navController.navigate(
+                                    Screen.PoojaDetail.createRoute(fileName = item.file)
+                                )
                             },
                             onViewAllClick = {
                                 val route = when (title) {
@@ -161,24 +142,6 @@ fun HomeScreen(
                     item { ShimmerPlaceholderRow() }
                 }
             }
-        }
-
-        // Upgrade dialog
-        if (showUpgradeDialog) {
-            AlertDialog(
-                onDismissRequest = { showUpgradeDialog = false },
-                title = { Text("Premium Content") },
-                text = { Text("This pooja is for premium members. Upgrade to access all premium content!") },
-                confirmButton = {
-                    Button(onClick = {
-                        showUpgradeDialog = false
-                        navController.navigate("billing")
-                    }) { Text("Upgrade Now") }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showUpgradeDialog = false }) { Text("Cancel") }
-                }
-            )
         }
     }
 }
