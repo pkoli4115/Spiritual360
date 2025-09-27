@@ -20,10 +20,10 @@ import com.hindu.pooja.R
 
 /** Central config used by Home & Profile */
 object DonationConfig {
-    const val upiId: String = "9121011887@ybl"          // <-- your UPI ID
+    const val upiId: String = "9121011887@ybl"      // your UPI ID
     const val payeeName: String = "Koli Prasanth"
     const val note: String = "Donation to Spiritual360 App"
-    val qrRes: Int = R.drawable.donation_qr                  // jpg/png, name only (no ext)
+    val qrRes: Int = R.drawable.donation_qr         // jpg/png in res/drawable
 }
 
 /** Reusable donation section (UPI link, copy/share, QR, quick amounts) */
@@ -45,7 +45,7 @@ fun DonationSection(
             Spacer(Modifier.height(6.dp))
         }
 
-        // --- UPI ID (tap to open chooser without preset amount) ---
+        // UPI ID (tap to open chooser without preset amount)
         Text(
             DonationConfig.upiId,
             style = MaterialTheme.typography.titleMedium,
@@ -74,7 +74,7 @@ fun DonationSection(
 
         Spacer(Modifier.height(12.dp))
 
-        // --- QR from drawable (works best in drawable-nodpi) ---
+        // QR from drawable (best in drawable-nodpi)
         Surface(tonalElevation = 2.dp, shape = MaterialTheme.shapes.medium) {
             Column(
                 modifier = Modifier
@@ -99,12 +99,11 @@ fun DonationSection(
 
         Spacer(Modifier.height(12.dp))
 
-        // --- Quick amounts -> chooser WITH preset amount ---
+        // Quick amounts -> chooser WITH preset amount
         Text("Quick Amounts", style = MaterialTheme.typography.titleSmall)
         Spacer(Modifier.height(8.dp))
 
-        FlowRowHorizontalPills(amounts) { label ->
-            // ✅ Plain computation (no remember here — this lambda is not @Composable)
+        DonationAmountPills(amounts) { label ->
             val digits = label.filter { it.isDigit() }
             launchUpiChooserIntent(
                 context = context,
@@ -117,10 +116,9 @@ fun DonationSection(
     }
 }
 
-/* ----------------- Helpers (same behavior as Profile) ----------------- */
-
+/** Public, shared pills — renamed to avoid name clash */
 @Composable
-private fun FlowRowHorizontalPills(
+fun DonationAmountPills(
     labels: List<String>,
     onClick: (String) -> Unit
 ) {

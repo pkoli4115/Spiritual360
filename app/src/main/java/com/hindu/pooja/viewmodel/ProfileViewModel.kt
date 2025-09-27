@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.firestore.Query
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,14 +16,29 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import kotlin.random.Random
 
+data class DonationRecord(
+    val id: String = "",                 // transaction reference we create
+    val upiId: String = "",
+    val payeeName: String = "",
+    val amount: String = "",
+    val note: String = "",
+    val status: String = "INITIATED",    // INITIATED|SUCCESS|FAILURE|SUBMITTED|CANCELLED|UNKNOWN
+    val txnId: String? = null,
+    val approvalRefNo: String? = null,
+    val provider: String? = null,
+    val createdAtMs: Long = System.currentTimeMillis(),
+    val updatedAtMs: Long = System.currentTimeMillis()
+)
+
 @HiltViewModel
 class ProfileViewModel @Inject constructor() : ViewModel() {
 
     // --- Firebase ---
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
     private val db: FirebaseFirestore = FirebaseFirestore.getInstance()
+    private val USERS = "userProfiles" // keep using this collection as in your login flow
 
-    // --- UI state (observed in Profile & Edit screens) ---
+    // --- UI state ---
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
@@ -50,18 +67,23 @@ class ProfileViewModel @Inject constructor() : ViewModel() {
     private val _loginProvider = MutableStateFlow("Google")
     val loginProvider: StateFlow<String> = _loginProvider.asStateFlow()
 
+    // Donations
+    private val _donations = MutableStateFlow<List<DonationRecord>>(emptyList())
+    val donations: StateFlow<List<DonationRecord>> = _donations.asStateFlow()
+    private var donationsListener: ListenerRegistration? = null
+
     init {
         loadProfile()
+        startDonationsListener()
     }
-
-    // ---------- Public API used by screens ----------
 
     fun loadProfile() {
         val user = auth.currentUser ?: return
         _isLoading.value = true
         _lastError.value = null
+        _loginProvider.value = providerName(user)
 
-        db.collection("users")
+        db.collection(USERS)
             .document(user.uid)
             .get()
             .addOnSuccessListener { doc ->
@@ -71,9 +93,6 @@ class ProfileViewModel @Inject constructor() : ViewModel() {
                     _email.value = doc.getString("email") ?: (user.email ?: "")
                     _phone.value = doc.getString("phone") ?: (user.phoneNumber ?: "")
                     _profilePictureUrl.value = doc.getString("photoUrl") ?: user.photoUrl?.toString()
-
-                    // ✅ Prefer server value (set during login), fallback to derived
-                    _loginProvider.value = doc.getString("loginProvider") ?: providerName(user)
                 } else {
                     seedFromFirebase(user)
                 }
@@ -93,7 +112,6 @@ class ProfileViewModel @Inject constructor() : ViewModel() {
     fun validateForm(): Boolean {
         val nameOk = _fullName.value.trim().isNotEmpty()
         val emailOk = _email.value.trim().isNotEmpty()
-        // Keep phone optional, or enforce 8..15 chars if you prefer:
         val phoneOk = _phone.value.isEmpty() || _phone.value.trim().length in 8..15
         return nameOk && emailOk && phoneOk
     }
@@ -118,7 +136,7 @@ class ProfileViewModel @Inject constructor() : ViewModel() {
             "loginProvider" to _loginProvider.value
         )
 
-        db.collection("users")
+        db.collection(USERS)
             .document(user.uid)
             .set(data)
             .addOnSuccessListener {
@@ -145,15 +163,50 @@ class ProfileViewModel @Inject constructor() : ViewModel() {
         }
     }
 
-    // ---------- Helpers ----------
+    // ---------- Donations listener ----------
+    fun startDonationsListener() {
+        val uid = auth.currentUser?.uid ?: return
+        donationsListener?.remove()
+        donationsListener = db.collection(USERS).document(uid)
+            .collection("donations")
+            .orderBy("createdAtMs", Query.Direction.DESCENDING)
+            .limit(20)
+            .addSnapshotListener { snap, err ->
+                if (err != null) {
+                    _lastError.value = err.localizedMessage
+                    return@addSnapshotListener
+                }
+                val list = snap?.documents?.map { d ->
+                    DonationRecord(
+                        id = d.getString("id") ?: d.id,
+                        upiId = d.getString("upiId") ?: "",
+                        payeeName = d.getString("payeeName") ?: "",
+                        amount = d.getString("amount") ?: "",
+                        note = d.getString("note") ?: "",
+                        status = d.getString("status") ?: "UNKNOWN",
+                        txnId = d.getString("txnId"),
+                        approvalRefNo = d.getString("approvalRefNo"),
+                        provider = d.getString("provider"),
+                        createdAtMs = d.getLong("createdAtMs") ?: 0L,
+                        updatedAtMs = d.getLong("updatedAtMs") ?: 0L
+                    )
+                } ?: emptyList()
+                _donations.value = list
+            }
+    }
 
+    override fun onCleared() {
+        donationsListener?.remove()
+        super.onCleared()
+    }
+
+    // ---------- Helpers ----------
     private fun seedFromFirebase(user: FirebaseUser) {
         _profileId.value = ensureProfileId()
         _fullName.value = user.displayName ?: ""
         _email.value = user.email ?: ""
         _phone.value = user.phoneNumber ?: ""
         _profilePictureUrl.value = user.photoUrl?.toString()
-        _loginProvider.value = providerName(user)
     }
 
     private fun ensureProfileId(): String {

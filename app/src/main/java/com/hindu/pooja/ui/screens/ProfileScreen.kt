@@ -1,16 +1,23 @@
 package com.hindu.pooja.ui.screens
 
+import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
+import android.util.Log
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,16 +31,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.hindu.pooja.R
 import com.hindu.pooja.ui.navigation.Screen
+import com.hindu.pooja.viewmodel.DonationRecord
 import com.hindu.pooja.viewmodel.ProfileViewModel
 
-// <<< Update these if needed >>>
+/* =====================  Donation constants  ===================== */
+/** Change only these three if you ever switch UPI */
 private const val DONATION_UPI_ID = "9121011887@ybl"
-private const val DONATION_PAYEE_NAME = "Koli Prasanth"
-private const val DONATION_NOTE = "Donation to Spiritual360 App"
-// If your QR file is named differently, change this:
-private val QR_DRAWABLE_RES = R.drawable.donation_qr
+private const val DONATION_PAYEE = "Koli Prasanth"
+private const val DONATION_NOTE  = "Donation to Spiritual360 App"
+private const val TAG = "DonateFlow"
 
 @Composable
 fun ProfileScreen(
@@ -42,6 +52,7 @@ fun ProfileScreen(
     onLogout: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
+
     LaunchedEffect(Unit) { viewModel.loadProfile() }
 
     val profileId by viewModel.profileId.collectAsState()
@@ -52,15 +63,30 @@ fun ProfileScreen(
     val provider by viewModel.loginProvider.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.lastError.collectAsState()
+    val donations by viewModel.donations.collectAsState()
+
+    // Show the donate banner until dismissed
+    var showDonateBanner by rememberSaveable { mutableStateOf(true) }
+
+    // UPI launcher that logs to Firestore and updates status
+    val donate = rememberUpiDonationLauncher(
+        upiId = DONATION_UPI_ID,
+        payeeName = DONATION_PAYEE,
+        note = DONATION_NOTE
+    )
+
+    val quickAmounts = listOf("₹51", "₹101", "₹501", "₹1001", "₹2001", "₹5001")
 
     Scaffold { padding ->
-        androidx.compose.foundation.lazy.LazyColumn(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+
+            /* ---------- Title ---------- */
             item {
                 Text(
                     text = "Profile",
@@ -69,28 +95,27 @@ fun ProfileScreen(
                 )
             }
 
-            item {
-                Surface(
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
-                    shape = MaterialTheme.shapes.medium
-                ) {
-                    Column(Modifier.padding(16.dp)) {
-                        Text(
-                            "🙏 Support Spiritual360 App with a voluntary donation",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(Modifier.height(2.dp))
-                        Text(
-                            "(All features are free for everyone)",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+            /* ---------- Donation banner (dismissible) ---------- */
+            if (showDonateBanner) {
+                item {
+                    DonateMiniBanner(
+                        onDonate = {
+                            Log.d(TAG, "Banner → Donate clicked (no preset amount)")
+                            donate(null)
+                        },
+                        onDetails = {
+                            Log.d(TAG, "Banner → Details clicked (opening chooser, no preset amount)")
+                            openUpiChooser(context, DONATION_UPI_ID, DONATION_PAYEE, null, DONATION_NOTE)
+                        },
+                        onDismiss = {
+                            Log.d(TAG, "Banner → Dismiss")
+                            showDonateBanner = false
+                        }
+                    )
                 }
             }
 
-            // Photo
+            /* ---------- Avatar ---------- */
             item {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
@@ -112,7 +137,7 @@ fun ProfileScreen(
                 }
             }
 
-            // Info
+            /* ---------- Profile info ---------- */
             item {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
@@ -128,7 +153,7 @@ fun ProfileScreen(
                 }
             }
 
-            // Actions
+            /* ---------- Actions ---------- */
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -142,8 +167,9 @@ fun ProfileScreen(
                     OutlinedButton(
                         onClick = {
                             viewModel.logout { ok ->
-                                if (ok) onLogout?.invoke()
-                                else Toast.makeText(context, "Logout failed", Toast.LENGTH_SHORT).show()
+                                if (ok) onLogout?.invoke() else {
+                                    Toast.makeText(context, "Logout failed", Toast.LENGTH_SHORT).show()
+                                }
                             }
                         },
                         modifier = Modifier.weight(1f)
@@ -151,175 +177,339 @@ fun ProfileScreen(
                 }
             }
 
-            // UPI ID block — clickable link + copy/share
+            /* ---------- Donation card (UPI link + QR + quick amounts) ---------- */
             item {
-                val clipboard = LocalClipboardManager.current
-                Surface(tonalElevation = 2.dp, shape = MaterialTheme.shapes.medium) {
-                    Column(
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text("UPI ID", style = MaterialTheme.typography.titleSmall)
-                        Spacer(Modifier.height(4.dp))
-                        Text(
-                            DONATION_UPI_ID,
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.clickable {
-                                // Open chooser WITHOUT preset amount: user can type any amount
-                                launchUpiChooserIntent(
-                                    context = context,
-                                    upiId = DONATION_UPI_ID,
-                                    payeeName = DONATION_PAYEE_NAME,
-                                    amount = null, // <- no preset amount
-                                    note = DONATION_NOTE
-                                )
-                            }
-                        )
-                        Spacer(Modifier.height(8.dp))
-                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            TextButton(onClick = {
-                                clipboard.setText(AnnotatedString(DONATION_UPI_ID))
-                                Toast.makeText(context, "UPI ID copied", Toast.LENGTH_SHORT).show()
-                            }) { Text("Copy UPI ID") }
-
-                            TextButton(onClick = {
-                                shareText(context, "UPI ID", DONATION_UPI_ID)
-                            }) { Text("Share UPI ID") }
-                        }
-                        Spacer(Modifier.height(4.dp))
-                        Text(
-                            "Tip: Tap the UPI ID to pick your UPI app and enter any amount.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                DonationCard(
+                    upiId = DONATION_UPI_ID,
+                    payeeName = DONATION_PAYEE,
+                    note = DONATION_NOTE,
+                    amounts = quickAmounts,
+                    onAmountClick = { label ->
+                        val amount = label.filter { it.isDigit() }
+                        Log.d(TAG, "Quick amount tapped: label=$label parsed=$amount")
+                        donate(amount)
+                    },
+                    onUpiTap = {
+                        Log.d(TAG, "UPI ID tapped → open chooser (no preset amount)")
+                        openUpiChooser(context, DONATION_UPI_ID, DONATION_PAYEE, null, DONATION_NOTE)
                     }
-                }
+                )
             }
 
-            // QR from drawable
-            item {
-                Surface(tonalElevation = 2.dp, shape = MaterialTheme.shapes.medium) {
-                    Column(
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text("Scan to Pay (Any UPI App)", style = MaterialTheme.typography.titleSmall)
-                        Spacer(Modifier.height(12.dp))
-                        Image(
-                            painter = painterResource(QR_DRAWABLE_RES),
-                            contentDescription = "UPI QR",
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(min = 220.dp)
-                                .padding(horizontal = 24.dp),
-                            contentScale = ContentScale.Fit
-                        )
-                        Spacer(Modifier.height(8.dp))
-                        Text(DONATION_UPI_ID, style = MaterialTheme.typography.bodyMedium)
-                    }
-                }
+            /* ---------- Recent donations ---------- */
+            if (donations.isNotEmpty()) {
+                item { Text("Recent donations", style = MaterialTheme.typography.titleMedium) }
+                items(donations) { d -> DonationRow(d) }
             }
 
-            // Quick amounts -> chooser WITH preset amount
-            item {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("Choose an amount:", style = MaterialTheme.typography.titleMedium)
-                    Spacer(Modifier.height(8.dp))
-                    val donationAmounts = listOf("₹51", "₹101", "₹501", "₹1001", "₹2001", "₹5001")
-                    FlowRowHorizontalPills(donationAmounts) { label ->
-                        val digits = label.filter { it.isDigit() }
-                        launchUpiChooserIntent(
-                            context = context,
-                            upiId = DONATION_UPI_ID,
-                            payeeName = DONATION_PAYEE_NAME,
-                            amount = digits,            // <- preset amount path
-                            note = DONATION_NOTE
-                        )
-                    }
-                }
+            if (isLoading) {
+                item { LinearProgressIndicator(modifier = Modifier.fillMaxWidth()) }
+            }
+            error?.let {
+                item { Text(it, color = MaterialTheme.colorScheme.error) }
             }
 
-            if (isLoading) item { LinearProgressIndicator(modifier = Modifier.fillMaxWidth()) }
-            error?.let { item { Text(it, color = MaterialTheme.colorScheme.error) } }
             item { Spacer(Modifier.height(24.dp)) }
         }
     }
 }
 
+/* =====================  UI bits  ===================== */
+
 @Composable
-private fun FlowRowHorizontalPills(
-    labels: List<String>,
-    onClick: (String) -> Unit
+private fun DonateMiniBanner(
+    onDonate: () -> Unit,
+    onDetails: () -> Unit,
+    onDismiss: () -> Unit
 ) {
-    Column {
-        var row = mutableListOf<String>()
-        var count = 0
-        val maxPerRow = 3
-        labels.forEachIndexed { i, label ->
-            row.add(label); count++
-            val end = (count == maxPerRow) || (i == labels.lastIndex)
-            if (end) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    row.forEach { text ->
-                        AssistChip(onClick = { onClick(text) }, label = { Text(text) })
-                    }
-                }
-                row = mutableListOf(); count = 0
-                Spacer(Modifier.height(8.dp))
+    Surface(
+        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
+        shape = MaterialTheme.shapes.medium,
+        tonalElevation = 1.dp,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text(
+                "🙏 Support this project",
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "Voluntary donation. All features are free for everyone.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(Modifier.height(8.dp))
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Button(onClick = onDonate, modifier = Modifier.weight(1f)) { Text("Donate") }
+                OutlinedButton(onClick = onDetails, modifier = Modifier.weight(1f)) { Text("Details") }
+                TextButton(onClick = onDismiss) { Text("Dismiss") }
             }
         }
     }
 }
 
-/** Build UPI URI; includes amount only when provided */
-private fun buildUpiUri(
+@Composable
+private fun DonationCard(
     upiId: String,
     payeeName: String,
-    amount: String?, // null => no &am param
     note: String,
-    tr: String = "HP-" + System.currentTimeMillis()
-): Uri {
-    val base = StringBuilder()
-        .append("upi://pay")
-        .append("?pa=").append(upiId)
-        .append("&pn=").append(Uri.encode(payeeName))
-        .apply {
-            if (!amount.isNullOrBlank()) append("&am=").append(Uri.encode(amount))
-        }
-        .append("&tn=").append(Uri.encode(note))
-        .append("&tr=").append(Uri.encode(tr))
-        .append("&cu=INR")
-        .toString()
-    return Uri.parse(base)
-}
-
-/** System chooser so user picks GPay/PhonePe/Paytm/BHIM/etc. */
-private fun launchUpiChooserIntent(
-    context: android.content.Context,
-    upiId: String,
-    payeeName: String,
-    amount: String?, // pass null for “let user type amount”
-    note: String
+    amounts: List<String>,
+    onAmountClick: (String) -> Unit,
+    onUpiTap: () -> Unit
 ) {
-    val uri = buildUpiUri(upiId, payeeName, amount, note)
-    val base = Intent(Intent.ACTION_VIEW, uri)
-    val chooser = Intent.createChooser(base, "Pay with UPI")
-    try {
-        context.startActivity(chooser)
-    } catch (_: ActivityNotFoundException) {
-        Toast.makeText(context, "No UPI app found. Install Google Pay, PhonePe, or Paytm.", Toast.LENGTH_LONG).show()
+    val context = LocalContext.current
+    val clipboard = LocalClipboardManager.current
+
+    Surface(
+        tonalElevation = 2.dp,
+        shape = MaterialTheme.shapes.medium,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Text("Donate to $payeeName", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(8.dp))
+
+            Text(
+                upiId,
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.clickable(onClick = onUpiTap)
+            )
+            Spacer(Modifier.height(6.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                TextButton(onClick = {
+                    clipboard.setText(AnnotatedString(upiId))
+                    Toast.makeText(context, "UPI ID copied", Toast.LENGTH_SHORT).show()
+                }) { Text("Copy UPI ID") }
+                TextButton(onClick = {
+                    shareText(context, "UPI ID", upiId)
+                }) { Text("Share UPI ID") }
+            }
+
+            Spacer(Modifier.height(12.dp))
+            // QR (put donation_qr.jpg/png in res/drawable)
+            Image(
+                painter = painterResource(R.drawable.donation_qr),
+                contentDescription = "UPI QR",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 220.dp)
+                    .padding(horizontal = 24.dp)
+            )
+
+            Spacer(Modifier.height(16.dp))
+            Text("Choose an amount:", style = MaterialTheme.typography.titleSmall)
+            Spacer(Modifier.height(8.dp))
+            QuickAmountPills(amounts, onAmountClick)
+        }
     }
 }
 
-/** Share plain text (UPI ID) */
+@Composable
+private fun DonationRow(d: DonationRecord) {
+    val statusColor = when (d.status.uppercase()) {
+        "SUCCESS"   -> Color(0xFF1B5E20)
+        "SUBMITTED" -> Color(0xFF1565C0)
+        "FAILURE"   -> Color(0xFFB71C1C)
+        "CANCELLED" -> Color(0xFF6D6D6D)
+        else        -> Color(0xFF8E24AA)
+    }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Column {
+            Text("₹${d.amount.ifBlank { "--" }} • ${d.payeeName}", style = MaterialTheme.typography.bodyLarge)
+            Text("UPI: ${d.upiId}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            d.txnId?.let { Text("TxnId: $it", style = MaterialTheme.typography.bodySmall) }
+            d.approvalRefNo?.let { Text("Ref: $it", style = MaterialTheme.typography.bodySmall) }
+        }
+        AssistChip(
+            onClick = {},
+            label = { Text(d.status) },
+            colors = AssistChipDefaults.assistChipColors(
+                labelColor = Color.White,
+                containerColor = statusColor
+            )
+        )
+    }
+}
+
+/* =====================  UPI logging + chooser  ===================== */
+
+@Composable
+private fun rememberUpiDonationLauncher(
+    upiId: String,
+    payeeName: String,
+    note: String
+): (String?) -> Unit {
+
+    val context = LocalContext.current
+    val auth = remember { FirebaseAuth.getInstance() }
+    val db = remember { FirebaseFirestore.getInstance() }
+    var pendingTr by remember { mutableStateOf<String?>(null) }
+
+    fun buildUri(amount: String?, tr: String): Uri {
+        val sb = StringBuilder()
+            .append("upi://pay")
+            .append("?pa=").append(upiId)
+            .append("&pn=").append(Uri.encode(payeeName))
+            .append("&tn=").append(Uri.encode(note))
+            .append("&tr=").append(Uri.encode(tr))
+            .append("&cu=INR")
+        if (!amount.isNullOrBlank()) sb.append("&am=").append(Uri.encode(amount))
+        val uri = Uri.parse(sb.toString())
+        Log.d(TAG, "Built UPI URI: $uri")
+        return uri
+    }
+
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        val uid = auth.currentUser?.uid ?: run {
+            Log.w(TAG, "onActivityResult: No user logged in; aborting update")
+            return@rememberLauncherForActivityResult
+        }
+        val tr = pendingTr ?: run {
+            Log.w(TAG, "onActivityResult: No pendingTr; nothing to update")
+            return@rememberLauncherForActivityResult
+        }
+
+        val responseText = result.data?.getStringExtra("response") ?: result.data?.dataString
+        Log.d(TAG, "onActivityResult: resultCode=${result.resultCode}, response=$responseText")
+        val parsed = parseUpiResponse(responseText)
+        Log.d(TAG, "onActivityResult: parsed map=$parsed")
+
+        var status = mapUpiStatus(parsed["status"])
+        if (status == "UNKNOWN" && result.resultCode == Activity.RESULT_CANCELED) {
+            status = "CANCELLED"
+        }
+        Log.d(TAG, "onActivityResult: derived status=$status")
+
+        val update = mutableMapOf<String, Any>(
+            "status" to status,
+            "updatedAtMs" to System.currentTimeMillis()
+        )
+        parsed["txnid"]?.let { update["txnId"] = it }
+        (parsed["approvalrefno"] ?: parsed["approvalref"] ?: parsed["refno"])?.let {
+            update["approvalRefNo"] = it
+        }
+        Log.d(TAG, "onActivityResult: updating Firestore donation/$tr with $update")
+
+        db.collection("userProfiles").document(uid)
+            .collection("donations").document(tr)
+            .update(update as Map<String, Any>)
+            .addOnSuccessListener { Log.d(TAG, "onActivityResult: Firestore update SUCCESS for $tr") }
+            .addOnFailureListener { e ->
+                Log.e(TAG, "onActivityResult: Firestore update FAILED for $tr", e)
+                Toast.makeText(context, "Failed to update donation status: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+
+        pendingTr = null
+    }
+
+    return remember {
+        { amount: String? ->
+            val uid = auth.currentUser?.uid
+            if (uid == null) {
+                Log.w(TAG, "startDonation: user not logged in")
+                Toast.makeText(context, "Please login first", Toast.LENGTH_SHORT).show()
+            } else {
+                val tr = "DON-${System.currentTimeMillis()}"
+                pendingTr = tr
+                val now = System.currentTimeMillis()
+                val init = mutableMapOf<String, Any>(
+                    "id" to tr,
+                    "upiId" to upiId,
+                    "payeeName" to payeeName,
+                    "amount" to (amount ?: ""),
+                    "note" to DONATION_NOTE,
+                    "status" to "INITIATED",
+                    "createdAtMs" to now,
+                    "updatedAtMs" to now
+                )
+
+                Log.d(TAG, "startDonation: creating donation doc $tr with $init")
+                db.collection("userProfiles").document(uid)
+                    .collection("donations").document(tr)
+                    .set(init)
+                    .addOnSuccessListener {
+                        Log.d(TAG, "startDonation: Firestore .set SUCCESS for $tr → launching chooser")
+                        val intent = Intent(Intent.ACTION_VIEW, buildUri(amount, tr))
+                        val chooser = Intent.createChooser(intent, "Pay with UPI")
+                        try {
+                            Log.d(TAG, "startDonation: startActivity(chooser)")
+                            context.startActivity(chooser)
+                        } catch (_: ActivityNotFoundException) {
+                            Log.e(TAG, "startDonation: no UPI app found")
+                            Toast.makeText(context, "No UPI app found. Install Google Pay / PhonePe / Paytm.", Toast.LENGTH_LONG).show()
+                            db.collection("userProfiles").document(uid)
+                                .collection("donations").document(tr)
+                                .update(mapOf("status" to "CANCELLED", "updatedAtMs" to System.currentTimeMillis()))
+                                .addOnSuccessListener { Log.d(TAG, "fallback: marked $tr as CANCELLED") }
+                                .addOnFailureListener { e -> Log.e(TAG, "fallback: failed to mark CANCELLED", e) }
+                        } catch (e: Exception) {
+                            Log.e(TAG, "startDonation: could not start UPI chooser", e)
+                            Toast.makeText(context, "Could not start UPI: ${e.message}", Toast.LENGTH_LONG).show()
+                            db.collection("userProfiles").document(uid)
+                                .collection("donations").document(tr)
+                                .update(mapOf("status" to "FAILURE", "updatedAtMs" to System.currentTimeMillis()))
+                                .addOnSuccessListener { Log.d(TAG, "fallback: marked $tr as FAILURE") }
+                                .addOnFailureListener { ex -> Log.e(TAG, "fallback: failed to mark FAILURE", ex) }
+                        }
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e(TAG, "startDonation: Firestore .set FAILED for $tr", e)
+                        Toast.makeText(context, "Failed to log donation: ${e.message}", Toast.LENGTH_SHORT).show()
+                    }
+            }
+        }
+    }
+}
+
+/* =====================  Helpers  ===================== */
+
+private fun openUpiChooser(
+    context: android.content.Context,
+    upiId: String,
+    payeeName: String,
+    amount: String?,
+    note: String
+) {
+    val uri = buildUpiUri(upiId, payeeName, amount, note)
+    val chooser = Intent.createChooser(Intent(Intent.ACTION_VIEW, uri), "Pay with UPI")
+    try {
+        context.startActivity(chooser)
+    } catch (_: ActivityNotFoundException) {
+        Toast.makeText(context, "No UPI app found. Install Google Pay / PhonePe / Paytm.", Toast.LENGTH_LONG).show()
+    }
+}
+
+private fun buildUpiUri(
+    upiId: String,
+    payeeName: String,
+    amount: String?, // null => no &am
+    note: String,
+    tr: String = "HP-" + System.currentTimeMillis()
+): Uri {
+    val sb = StringBuilder()
+        .append("upi://pay")
+        .append("?pa=").append(upiId)
+        .append("&pn=").append(Uri.encode(payeeName))
+    if (!amount.isNullOrBlank()) sb.append("&am=").append(Uri.encode(amount))
+    sb.append("&tn=").append(Uri.encode(note))
+        .append("&tr=").append(Uri.encode(tr))
+        .append("&cu=INR")
+    return Uri.parse(sb.toString())
+}
+
 private fun shareText(context: android.content.Context, title: String, text: String) {
     val intent = Intent(Intent.ACTION_SEND).apply {
         type = "text/plain"
@@ -327,4 +517,46 @@ private fun shareText(context: android.content.Context, title: String, text: Str
         putExtra(Intent.EXTRA_SUBJECT, title)
     }
     context.startActivity(Intent.createChooser(intent, title))
+}
+
+private fun parseUpiResponse(response: String?): Map<String, String> {
+    if (response.isNullOrBlank()) return emptyMap()
+    return response.split("&").mapNotNull { pair ->
+        val idx = pair.indexOf('=')
+        if (idx <= 0) null
+        else pair.substring(0, idx).trim().lowercase() to pair.substring(idx + 1).trim()
+    }.toMap()
+}
+
+private fun mapUpiStatus(raw: String?): String {
+    return when (raw?.uppercase()) {
+        "SUCCESS"   -> "SUCCESS"
+        "FAILURE"   -> "FAILURE"
+        "SUBMITTED" -> "SUBMITTED"
+        "PENDING"   -> "SUBMITTED"
+        "CANCELLED" -> "CANCELLED"
+        else        -> "UNKNOWN"
+    }
+}
+
+/* ---------- Quick amount pills (unique name to avoid conflicts) ---------- */
+@Composable
+private fun QuickAmountPills(
+    labels: List<String>,
+    onClick: (String) -> Unit
+) {
+    Column {
+        val maxPerRow = 3
+        labels.chunked(maxPerRow).forEach { row ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                row.forEach { text ->
+                    AssistChip(onClick = { onClick(text) }, label = { Text(text) })
+                }
+            }
+            Spacer(Modifier.height(8.dp))
+        }
+    }
 }
