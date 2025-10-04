@@ -170,6 +170,26 @@ class RamakotiRepository @Inject constructor(
         return snap.getLong("totalCount")?.toInt()
     }
 
+    /**
+     * ✅ Lifetime total from committed batches ONLY.
+     * Sums up committed batches (capped at 108 per batch to be safe with legacy docs).
+     */
+    suspend fun readCommittedTotalCount(): Int {
+        val uid = userId()
+        val committed = batchesCol(uid)
+            .whereEqualTo("status", "committed")
+            .get()
+            .await()
+
+        // Prefer completedCells if present; cap at 108 to avoid over-counting.
+        var total = 0
+        for (doc in committed.documents) {
+            val cellsCount = (doc.getLong("completedCells")?.toInt() ?: 108).coerceAtMost(108)
+            total += cellsCount
+        }
+        return total
+    }
+
     /* --------------------------------- Helpers -------------------------------- */
 
     private fun userId(): String =

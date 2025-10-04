@@ -108,6 +108,9 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.10.1'                     // remove if only using kotlinx-serialization
     implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3'// remove if only using Gson
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'                    // remove if not calling external APIs
+//=======GIF support via Coil===================
+    implementation("io.coil-kt:coil-compose:2.6.0")
+    implementation("io.coil-kt:coil-gif:2.6.0")
 
     // ===== Optional security (remove if not encrypting) =====
     implementation 'androidx.security:security-crypto:1.1.0-alpha03'

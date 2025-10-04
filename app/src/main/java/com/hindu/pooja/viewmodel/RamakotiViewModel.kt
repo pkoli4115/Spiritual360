@@ -1,5 +1,6 @@
 package com.hindu.pooja.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.hindu.pooja.feature.ramakoti.data.RamakotiRepository
@@ -27,8 +28,8 @@ class RamakotiViewModel @Inject constructor(
     private val _completed = MutableStateFlow(0)
     val completed: StateFlow<Int> = _completed.asStateFlow()
 
-    private val _totalCount = MutableStateFlow(0)
-    val totalCount: StateFlow<Int> = _totalCount.asStateFlow()
+    private val _totalCommitted = MutableStateFlow(0)
+    val totalCount: StateFlow<Int> = _totalCommitted.asStateFlow()
 
     private val _showCelebration = MutableStateFlow(false)
     val showCelebration: StateFlow<Boolean> = _showCelebration.asStateFlow()
@@ -36,76 +37,102 @@ class RamakotiViewModel @Inject constructor(
     private val _audioMode = MutableStateFlow(false)
     val audioMode: StateFlow<Boolean> = _audioMode.asStateFlow()
 
+    // ✅ Threshold temporarily lowered for testing; revert to 108 for production
+    private val BATCH_SIZE = 108
+
     fun init(language: String) {
         viewModelScope.launch {
-            _language.value = language
+            try {
+                _language.value = language
+                Log.d("RamakotiVM", "🟢 init(language=$language)")
 
-            // Try to load an existing in-progress batch
-            var pair: Pair<String?, List<Any?>> = repo.getActiveBatchOrNull(language)
-            // If none, create one so the grid never appears empty
-            if (pair.first == null) {
-                val created = repo.createNewInProgressBatch(language)
-                pair = created.first to created.second
+                // load or create a batch
+                var pair = repo.getActiveBatchOrNull(language)
+                if (pair.first == null) {
+                    val created = repo.createNewInProgressBatch(language)
+                    pair = created.first to created.second
+                    Log.d("RamakotiVM", "🆕 Created new in-progress batch ${pair.first}")
+                }
+
+                currentBatchId = pair.first
+                _cells.value = rawToCellState(pair.second, language)
+                _completed.value = _cells.value.count { it.filled }
+
+                // read committed-only total
+                _totalCommitted.value = repo.readCommittedTotalCount() ?: 0
+                _showCelebration.value = false
+
+                // edge case: last batch already complete
+                if (_completed.value >= BATCH_SIZE && currentBatchId != null) {
+                    val finishedId = currentBatchId!!
+                    Log.d("RamakotiVM", "⚙️ Auto-committing already complete batch $finishedId")
+                    repo.commitBatchAndIncrementTotal(finishedId)
+                    _totalCommitted.value = repo.readCommittedTotalCount() ?: 0
+                    _showCelebration.value = true
+                    Log.d("RamakotiVM", "🎉 Celebration triggered (auto-commit) for $finishedId")
+
+                    val (newId, newCells) = repo.createNewInProgressBatch(_language.value)
+                    currentBatchId = newId
+                    _cells.value = rawToCellState(newCells, _language.value)
+                    _completed.value = 0
+                }
+
+            } catch (e: Exception) {
+                Log.e("RamakotiVM", "❌ init() failed", e)
             }
-
-            currentBatchId = pair.first
-            val raw: List<Any?> = pair.second
-            _cells.value = rawToCellState(raw, language)
-            _completed.value = _cells.value.count { it.filled }
-            _totalCount.value = repo.readTotalCount() ?: 0
-            _showCelebration.value = false
         }
     }
 
     fun switchLanguage(lang: String) { _language.value = lang }
     fun setAudioMode(enabled: Boolean) { _audioMode.value = enabled }
     fun dismissCelebration() { _showCelebration.value = false }
-    fun undoLastFillNoop() { /* reserved for future */ }
+    fun undoLastFillNoop() { /* reserved for undo later */ }
 
     fun fillNextCellWithMantra() {
         viewModelScope.launch {
-            val batchId = currentBatchId ?: return@launch
+            try {
+                val batchId = currentBatchId ?: return@launch
 
-            val next = _cells.value.firstOrNull { !it.filled } ?: return@launch
+                val nextEmpty = _cells.value.firstOrNull { !it.filled } ?: return@launch
+                val now = System.currentTimeMillis()
+                val mantra = when (_language.value.lowercase()) {
+                    "hi" -> "जय श्री राम"
+                    "te" -> "జై శ్రీ రామ్"
+                    else -> "Jai Shri Ram"
+                }
 
-            val now = System.currentTimeMillis()
-            val text = when (_language.value.lowercase()) {
-                "hi" -> "जय श्री राम"
-                "te" -> "జై శ్రీ రామ్"
-                else -> "Jai Shri Ram"
-            }
+                repo.fillCell(batchId, nextEmpty.index, mantra, _language.value, now)
+                Log.d("RamakotiVM", "✍️ Filled cell ${nextEmpty.index} in batch $batchId")
 
-            // Persist the next cell
-            repo.fillCell(
-                batchId = batchId,
-                index = next.index,
-                value = text,
-                lang = _language.value,
-                ts = now
-            )
+                // refresh UI
+                val refreshed = repo.getActiveBatchOrNull(_language.value)
+                currentBatchId = refreshed.first
+                _cells.value = rawToCellState(refreshed.second, _language.value)
+                _completed.value = _cells.value.count { it.filled }
+                Log.d("RamakotiVM", "📊 Progress updated = ${_completed.value}/$BATCH_SIZE")
 
-            // Refresh current batch state
-            val refreshed = repo.getActiveBatchOrNull(_language.value)
-            currentBatchId = refreshed.first
-            _cells.value = rawToCellState(refreshed.second, _language.value)
-            _completed.value = _cells.value.count { it.filled }
+                // check threshold
+                if (_completed.value >= BATCH_SIZE) {
+                    Log.d("RamakotiVM", "✅ Batch $batchId complete; committing...")
+                    repo.commitBatchAndIncrementTotal(batchId)
+                    _totalCommitted.value = repo.readCommittedTotalCount() ?: 0
+                    _showCelebration.value = true
+                    Log.d("RamakotiVM", "🎉 Celebration triggered (manual complete) for $batchId")
 
-            // If completed -> commit & immediately start a brand-new batch
-            if (_completed.value == 108) {
-                repo.commitBatchAndIncrementTotal(batchId)
+                    // create next batch
+                    val (newId, newCells) = repo.createNewInProgressBatch(_language.value)
+                    currentBatchId = newId
+                    _cells.value = rawToCellState(newCells, _language.value)
+                    _completed.value = 0
+                }
 
-                // Update lifetime total from server (falls back to +108 if null)
-                _totalCount.value = repo.readTotalCount() ?: (_totalCount.value + 108)
-                _showCelebration.value = true
-
-                // 🔁 Auto-create and load the next in-progress batch
-                val (newId, newCells) = repo.createNewInProgressBatch(_language.value)
-                currentBatchId = newId
-                _cells.value = rawToCellState(newCells, _language.value)
-                _completed.value = 0
+            } catch (e: Exception) {
+                Log.e("RamakotiVM", "❌ fillNextCellWithMantra failed", e)
             }
         }
     }
+
+    /* ----------------------- helpers ----------------------- */
 
     private fun rawToCellState(raw: List<Any?>, langDefault: String): List<CellState> {
         return raw.mapIndexed { i, anyItem ->
