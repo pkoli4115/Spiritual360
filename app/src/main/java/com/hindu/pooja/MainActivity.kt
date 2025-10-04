@@ -2,6 +2,7 @@ package com.hindu.pooja
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.KeyEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.padding
@@ -22,11 +23,35 @@ import com.facebook.FacebookSdk
 import com.facebook.appevents.AppEventsLogger
 import com.facebook.CallbackManager
 
+// ---- Ramakoti audio key bus (single-file helper) ----
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+
+enum class VolumeEvent { UP, DOWN }
+
+object RamakotiAudioKeyBus {
+    // only capture keys when a listener on Ramakoti screen is active & audio mode is ON
+    @Volatile private var active: Boolean = false
+    fun setActive(enabled: Boolean) { active = enabled }
+
+    val events = MutableSharedFlow<VolumeEvent>(
+        replay = 0,
+        extraBufferCapacity = 64,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
+
+    fun emit(e: VolumeEvent): Boolean {
+        if (!active) return false
+        events.tryEmit(e)
+        return true
+    }
+}
+// -----------------------------------------------------
+
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     companion object {
-        // ✅ Shared CallbackManager instance for FB login
         lateinit var fbCallbackManager: CallbackManager
             private set
     }
@@ -48,8 +73,24 @@ class MainActivity : ComponentActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        // ✅ Forward to shared callback manager
         fbCallbackManager.onActivityResult(requestCode, resultCode, data)
+    }
+
+    // Intercept hardware volume keys while Audio Mode is active on Ramakoti screen
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (event.action == KeyEvent.ACTION_DOWN) {
+            when (event.keyCode) {
+                KeyEvent.KEYCODE_VOLUME_UP -> {
+                    val consumed = RamakotiAudioKeyBus.emit(VolumeEvent.UP)
+                    if (consumed) return true
+                }
+                KeyEvent.KEYCODE_VOLUME_DOWN -> {
+                    val consumed = RamakotiAudioKeyBus.emit(VolumeEvent.DOWN)
+                    if (consumed) return true
+                }
+            }
+        }
+        return super.dispatchKeyEvent(event)
     }
 }
 

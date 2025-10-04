@@ -5,7 +5,7 @@ plugins {
     id 'dagger.hilt.android.plugin'
     id 'com.google.gms.google-services'
     id 'com.google.firebase.crashlytics'
-    id 'com.google.firebase.firebase-perf'
+    // id 'com.google.firebase.firebase-perf'   // ← removed (not using Perf)
     id 'org.jetbrains.kotlin.plugin.serialization' version '1.9.22'
 }
 
@@ -28,9 +28,7 @@ android {
             debuggable false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
-        debug {
-            debuggable true
-        }
+        debug { debuggable true }
     }
 
     compileOptions {
@@ -38,92 +36,81 @@ android {
         targetCompatibility JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = "17"
-    }
+    kotlinOptions { jvmTarget = "17" }
 
-    buildFeatures {
-        compose true
-    }
+    buildFeatures { compose true }
 
     composeOptions {
         kotlinCompilerExtensionVersion "1.5.10"
     }
 
     packagingOptions {
-        resources {
-            excludes += ["/META-INF/{AL2.0,LGPL2.1}"]
-        }
+        resources { excludes += ["/META-INF/{AL2.0,LGPL2.1}"] }
     }
 }
 
 dependencies {
-    // --- Compose Core & Material3 ---
-    implementation 'com.android.billingclient:billing-ktx:6.1.0' //Billing
+    // ===== Compose =====
     implementation platform('androidx.compose:compose-bom:2023.10.01')
     implementation 'androidx.compose.ui:ui'
     implementation 'androidx.compose.ui:ui-tooling-preview'
     implementation 'androidx.compose.material3:material3'
     implementation 'androidx.compose.material:material-icons-extended'
     implementation 'androidx.activity:activity-compose:1.8.2'
-    implementation "androidx.compose.foundation:foundation"
+    implementation 'androidx.compose.foundation:foundation'
     implementation 'androidx.compose.ui:ui-tooling'
 
-    // --- Firebase ---
-    implementation platform('com.google.firebase:firebase-bom:32.7.0')
-    implementation 'com.google.firebase:firebase-auth-ktx'
-    implementation 'com.google.firebase:firebase-firestore-ktx'
-    implementation 'com.google.firebase:firebase-storage-ktx'
-    implementation 'com.google.firebase:firebase-analytics-ktx'
-    implementation 'com.google.firebase:firebase-crashlytics-ktx'
-    implementation 'com.google.firebase:firebase-perf-ktx'
-    implementation 'com.google.firebase:firebase-storage-ktx:20.3.0'
+    // ===== Navigation =====
+    implementation 'androidx.navigation:navigation-compose:2.7.7'
 
+    // ===== Lifecycle =====
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.2'
 
-    // --- Google Sign-In ---
-    implementation 'com.google.android.gms:play-services-auth:20.7.0'
-    // --- Facebook Sign-In ---
-
-    implementation 'com.facebook.android:facebook-android-sdk:latest.release'
-
-    // --- Hilt DI ---
+    // ===== Hilt =====
     implementation 'com.google.dagger:hilt-android:2.50'
     kapt 'com.google.dagger:hilt-compiler:2.50'
     implementation 'androidx.hilt:hilt-navigation-compose:1.1.0'
 
-    // --- Navigation ---
-    implementation 'androidx.navigation:navigation-compose:2.7.7'
+    // ===== WorkManager (reminders) =====
+    implementation "androidx.work:work-runtime-ktx:2.9.0"
 
-    // --- ViewModel + Lifecycle ---
-    implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0'
-    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.2'
+    // ===== Room (Ramakoti storage) =====
+    implementation "androidx.room:room-runtime:2.6.1"
+    implementation "androidx.room:room-ktx:2.6.1"
+    kapt "androidx.room:room-compiler:2.6.1"
 
-    // --- Coil (image loading) ---
-    implementation("io.coil-kt:coil-compose:2.4.0")
-    implementation("io.coil-kt:coil-compose:2.6.0")
+    // ===== DataStore (prefs: reminders + language) =====
+    implementation "androidx.datastore:datastore-preferences:1.1.1"
 
+    // ===== Firebase (BOM keeps versions aligned) =====
+    implementation platform('com.google.firebase:firebase-bom:33.3.0')
+    implementation 'com.google.firebase:firebase-auth-ktx'
+    implementation 'com.google.firebase:firebase-firestore-ktx'
+    implementation 'com.google.firebase:firebase-storage-ktx'     // keep if you upload avatars/images
+    implementation 'com.google.firebase:firebase-analytics-ktx'   // optional; remove if you don’t want analytics
+    implementation 'com.google.firebase:firebase-crashlytics-ktx'
+    // implementation 'com.google.firebase:firebase-perf-ktx'      // ← removed
 
-    // --- Coroutines/Flow ---
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    // ===== Sign-in =====
+    implementation 'com.google.android.gms:play-services-auth:20.7.0'
+    implementation 'com.facebook.android:facebook-android-sdk:latest.release' // pin a version in prod
+
+    // ===== Coil (images) =====
+    implementation "io.coil-kt:coil-compose:2.6.0"
+
+    // ===== Coroutines =====
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3"
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3'
 
-    // --- DataStore (optional, for XP saving etc) ---
-    implementation "androidx.datastore:datastore-preferences:1.0.0"
+    // ===== Optional utilities (remove if unused) =====
+    implementation "com.google.accompanist:accompanist-flowlayout:0.30.1" // remove if not using flow layouts
+    implementation 'com.google.code.gson:gson:2.10.1'                     // remove if only using kotlinx-serialization
+    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3'// remove if only using Gson
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'                    // remove if not calling external APIs
 
-    // --- Security (optional, for encrypted prefs) ---
+    // ===== Optional security (remove if not encrypting) =====
     implementation 'androidx.security:security-crypto:1.1.0-alpha03'
-
-    // --- Accompanist (for flow layouts etc) ---
-    implementation "com.google.accompanist:accompanist-flowlayout:0.30.1"
-
-    // --- Gson (optional) ---
-    implementation 'com.google.code.gson:gson:2.10.1'
-
-    // --- Kotlin Serialization (optional, for API/JSON parsing) ---
-    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3'
-
-    // --- OkHttp (for country/state API if used) ---
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
 }
 
 apply plugin: 'com.google.gms.google-services'

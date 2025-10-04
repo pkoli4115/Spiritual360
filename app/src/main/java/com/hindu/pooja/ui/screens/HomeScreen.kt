@@ -6,6 +6,7 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
@@ -17,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.google.firebase.auth.FirebaseAuth
@@ -35,6 +37,7 @@ fun HomeScreen(
     val context = LocalContext.current
     val userName = FirebaseAuth.getInstance().currentUser?.displayName ?: "User"
 
+    // Your existing sections
     val categories = listOf(
         "Daily Poojas" to "daily_index_te.json",
         "Vrathams / Nomulu" to "vrathams_index_te.json",
@@ -54,14 +57,14 @@ fun HomeScreen(
     }
 
     LaunchedEffect(Unit) {
-        delay(1000)
+        delay(1000) // cover JSON read / shimmer
         isLoading = false
     }
 
-    // Small action row visibility
+    // Donate row visibility
     var showDonateRow by rememberSaveable { mutableStateOf(true) }
 
-    // Same config as Profile/DonationSection
+    // Use DonationConfig from DonationSection.kt (do NOT redeclare here)
     val upiId = DonationConfig.upiId
     val payeeName = DonationConfig.payeeName
     val note = DonationConfig.note
@@ -79,31 +82,38 @@ fun HomeScreen(
                 .fillMaxSize()
                 .padding(12.dp)
         ) {
+            // Greeting
             item {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp)
-                ) {
-                    Text(
-                        text = "🙏 Jai Sri Ram $userName",
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
+                Text(
+                    text = "🙏 Jai Sri Ram $userName",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
             }
 
-            // Compact row: Donate | Details | Dismiss
+            // 🔸 Featured section (header + single Ramakoti card)
+            item {
+                FeaturedSectionHeader(
+                    onViewAll = { navController.navigate(Screen.Featured.route) }
+                )
+                Spacer(Modifier.height(8.dp))
+                FeaturedRamakotiCard(
+                    onOpen = { navController.navigate(Screen.Ramakoti.route) }
+                )
+                Spacer(Modifier.height(16.dp))
+            }
+
+            // Donate | Details | Dismiss
             if (showDonateRow) {
                 item {
                     DonateActionRow(
                         onDonate = {
-                            // Open chooser WITHOUT preset amount so user can type
                             launchUpiChooserIntent(
                                 context = context,
                                 upiId = upiId,
                                 payeeName = payeeName,
-                                amount = null,
+                                amount = null, // user types amount
                                 note = note
                             )
                         },
@@ -114,7 +124,7 @@ fun HomeScreen(
                 }
             }
 
-            // Example extra CTA
+            // Extra CTA
             item {
                 Button(
                     onClick = { navController.navigate("find_it_game/hidden_objects_shiva_scene.json") },
@@ -125,6 +135,7 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(8.dp))
             }
 
+            // Existing content sections (unchanged)
             categoryData.forEach { (title, poojaList) ->
                 val filteredItems = if (title == "Daily Poojas") {
                     poojaList.filter { it.scrollable == true }
@@ -165,6 +176,58 @@ fun HomeScreen(
     }
 }
 
+/* ---------------- Featured UI (local & self-contained) ---------------- */
+
+@Composable
+private fun FeaturedSectionHeader(onViewAll: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "Featured",
+            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold)
+        )
+        Text(
+            text = "View All  ➜",
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier
+                .clickable { onViewAll() }
+                .padding(4.dp)
+        )
+    }
+}
+
+@Composable
+private fun FeaturedRamakotiCard(onOpen: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 4.dp)
+            .clickable { onOpen() }
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Text("Ramakoti", style = MaterialTheme.typography.titleMedium)
+            Text(
+                "Write Jai Sri Ram (English / हिंदी / తెలుగు). Unlimited. Daily streaks, reminders & cloud sync.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(Modifier.height(4.dp))
+            Button(onClick = onOpen) { Text("Open Ramakoti") }
+        }
+    }
+}
+
+/* ---------------- Donate row & placeholders (kept here to avoid unresolved refs) ---------------- */
+
 @Composable
 private fun DonateActionRow(
     onDonate: () -> Unit,
@@ -193,7 +256,10 @@ fun ShimmerPlaceholderRow() {
                     .padding(end = 8.dp)
                     .width(180.dp)
                     .height(230.dp)
-                    .background(Color.LightGray.copy(alpha = 0.2f), shape = MaterialTheme.shapes.medium)
+                    .background(
+                        Color.LightGray.copy(alpha = 0.2f),
+                        shape = MaterialTheme.shapes.medium
+                    )
             )
         }
     }

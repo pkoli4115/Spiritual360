@@ -1,4 +1,3 @@
-// app/src/main/java/com/hindu/pooja/ui/navigation/HinduPoojaNavHost.kt
 package com.hindu.pooja.ui.navigation
 
 import androidx.compose.material3.Text
@@ -11,6 +10,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.google.firebase.auth.FirebaseAuth
+import com.hindu.pooja.feature.ramakoti.ui.RamakotiScreen
+import com.hindu.pooja.feature.ramakoti.ui.RamakotiIntroScreen
 import com.hindu.pooja.ui.kids.findit.FindItGameScreen
 import com.hindu.pooja.ui.kids.findit.GameResultScreen
 import com.hindu.pooja.ui.login.LoginScreen
@@ -35,14 +36,16 @@ fun HinduPoojaNavHost(
         startDestination = start,
         modifier = modifier
     ) {
-        // --- already in your graph ---
+        // --- Core screens ---
         composable(Screen.FirstTimeProfile.route) {
             FirstTimeProfileScreen(navController, onCompletedRoute = Screen.Home.route)
         }
         composable(Screen.Home.route) {
             HomeScreen(navController = navController, profileViewModel = profileViewModel)
         }
-        composable(Screen.Featured.route) { Text("Featured") }
+        composable(Screen.Featured.route) {
+            FeaturedScreen(navController = navController)
+        }
         composable(Screen.Kids.route) { Text("Kids Zone Coming Soon") }
         composable(Screen.Profile.route) {
             ProfileScreen(
@@ -63,9 +66,25 @@ fun HinduPoojaNavHost(
         composable(Screen.Login.route) { LoginScreen(navController = navController) }
         composable(Screen.Splash.route) { Text("Splash Screen (placeholder)") }
 
-        // --- ✅ content routes used from Home ---
+        // --- Ramakoti flow ---
+        // Use the existing Screen.Ramakoti to open the INTRO first
+        composable(Screen.Ramakoti.route) {
+            RamakotiIntroScreen(
+                navController = navController,
+                onNextRoute = "ramakoti/writer"
+            )
+        }
+        // Writer page route (navigated from Intro NEXT)
+        composable("ramakoti/writer") {
+            RamakotiScreen(navController = navController)
+        }
 
-        // Poojas list by file
+        // Donations placeholder
+        composable(Screen.Donations.route) {
+            Text("Donations screen (wire your UPI/flow here)")
+        }
+
+        // --- Content routes (Home) ---
         composable(
             route = Screen.Poojas.route,
             arguments = listOf(navArgument("fileName") { type = NavType.StringType })
@@ -75,7 +94,6 @@ fun HinduPoojaNavHost(
             PoojasScreen(navController = navController, fileName = fileName)
         }
 
-        // Vrathams list by file
         composable(
             route = Screen.Vrathams.route,
             arguments = listOf(navArgument("fileName") { type = NavType.StringType })
@@ -85,7 +103,6 @@ fun HinduPoojaNavHost(
             VrathamsScreen(navController = navController, fileName = fileName)
         }
 
-        // Ashtottaras list by file
         composable(
             route = Screen.Ashtottaras.route,
             arguments = listOf(navArgument("fileName") { type = NavType.StringType })
@@ -95,7 +112,6 @@ fun HinduPoojaNavHost(
             AshtottarasScreen(navController = navController, fileName = fileName)
         }
 
-        // Single pooja detail
         composable(
             route = Screen.PoojaDetail.route,
             arguments = listOf(navArgument("fileName") { type = NavType.StringType })
@@ -105,7 +121,7 @@ fun HinduPoojaNavHost(
             PoojaDetailScreen(navController = navController, fileName = fileName)
         }
 
-        // ---------- ✅ NEW: Find-It Game ----------
+        // ---------- Find-It ----------
         composable(
             route = Screen.FindItGame.route,
             arguments = listOf(navArgument("levelFile") { type = NavType.StringType })
@@ -115,7 +131,7 @@ fun HinduPoojaNavHost(
             FindItGameScreen(levelFile = levelFile, navController = navController)
         }
 
-        // ---------- ✅ NEW: Game Result ----------
+        // ---------- Game Result ----------
         composable(
             route = Screen.GameResult.route,
             arguments = listOf(navArgument("levelName") { type = NavType.StringType })

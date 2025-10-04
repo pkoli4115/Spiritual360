@@ -1,0 +1,6 @@
+<resources>
+    <!-- Safe defaults; flip to true only after consent flow -->
+    <bool name="com.facebook.sdk.AutoInitEnabled">true</bool>
+    <bool name="com.facebook.sdk.AutoLogAppEventsEnabled">true</bool>
+    <bool name="com.facebook.sdk.AdvertiserIDCollectionEnabled">false</bool>
+</resources>

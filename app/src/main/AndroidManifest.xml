@@ -10,15 +10,20 @@
         </intent>
     </queries>
 
-    <!-- Network access for Firebase, Facebook, etc. -->
+    <!-- Permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Runtime permission on Android 13+; request it from UI before posting notifications -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- To re-schedule WorkManager reminders after device reboot -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
         android:name=".HinduPoojaApp"
         android:allowBackup="true"
         android:label="@string/app_name"
         android:icon="@mipmap/ic_launcher"
-        android:theme="@style/Theme.HinduPoojaApp">
+        android:theme="@style/Theme.HinduPoojaApp"
+        android:enableOnBackInvokedCallback="true">
 
         <!-- Main launcher activity -->
         <activity
@@ -29,6 +34,15 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Ramakoti reminders: re-schedule on boot -->
+        <receiver
+            android:name=".feature.ramakoti.reminders.BootReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
 
         <!-- Facebook SDK configuration -->
         <meta-data
@@ -61,5 +75,6 @@
                 <data android:scheme="@string/fb_login_protocol_scheme" />
             </intent-filter>
         </activity>
+
     </application>
 </manifest>
