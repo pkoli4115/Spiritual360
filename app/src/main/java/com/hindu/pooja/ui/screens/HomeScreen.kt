@@ -20,6 +20,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.google.firebase.auth.FirebaseAuth
@@ -38,7 +39,6 @@ fun HomeScreen(
     val context = LocalContext.current
     val userName = FirebaseAuth.getInstance().currentUser?.displayName ?: "User"
 
-    // Existing sections
     val categories = listOf(
         "Daily Poojas" to "daily_index_te.json",
         "Vrathams / Nomulu" to "vrathams_index_te.json",
@@ -58,19 +58,17 @@ fun HomeScreen(
     }
 
     LaunchedEffect(Unit) {
-        delay(1000) // cover JSON read / shimmer
+        delay(1000)
         isLoading = false
     }
 
-    // Donate row visibility
     var showDonateRow by rememberSaveable { mutableStateOf(true) }
 
-    // Donation config (from your DonationSection.kt)
     val upiId = DonationConfig.upiId
     val payeeName = DonationConfig.payeeName
     val note = DonationConfig.note
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(id = R.drawable.home_screen),
             contentDescription = null,
@@ -93,7 +91,7 @@ fun HomeScreen(
                 )
             }
 
-            // Featured section (header + horizontal cards)
+            // --- Featured header + cards row ---
             item {
                 FeaturedSectionHeader(
                     onViewAll = { navController.navigate(Screen.Featured.route) }
@@ -111,7 +109,7 @@ fun HomeScreen(
                         )
                     }
                     item {
-                        // OPEN SIMPLE TELUGU READER (not flip)
+                        // Keep this opening the wiki/reader flow
                         FeaturedBalaKandaCard(
                             onOpen = { navController.navigate(Screen.BalaKandaWikiSimple.route) }
                         )
@@ -121,7 +119,7 @@ fun HomeScreen(
                 Spacer(Modifier.height(16.dp))
             }
 
-            // Donate | Details | Dismiss
+            // Donate row
             if (showDonateRow) {
                 item {
                     DonateActionRow(
@@ -130,7 +128,7 @@ fun HomeScreen(
                                 context = context,
                                 upiId = upiId,
                                 payeeName = payeeName,
-                                amount = null, // user types amount in app
+                                amount = null,
                                 note = note
                             )
                         },
@@ -141,12 +139,10 @@ fun HomeScreen(
                 }
             }
 
-            // Extra CTA
+            // Find-It CTA
             item {
                 Button(
-                    onClick = {
-                        navController.navigate("find_it_game/hidden_objects_shiva_scene.json")
-                    },
+                    onClick = { navController.navigate("find_it_game/hidden_objects_shiva_scene.json") },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 12.dp)
@@ -154,7 +150,7 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(8.dp))
             }
 
-            // Existing content sections (unchanged)
+            // Content sections
             categoryData.forEach { (title, poojaList) ->
                 val filteredItems = if (title == "Daily Poojas") {
                     poojaList.filter { it.scrollable == true }
@@ -195,7 +191,10 @@ fun HomeScreen(
     }
 }
 
-/* ---------------- Featured UI (local & self-contained) ---------------- */
+/* ---------------- Featured UI ---------------- */
+
+private val FeaturedCardWidth = 300.dp
+private val FeaturedCardHeight = 176.dp
 
 @Composable
 private fun FeaturedSectionHeader(onViewAll: () -> Unit) {
@@ -208,6 +207,8 @@ private fun FeaturedSectionHeader(onViewAll: () -> Unit) {
     ) {
         Text(
             text = "Featured",
+            // 🔶 Match “Daily Poojas” saffron
+            color = MaterialTheme.colorScheme.primary,
             style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold)
         )
         Text(
@@ -225,22 +226,28 @@ private fun FeaturedSectionHeader(onViewAll: () -> Unit) {
 private fun FeaturedRamakotiCard(onOpen: () -> Unit) {
     Card(
         modifier = Modifier
-            .width(280.dp)
-            .heightIn(min = 160.dp)
+            .width(FeaturedCardWidth)
+            .height(FeaturedCardHeight)
             .clickable { onOpen() }
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Text("Ramakoti", style = MaterialTheme.typography.titleMedium)
             Text(
                 "Write Jai Sri Ram (English / हिंदी / తెలుగు). Unlimited. Daily streaks, reminders & cloud sync.",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis
             )
-            Spacer(Modifier.height(4.dp))
-            Button(onClick = onOpen) { Text("Open Ramakoti") }
+            Spacer(Modifier.weight(1f)) // keep buttons aligned at bottom
+            Button(onClick = onOpen, modifier = Modifier.fillMaxWidth()) {
+                Text("Open Ramakoti")
+            }
         }
     }
 }
@@ -249,22 +256,28 @@ private fun FeaturedRamakotiCard(onOpen: () -> Unit) {
 private fun FeaturedBalaKandaCard(onOpen: () -> Unit) {
     Card(
         modifier = Modifier
-            .width(280.dp)
-            .heightIn(min = 160.dp)
+            .width(FeaturedCardWidth)
+            .height(FeaturedCardHeight)
             .clickable { onOpen() }
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Text("Bala Kanda — Lessons", style = MaterialTheme.typography.titleMedium)
             Text(
-                "Read child-friendly Telugu lessons + quiz.",
+                "Child-friendly Telugu lessons + quiz (simple reader view).",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis
             )
-            Spacer(Modifier.height(4.dp))
-            Button(onClick = onOpen) { Text("Open Bala Kanda") }
+            Spacer(Modifier.weight(1f))
+            Button(onClick = onOpen, modifier = Modifier.fillMaxWidth()) {
+                Text("Open Bala Kanda")
+            }
         }
     }
 }
@@ -308,12 +321,12 @@ fun ShimmerPlaceholderRow() {
     }
 }
 
-/* ---------------- UPI helpers (chooser) ---------------- */
+/* ---------------- UPI helpers ---------------- */
 
 private fun buildUpiUri(
     upiId: String,
     payeeName: String,
-    amount: String?, // null => user will enter amount in app
+    amount: String?,
     note: String,
     tr: String = "HP-" + System.currentTimeMillis()
 ): Uri {
@@ -332,7 +345,7 @@ private fun launchUpiChooserIntent(
     context: android.content.Context,
     upiId: String,
     payeeName: String,
-    amount: String?, // pass null to let user type amount
+    amount: String?,
     note: String
 ) {
     val uri = buildUpiUri(upiId, payeeName, amount, note)
