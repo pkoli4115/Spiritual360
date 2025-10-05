@@ -1,0 +1,2965 @@
+{
+  "id": "ramayana_bala_kanda",
+  "title": {
+    "en": "Ramayana — Bala Kanda (Flip Cards)",
+    "te": "రామాయణం — బాలకాండము (ఫ్లిప్ కార్డులు)",
+    "hi": "रामायण — बाल कांड (फ्लिप कार्ड)"
+  },
+  "version": "1.4.0",
+  "created_at": "2025-10-05T06:30:43.083611+00:00",
+  "languages": [
+    "en",
+    "te",
+    "hi"
+  ],
+  "tts": {
+    "default_language": "en",
+    "available_languages": [
+      "en",
+      "te",
+      "hi"
+    ]
+  },
+  "lessons": [
+    {
+      "id": "01_lesson_01",
+      "order": 1,
+      "title": {
+        "en": "Ayodhya & King Dasharatha",
+        "te": "అయోధ్య & రాజు దశరథుడు",
+        "hi": "अयोध्या और राजा दशरथ"
+      },
+      "flipCards": [
+        {
+          "lang": "en",
+          "front": {
+            "title": "Summary",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 1 Valmiki, Narada & the Birth of the Ramayana 100 5 20 Who is Vālmīki? The sage who composes the Rāmāyaṇa after asking Nārada the qualities of the ideal person (Rāma). Nārada’s list of virtues Truthful, valorous, compassionate, disciplined, devoted to dharma—pointing to Rāma."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Valmiki, Narada & the Birth of the Ramayana"
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "The sage who composes the Rāmāyaṇa after asking Nārada the qualities of the ideal person (Rāma)."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Nārada’s list of virtues"
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Truthful, valorous, compassionate, disciplined, devoted to dharma—pointing to Rāma."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Story",
+            "hint": ""
+          },
+          "back": "Inspiration for the epic Moved by a hunter killing a bird, Vālmīki utters the first śloka and is guided by Brahmā. Structure of the Rāmāyaṇa Seven Kāṇḍas, 24,000 verses, the life of Rāma as the model of dharma."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "సారాంశం",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 1 Valmiki, Narada & the Birth of the Ramayana 100 5 20 వాల్మీకి మహర్షి నారదుని వద్ద ఆదర్శ పురుషుడి గుణాలు అడిగి, రామాయణాన్ని రచించిన ఋషి. నారదుని గుణగణాలు సత్యవంతుడు, శౌర్యవంతుడు, కరుణగుణం, నియమశీలి—ఇది రాముడి లక్షణాలు. మంగళ శ్లోకం జననం వేటగాడు పక్షిని చంపడంతో వాల్మీకి నుండి తొలి శ్లోకం ఉద్భవం; బ్రహ్మ ఆదేశం."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "నారదుని వద్ద ఆదర్శ పురుషుడి గుణాలు అడిగి, రామాయణాన్ని రచించిన ఋషి."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "సత్యవంతుడు, శౌర్యవంతుడు, కరుణగుణం, నియమశీలి—ఇది రాముడి లక్షణాలు."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "వేటగాడు పక్షిని చంపడంతో వాల్మీకి నుండి తొలి శ్లోకం ఉద్భవం; బ్రహ్మ ఆదేశం."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "ఏడు కాండాలు, 24,000 శ్లోకాలతో రామచరితం."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "కథ",
+            "hint": ""
+          },
+          "back": "రామాయణ నిర్మాణం ఏడు కాండాలు, 24,000 శ్లోకాలతో రామచరితం."
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "सारांश",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 1 Valmiki, Narada & the Birth of the Ramayana 100 5 20 वाल्मीकि और नारद आदर्श पुरुष के गुण पूछकर वाल्मीकि ने रामायण की रचना की—उत्तर श्रीराम हैं। गुणों की सूची सत्य, वीरता, करुणा, स्वसंयम, धर्म—ये राम के लक्षण हैं। पहला श्लोक शिकारी द्वारा पक्षी-वध से करुण श्लोक निकला; ब्रह्मा ने मार्ग दिखाया।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "आदर्श पुरुष के गुण पूछकर वाल्मीकि ने रामायण की रचना की—उत्तर श्रीराम हैं।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "सत्य, वीरता, करुणा, स्वसंयम, धर्म—ये राम के लक्षण हैं।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "शिकारी द्वारा पक्षी-वध से करुण श्लोक निकला; ब्रह्मा ने मार्ग दिखाया।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "सात कांड, 24,000 श्लोक—रामचरित।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "कथा",
+            "hint": ""
+          },
+          "back": "रामायण की रचना सात कांड, 24,000 श्लोक—रामचरित।"
+        }
+      ]
+    },
+    {
+      "id": "02_lesson_02",
+      "order": 2,
+      "title": {
+        "en": "Putrakameshti & Birth of Four Princes",
+        "te": "పుత్రకామేష్టి యజ్ఞం & నాలుగు కుమారుల జననం",
+        "hi": "पुत्रकामेष्टि यज्ञ व चारों पुत्रों का जन्म"
+      },
+      "flipCards": [
+        {
+          "lang": "en",
+          "front": {
+            "title": "Summary",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 2 Kusha–Lava and the Teaching of the Epic 100 5 20 Kusha–Lava Twin sons of Rāma and Sītā, trained by Vālmīki in music and the epic. Teaching the Epic They memorize and sing the Rāmāyaṇa with melody and emotion. Purpose of singing To transmit dharma, devotion, and the ideals embodied by Rāma."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Kusha–Lava and the Teaching of the Epic"
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Twin sons of Rāma and Sītā, trained by Vālmīki in music and the epic."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "They memorize and sing the Rāmāyaṇa with melody and emotion."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "To transmit dharma, devotion, and the ideals embodied by Rāma."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Story",
+            "hint": ""
+          },
+          "back": "Audience Sages and citizens, later even Rāma himself hears them."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "సారాంశం",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 2 Kusha–Lava and the Teaching of the Epic 100 5 20 కుశ-లవులు రామ-సీతల కుమారులు; వాల్మీకి వద్ద సంగీతంతో రామాయణం అభ్యసించారు. పాటగా బోధన భక్తి, ధర్మ బోధతో రాగభావాలతో పాడటం. పాట లక్ష్యం ధర్మాన్ని ప్రజలలో నూరిపోసే సంకల్పం."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "రామ-సీతల కుమారులు; వాల్మీకి వద్ద సంగీతంతో రామాయణం అభ్యసించారు."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "భక్తి, ధర్మ బోధతో రాగభావాలతో పాడటం."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "ధర్మాన్ని ప్రజలలో నూరిపోసే సంకల్పం."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "ఋషులు, ప్రజలు; తరువాత రాముడే వినెను."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "కథ",
+            "hint": ""
+          },
+          "back": "శ్రోతలు ఋషులు, ప్రజలు; తరువాత రాముడే వినెను."
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "सारांश",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 2 Kusha–Lava and the Teaching of the Epic 100 5 20 कुश–लव राम–सीता के पुत्र, वाल्मीकि के आश्रम में गान द्वारा रामायण सीखते। कथा का गान धर्म, भक्ति और भाव के साथ गाते हैं। उद्देश्य आदर्शों का प्रसार और जन-शिक्षा।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "राम–सीता के पुत्र, वाल्मीकि के आश्रम में गान द्वारा रामायण सीखते।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "धर्म, भक्ति और भाव के साथ गाते हैं।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "आदर्शों का प्रसार और जन-शिक्षा।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "ऋषि, नागरिक—बाद में स्वयं राम भी सुनते हैं।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "कथा",
+            "hint": ""
+          },
+          "back": "श्रोता ऋषि, नागरिक—बाद में स्वयं राम भी सुनते हैं।"
+        }
+      ]
+    },
+    {
+      "id": "03_lesson_03",
+      "order": 3,
+      "title": {
+        "en": "Childhood & Education of Rama and Brothers",
+        "te": "రాముడు మరియు సహోదరుల బాల్యం–విద్యాభ్యాసం",
+        "hi": "राम व भाइयों का बाल्यकाल व शिक्षा"
+      },
+      "flipCards": [
+        {
+          "lang": "en",
+          "front": {
+            "title": "Summary",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 3 Ayodhya, King Dasharatha and the Putrakameshti Yajna 100 5 20 Ayodhyā and Ikṣvāku lineage Dasharatha rules Ayodhyā, famed for prosperity and righteousness. Need for heirs Dasharatha performs Putrakāmeṣṭi under Sage Ṛśyaśṛṅga’s guidance. Divine payasa A celestial offering is given to queens Kausalyā, Kaikeyī, Sumitrā."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Ayodhya, King Dasharatha and the Putrakameshti Yajna"
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Ayodhyā and Ikṣvāku lineage"
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Dasharatha rules Ayodhyā, famed for prosperity and righteousness."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Dasharatha performs Putrakāmeṣṭi under Sage Ṛśyaśṛṅga’s guidance."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Story",
+            "hint": ""
+          },
+          "back": "Omen of avatāra Indra and devas pray for Viṣṇu to descend to destroy Rāvaṇa."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "సారాంశం",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 3 Ayodhya, King Dasharatha and the Putrakameshti Yajna 100 5 20 అయోధ్య, ఇక్ష్వాకులు దశరథుడు ధర్మపాలకుడు; రాజ్యం సుభిక్షంగా ఉంది. పుత్రకామేష్టి ఋశ్యశృంగుని ఆధ్వర్యంలో యజ్ఞం. పాయసం ప్రసాదం కౌసల్య, కైకేయి, సుమిత్రలకు దివ్య పాయసం."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "దశరథుడు ధర్మపాలకుడు; రాజ్యం సుభిక్షంగా ఉంది."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "ఋశ్యశృంగుని ఆధ్వర్యంలో యజ్ఞం."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "కౌసల్య, కైకేయి, సుమిత్రలకు దివ్య పాయసం."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "దేవతల ప్రార్థనపై విష్ణువు అవతారం."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "కథ",
+            "hint": ""
+          },
+          "back": "అవతార సంకేతం దేవతల ప్రార్థనపై విష్ణువు అవతారం."
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "सारांश",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 3 Ayodhya, King Dasharatha and the Putrakameshti Yajna 100 5 20 अयोध्या व इक्ष्वाकु दशरथ धर्मप्रिय; राज्य समृद्ध। पुत्रकामेष्टि ऋश्यशृंग के मार्गदर्शन में यज्ञ। दिव्य पायस कौसल्या, कैकेयी, सुमित्रा को विभाजन।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "दशरथ धर्मप्रिय; राज्य समृद्ध।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "ऋश्यशृंग के मार्गदर्शन में यज्ञ।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "कौसल्या, कैकेयी, सुमित्रा को विभाजन।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "देवों की प्रार्थना पर विष्णु का अवतरण।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "कथा",
+            "hint": ""
+          },
+          "back": "अवतार संकेत देवों की प्रार्थना पर विष्णु का अवतरण।"
+        }
+      ]
+    },
+    {
+      "id": "04_lesson_04",
+      "order": 4,
+      "title": {
+        "en": "Vishvamitra Arrives at Ayodhya",
+        "te": "విశ్వామిత్రుని అయోధ్యకు ఆగమనం",
+        "hi": "विश्वामित्र का अयोध्या आगमन"
+      },
+      "flipCards": [
+        {
+          "lang": "en",
+          "front": {
+            "title": "Summary",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 4 Birth of Rama, Bharata, Lakshmana and Shatrughna 100 5 20 Birth of princes Rāma (Kausalyā), Bharata (Kaikeyī), Lakṣmaṇa & Śatrughna (Sumitrā). Celebrations Joy across Ayodhyā; auspicious signs fill the city. Early qualities Rāma displays serenity, compassion, obedience, and courage."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Birth of Rama, Bharata, Lakshmana and Shatrughna"
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Rāma (Kausalyā), Bharata (Kaikeyī), Lakṣmaṇa & Śatrughna (Sumitrā)."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Joy across Ayodhyā; auspicious signs fill the city."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Rāma displays serenity, compassion, obedience, and courage."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Story",
+            "hint": ""
+          },
+          "back": "Brotherly bonds Lakṣmaṇa’s deep affection and service to Rāma."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "సారాంశం",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 4 Birth of Rama, Bharata, Lakshmana and Shatrughna 100 5 20 పుట్టిన కుమారులు రాముడు (కౌసల్య), భరతుడు (కైకేయి), లక్ష్మణ–శత్రుఘ్నులు (సుమిత్ర). ఉత్సవాలు అయోధ్య సంతోషంతో ముంచెత్తింది. బాల్య లక్షణాలు శాంత స్వభావం, కరుణ, విధేయత, ధైర్యం."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "రాముడు (కౌసల్య), భరతుడు (కైకేయి), లక్ష్మణ–శత్రుఘ్నులు (సుమిత్ర)."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "అయోధ్య సంతోషంతో ముంచెత్తింది."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "శాంత స్వభావం, కరుణ, విధేయత, ధైర్యం."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "లక్ష్మణుని అఖండ సేవాభావం."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "కథ",
+            "hint": ""
+          },
+          "back": "అన్నదమ్ముల అనురాగం లక్ష్మణుని అఖండ సేవాభావం."
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "सारांश",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 4 Birth of Rama, Bharata, Lakshmana and Shatrughna 100 5 20 चारों राजकुमार राम (कौसल्या), भरत (कैकेयी), लक्ष्मण–शत्रुघ्न (सुमित्रा)। उत्सव अयोध्या आनन्दित। बाल्य-गुण शांत, करुण, आज्ञाकारी, साहसी।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "राम (कौसल्या), भरत (कैकेयी), लक्ष्मण–शत्रुघ्न (सुमित्रा)।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "शांत, करुण, आज्ञाकारी, साहसी।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "लक्ष्मण का अखंड सेवाभाव।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "कथा",
+            "hint": ""
+          },
+          "back": "भ्रातृ-प्रेम लक्ष्मण का अखंड सेवाभाव।"
+        }
+      ]
+    },
+    {
+      "id": "05_lesson_05",
+      "order": 5,
+      "title": {
+        "en": "Rama–Lakshmana Escort the Sage",
+        "te": "రామ–లక్ష్మణులు ఋషిని అనుసరించుట",
+        "hi": "राम–लक्ष्मण का ऋषि संग वनगमन"
+      },
+      "flipCards": [
+        {
+          "lang": "en",
+          "front": {
+            "title": "Summary",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 5 Gurukula Years: Learning, Virtues and Skills 100 20 Gurukula education Scriptures, ethics, warfare, statecraft, and self-discipline. Mastery of arms Proficiency with bow; restraint and humility emphasized. Service to elders Reverence to parents and teachers as core dharma."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Gurukula Years: Learning, Virtues and Skills"
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Scriptures, ethics, warfare, statecraft, and self-discipline."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Proficiency with bow; restraint and humility emphasized."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Reverence to parents and teachers as core dharma."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Story",
+            "hint": ""
+          },
+          "back": "Royal virtues Leadership rooted in compassion and justice."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "సారాంశం",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 5 Gurukula Years: Learning, Virtues and Skills 100 20 గురుకుల విద్య శాస్త్రాలు, నీతి, శస్త్రవిద్య, రాజధర్మం, స్వీయ నియమం. ఆయుధ నైపుణ్యం ధనుర్విద్యలో ప్రవీణుడు; వినయం మూలధనం. మాతృపితృ సేవ పెద్దల పట్ల గౌరవం ధర్మాధారం."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "శాస్త్రాలు, నీతి, శస్త్రవిద్య, రాజధర్మం, స్వీయ నియమం."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "ధనుర్విద్యలో ప్రవీణుడు; వినయం మూలధనం."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "పెద్దల పట్ల గౌరవం ధర్మాధారం."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "కరుణతో న్యాయం, ప్రజాహితం."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "కథ",
+            "hint": ""
+          },
+          "back": "రాజగుణాలు కరుణతో న్యాయం, ప్రజాహితం."
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "सारांश",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 5 Gurukula Years: Learning, Virtues and Skills 100 20 गुरुकुल शास्त्र, नीति, धनुर्विद्या, राज्य-धर्म, आत्मसंयम। शस्त्र-कौशल धनुष में पारंगत; विनय प्रधान। गुरु-जन सेवा माता–पिता और आचार्य का सम्मान ही धर्म।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "शास्त्र, नीति, धनुर्विद्या, राज्य-धर्म, आत्मसंयम।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "धनुष में पारंगत; विनय प्रधान।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "माता–पिता और आचार्य का सम्मान ही धर्म।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "करुणा सहित न्याय, प्रजाहित।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "कथा",
+            "hint": ""
+          },
+          "back": "राजधर्म करुणा सहित न्याय, प्रजाहित।"
+        }
+      ]
+    },
+    {
+      "id": "06_lesson_06",
+      "order": 6,
+      "title": {
+        "en": "Tātakā Vadha (Slaying of Tataka)",
+        "te": "తాటకా వధ",
+        "hi": "ताड़का वध"
+      },
+      "flipCards": [
+        {
+          "lang": "en",
+          "front": {
+            "title": "Summary",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 6 Sage Viśvāmitra Seeks Rama’s Aid 100 5 20 Viśvāmitra’s request Seeks Rāma’s protection for his yajña from demons. Debate in court Vasiṣṭha assures Dasharatha that Rāma will gain glory and protection. Rāma’s readiness Obediently accepts; Lakṣmaṇa accompanies."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Sage Viśvāmitra Seeks Rama’s Aid"
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Viśvāmitra’s request"
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Seeks Rāma’s protection for his yajña from demons."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Vasiṣṭha assures Dasharatha that Rāma will gain glory and protection."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Story",
+            "hint": ""
+          },
+          "back": "Departure They set forth from Ayodhyā with the sage."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "సారాంశం",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 6 Sage Viśvāmitra Seeks Rama’s Aid 100 5 20 విశ్వామిత్రుని విన్నపం యజ్ఞరక్షణకు రాముని సహాయం కోరడం. సభలో చర్చ వశిష్ఠుడు ధైర్యం చెప్పారు—రామునికి మహిమ, రక్షణ కలుగునని. రాముని సిద్ధత విధేయతతో అంగీకారం; లక్ష్మణుడు తోడు."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "విశ్వామిత్రుని విన్నపం"
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "యజ్ఞరక్షణకు రాముని సహాయం కోరడం."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "వశిష్ఠుడు ధైర్యం చెప్పారు—రామునికి మహిమ, రక్షణ కలుగునని."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "విధేయతతో అంగీకారం; లక్ష్మణుడు తోడు."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "కథ",
+            "hint": ""
+          },
+          "back": "ప్రయాణం మునితో అయోధ్య విడిచి బయలుదేరు."
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "सारांश",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 6 Sage Viśvāmitra Seeks Rama’s Aid 100 5 20 विश्वामित्र का निवेदन यज्ञ-रक्षा हेतु राम की सहायता चाहते हैं। सभा में विमर्श वशिष्ठ आश्वस्त करते हैं—राम के लिए महिमा और संरक्षण। राम की स्वीकृति आज्ञापालन; लक्ष्मण साथ।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "विश्वामित्र का निवेदन"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "यज्ञ-रक्षा हेतु राम की सहायता चाहते हैं।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "वशिष्ठ आश्वस्त करते हैं—राम के लिए महिमा और संरक्षण।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "आज्ञापालन; लक्ष्मण साथ।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "कथा",
+            "hint": ""
+          },
+          "back": "प्रस्थान ऋषि के साथ अयोध्या से निकलते हैं।"
+        }
+      ]
+    },
+    {
+      "id": "07_lesson_07",
+      "order": 7,
+      "title": {
+        "en": "Protecting the Sacrifice: Maricha & Subahu",
+        "te": "యజ్ఞ రక్షణ — మారీచ, సుబాహు సంహారం",
+        "hi": "यज्ञ की रक्षा — मारीच व सुबाहु का दमन"
+      },
+      "flipCards": [
+        {
+          "lang": "en",
+          "front": {
+            "title": "Summary",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 7 Bala & Atibala Mantras: Strength and Focus 100 5 20 Bala & Atibala Secret mantras taught by Viśvāmitra to ward off fatigue, hunger, fear. Meaning Symbolize mastery of senses and mind for spiritual/heroic work. Practice Recitation with purity and focus."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Bala & Atibala Mantras: Strength and Focus"
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Secret mantras taught by Viśvāmitra to ward off fatigue, hunger, fear."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Symbolize mastery of senses and mind for spiritual/heroic work."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Recitation with purity and focus."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Story",
+            "hint": ""
+          },
+          "back": "Benefit Clarity, stamina, and protection during trials."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "సారాంశం",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 7 Bala & Atibala Mantras: Strength and Focus 100 5 20 బల, అతిబల మంత్రాలు ఆయాసం, ఆకలి, భయం తొలగించే ఉపాసన. అర్థం ఇంద్రియ-మనో నిగ్రహానికి చిహ్నం. ఆచరణ పావిత్ర్యంతో జపం, ధ్యానం."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "ఆయాసం, ఆకలి, భయం తొలగించే ఉపాసన."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "ఇంద్రియ-మనో నిగ్రహానికి చిహ్నం."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "పావిత్ర్యంతో జపం, ధ్యానం."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "స్పష్టత, స్థైర్యం, రక్షణ."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "కథ",
+            "hint": ""
+          },
+          "back": "ఫలితం స్పష్టత, స్థైర్యం, రక్షణ."
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "सारांश",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 7 Bala & Atibala Mantras: Strength and Focus 100 5 20 बल–अतिबल मंत्र थकान, भूख, भय का हरण; इंद्रिय-निग्रह। भाव मन और इंद्रियों पर अधिकार। अनुष्ठान पवित्र जप और ध्यान।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "थकान, भूख, भय का हरण; इंद्रिय-निग्रह।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "मन और इंद्रियों पर अधिकार।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "स्वच्छता, धैर्य, संरक्षण।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "कथा",
+            "hint": ""
+          },
+          "back": "फल स्वच्छता, धैर्य, संरक्षण।"
+        }
+      ]
+    },
+    {
+      "id": "08_lesson_08",
+      "order": 8,
+      "title": {
+        "en": "Ahalyā’s Redemption",
+        "te": "అహల్యా శాప విమోచనం",
+        "hi": "अहल्या उद्धार"
+      },
+      "flipCards": [
+        {
+          "lang": "en",
+          "front": {
+            "title": "Summary",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 8 Into the Tāṭakā Forest 100 5 20 Tāṭakā’s forest A region terrorized by the yakṣiṇī Tāṭakā. Duty vs compassion Rāma weighs dharma of protection against pity for a female foe. Counsel Viśvāmitra clarifies righteous action in extraordinary cases."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Into the Tāṭakā Forest"
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "A region terrorized by the yakṣiṇī Tāṭakā."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Rāma weighs dharma of protection against pity for a female foe."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Viśvāmitra clarifies righteous action in extraordinary cases."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Story",
+            "hint": ""
+          },
+          "back": "Resolve Rāma prepares to confront Tāṭakā."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "సారాంశం",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 8 Into the Tāṭakā Forest 100 5 20 తాటకా వనం యక్షిణి తాటకా వల్ల భయభ్రాంతి. కర్తవ్యము vs కరుణ స్త్రీని హింసించరా? ధర్మసందేహం."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "యక్షిణి తాటకా వల్ల భయభ్రాంతి."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "స్త్రీని హింసించరా? ధర్మసందేహం."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "అత్యవసరంలో ధర్మరక్షణే ప్రధానం."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "రాముడు యుద్ధానికి సిద్ధం."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "కథ",
+            "hint": ""
+          },
+          "back": "ముని ఉపదేశం అత్యవసరంలో ధర్మరక్షణే ప్రధానం. దృఢ సంకల్పం రాముడు యుద్ధానికి సిద్ధం."
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "सारांश",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 8 Into the Tāṭakā Forest 100 5 20 ताड़का वन यक्षिणी ताड़का से भयाक्रांत क्षेत्र। कर्तव्य बनाम करुणा स्त्री पर वार उचित? धर्म-संशय।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "यक्षिणी ताड़का से भयाक्रांत क्षेत्र।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "स्त्री पर वार उचित? धर्म-संशय।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "अत्यावश्यक में धर्म-रक्षा प्रधान।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "कथा",
+            "hint": ""
+          },
+          "back": "ऋषि का उपदेश अत्यावश्यक में धर्म-रक्षा प्रधान। संकल्प राम युद्ध को तत्पर।"
+        }
+      ]
+    },
+    {
+      "id": "09_lesson_09",
+      "order": 9,
+      "title": {
+        "en": "Journey to Mithilā",
+        "te": "మిథిలా యాత్ర",
+        "hi": "मिथिला की यात्रा"
+      },
+      "flipCards": [
+        {
+          "lang": "en",
+          "front": {
+            "title": "Summary",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 9 Slaying of Tāṭakā 100 5 20 The battle Rāma engages and finally slays Tāṭakā. Devas’ approval Celestial beings praise the act as protection of sages. Gift of divine weapons Viśvāmitra bestows astras and training."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Rāma engages and finally slays Tāṭakā."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Celestial beings praise the act as protection of sages."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Gift of divine weapons"
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Viśvāmitra bestows astras and training."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Story",
+            "hint": ""
+          },
+          "back": "Ethical lesson Strength guided by dharma protects the innocent."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "సారాంశం",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 9 Slaying of Tāṭakā 100 5 20 పోరాటం రాముడు తాటకాను సంహరించాడు. దేవగణ స్తుతి మునుల రక్షణకు ఇది ధర్మం. దివ్యాస్త్రాలు విశ్వామిత్రుడు ఆస్త్ర విద్య బోధించాడు."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "రాముడు తాటకాను సంహరించాడు."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "మునుల రక్షణకు ఇది ధర్మం."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "విశ్వామిత్రుడు ఆస్త్ర విద్య బోధించాడు."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "ధర్మబద్దమైన శక్తి నిర్భయత ఇస్తుంది."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "కథ",
+            "hint": ""
+          },
+          "back": "నీతి బోధ ధర్మబద్దమైన శక్తి నిర్భయత ఇస్తుంది."
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "सारांश",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 9 Slaying of Tāṭakā 100 5 20 युद्ध राम ने ताड़का का वध किया। देव-स्तुति ऋषियों की रक्षा हेतु उचित कर्म। दिव्यास्त्र विश्वामित्र ने अस्त्र-विद्या प्रदान की।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "राम ने ताड़का का वध किया।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "ऋषियों की रक्षा हेतु उचित कर्म।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "विश्वामित्र ने अस्त्र-विद्या प्रदान की।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "धर्म-संयमित शक्ति ही सुरक्षा देती है।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "कथा",
+            "hint": ""
+          },
+          "back": "नैतिक सीख धर्म-संयमित शक्ति ही सुरक्षा देती है।"
+        }
+      ]
+    },
+    {
+      "id": "10_lesson_10",
+      "order": 10,
+      "title": {
+        "en": "Śiva Dhanus at Janaka’s Court",
+        "te": "జనక సభలో శివధనుస్సు",
+        "hi": "जनक दरबार में शिवधनुष"
+      },
+      "flipCards": [
+        {
+          "lang": "en",
+          "front": {
+            "title": "Summary",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 10 Protecting the Sacrifice: Subāhu and Mārīca 100 5 20 Mārīca & Subāhu Demons defiling sacrifices; Rāma subdues them. Arrow of mantras Mārīca is hurled far; Subāhu is slain. Yajña completed Sage’s vow fulfilled in peace."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Protecting the Sacrifice: Subāhu and Mārīca"
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Demons defiling sacrifices; Rāma subdues them."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Mārīca is hurled far; Subāhu is slain."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Sage’s vow fulfilled in peace."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Story",
+            "hint": ""
+          },
+          "back": "Fame spreads Rāma’s righteousness and prowess renowned."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "సారాంశం",
+            "hint": ""
+          },
+          "back": "మంత్రబల బాణం మారీచుడు దూరం ఎగిరిపోగా, సుబాహు సంహారం. యజ్ఞ విజయం మునుల వ్రతం సఫలం. యశస్సు రాముని ఖ్యాతి వ్యాపించింది."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "యజ్ఞ భంగం; రాముడు వారిని అణిచివేసాడు."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "మారీచుడు దూరం ఎగిరిపోగా, సుబాహు సంహారం."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "రాముని ఖ్యాతి వ్యాపించింది."
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "सारांश",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 10 Protecting the Sacrifice: Subāhu and Mārīca 100 5 20 मारीच–सुबहु यज्ञ-विघ्नकारी राक्षस; राम ने दमन किया। मंत्र-बाण मारीच दूर फेंका गया; सुबहु वध। यज्ञ सिद्धि व्रत शांति से पूर्ण।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "यज्ञ-विघ्नकारी राक्षस; राम ने दमन किया।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "मारीच दूर फेंका गया; सुबहु वध।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "व्रत शांति से पूर्ण।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "कथा",
+            "hint": ""
+          },
+          "back": "यश राम की कीर्ति फैली।"
+        }
+      ]
+    },
+    {
+      "id": "11_lesson_11",
+      "order": 11,
+      "title": {
+        "en": "Rama Breaks the Bow",
+        "te": "రాముడు ధనుస్సును విరిచుట",
+        "hi": "राम द्वारा धनुष भंग"
+      },
+      "flipCards": [
+        {
+          "lang": "en",
+          "front": {
+            "title": "Summary",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 11 Ahalyā’s Redemption at Gautama’s Ashrama 100 5 20 Gautama’s āśrama Ahalyā turned to stone by a curse. Rāma’s grace He touches the stone; Ahalyā regains form. Repentance and forgiveness Gautama and Ahalyā reunited."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Ahalyā’s Redemption at Gautama’s Ashrama"
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Ahalyā turned to stone by a curse."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "He touches the stone; Ahalyā regains form."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Repentance and forgiveness"
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Story",
+            "hint": ""
+          },
+          "back": "Theme Compassion and purification through contact with the divine."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "సారాంశం",
+            "hint": ""
+          },
+          "back": "రామ కృప రామ స్పర్శతో అహల్యా విమోచనం. క్షమాపణ గౌతముడు–అహల్యా మళ్లీ కలుసుకున్నారు. సారం దైవానుగ్రహం శుద్ధి చేయును."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "అహల్యా శపథంతో శిలగా మారింది."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "రామ స్పర్శతో అహల్యా విమోచనం."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "గౌతముడు–అహల్యా మళ్లీ కలుసుకున్నారు."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "దైవానుగ్రహం శుద్ధి చేయును."
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "सारांश",
+            "hint": ""
+          },
+          "back": "राम की कृपा राम-स्पर्श से अहल्या मुक्त। क्षमा गौतम–अहल्या पुनः मिलन। संदेश दिव्य-स्पर्श से शुद्धि।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "अहल्या शाप से शिला बनी।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "राम-स्पर्श से अहल्या मुक्त।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "गौतम–अहल्या पुनः मिलन।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "दिव्य-स्पर्श से शुद्धि।"
+        }
+      ]
+    },
+    {
+      "id": "12_lesson_12",
+      "order": 12,
+      "title": {
+        "en": "Paraśurāma’s Challenge",
+        "te": "పరశురాముని సవాలు",
+        "hi": "परशुराम की चुनौती"
+      },
+      "flipCards": [
+        {
+          "lang": "en",
+          "front": {
+            "title": "Summary",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 12 Journey to Mithilā and King Janaka 100 5 20 Toward Mithilā Invited to view Śiva’s bow at King Janaka’s court. Janaka’s virtue A righteous king; Sītā is his foster-daughter. Hospitality to sages Viśvāmitra honored; Rāma welcomed."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Journey to Mithilā and King Janaka"
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Invited to view Śiva’s bow at King Janaka’s court."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "A righteous king; Sītā is his foster-daughter."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Hospitality to sages"
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Story",
+            "hint": ""
+          },
+          "back": "Prelude to swayamvara News of the great bow spreads."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "సారాంశం",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 12 Journey to Mithilā and King Janaka 100 5 20 మిథిలా యాత్ర జనకుని సభలో శివధనస్సు దర్శనం. జనకుని ధర్మం ధర్మనిరతుడు; సీతకు పోషకుడు. సత్కారం మునులకు గౌరవం, రామకు ఆహ్వానం."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "జనకుని సభలో శివధనస్సు దర్శనం."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "ధర్మనిరతుడు; సీతకు పోషకుడు."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "మునులకు గౌరవం, రామకు ఆహ్వానం."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "మహాదనస్సు వార్త వ్యాపించింది."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "కథ",
+            "hint": ""
+          },
+          "back": "స్వయంవర పూర్వభూమిక మహాదనస్సు వార్త వ్యాపించింది."
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "सारांश",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 12 Journey to Mithilā and King Janaka 100 5 20 मिथिला यात्रा जनक दरबार और शिव धनुष। जनक का धर्म धर्मनिष्ठ; सीता के पालक। आतिथ्य ऋषियों का सम्मान, राम का स्वागत।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "जनक दरबार और शिव धनुष।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "धर्मनिष्ठ; सीता के पालक।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "ऋषियों का सम्मान, राम का स्वागत।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "कथा",
+            "hint": ""
+          },
+          "back": "भूमिका स्वयंवर की तैयारी।"
+        }
+      ]
+    },
+    {
+      "id": "13_lesson_13",
+      "order": 13,
+      "title": {
+        "en": "Sītā–Rāma Vivāha (Wedding)",
+        "te": "సీత–రామ కల్యాణం",
+        "hi": "सीता–राम विवाह"
+      },
+      "flipCards": [
+        {
+          "lang": "en",
+          "front": {
+            "title": "Summary",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 13 The Bow of Śiva and Sītā’s Swayamvara 100 5 20 Śiva-dhanus An ancient, mighty bow impossible to even lift. Sītā’s swayamvara Whoever strings the bow shall win Sītā’s hand. Rulers attempt Many fail; pride is humbled."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "The Bow of Śiva and Sītā’s Swayamvara"
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "An ancient, mighty bow impossible to even lift."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Whoever strings the bow shall win Sītā’s hand."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Many fail; pride is humbled."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Story",
+            "hint": ""
+          },
+          "back": "Rāma observes He waits respectfully for the sage’s word."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "సారాంశం",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 13 The Bow of Śiva and Sītā’s Swayamvara 100 5 20 శివ ధనస్సు భారీ ప్రాచీన ధనస్సు; ఎత్తలేనంత గరువు. సీత స్వయంవరం ధనుస్సును ఎడది కట్టినవారికి సీతవర ప్రసాదం. పరాక్రమ పరీక్ష నరపతులు విఫలమై వినితులయ్యారు."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "భారీ ప్రాచీన ధనస్సు; ఎత్తలేనంత గరువు."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "ధనుస్సును ఎడది కట్టినవారికి సీతవర ప్రసాదం."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "నరపతులు విఫలమై వినితులయ్యారు."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "ముని ఆజ్ఞ కోసం వేచి ఉంటాడు."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "కథ",
+            "hint": ""
+          },
+          "back": "రాముని వినయం ముని ఆజ్ఞ కోసం వేచి ఉంటాడు."
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "सारांश",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 13 The Bow of Śiva and Sītā’s Swayamvara 100 5 20 शिव धनुष प्राचीन, अत्यंत भारी; उठाना कठिन। सीता स्वयंवर जो धनुष चढ़ाए, वही सीता को पाए। राजाओं का प्रयास अनेक असफल; अहं टूटता है।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "प्राचीन, अत्यंत भारी; उठाना कठिन।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "जो धनुष चढ़ाए, वही सीता को पाए।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "अनेक असफल; अहं टूटता है।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "ऋषि की आज्ञा की प्रतीक्षा।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "कथा",
+            "hint": ""
+          },
+          "back": "राम का धैर्य ऋषि की आज्ञा की प्रतीक्षा।"
+        }
+      ]
+    },
+    {
+      "id": "14_lesson_14",
+      "order": 14,
+      "title": {
+        "en": "Other Marriages of the Princes",
+        "te": "ఇతర వివాహాలు — లక్ష్మణ–ఉర్మిళ, భరత–మాండవి, శత్రుఘ్న–శ్రుతకీర్తి",
+        "hi": "लक्ष्मण–उर्मिला, भरत–मांडवी, शत्रुघ्न–श्रुतकीर्ति विवाह"
+      },
+      "flipCards": [
+        {
+          "lang": "en",
+          "front": {
+            "title": "Summary",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 14 Sītā’s Background: Virtue, Grace and Destiny 100 5 20 Sītā’s virtues Modesty, compassion, steadfastness; avatar of Lakṣmī. Janaka’s find Discovered as a baby while ploughing the field. Destiny She is destined to unite with Rāma."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Sītā’s Background: Virtue, Grace and Destiny"
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Modesty, compassion, steadfastness; avatar of Lakṣmī."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Discovered as a baby while ploughing the field."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "She is destined to unite with Rāma."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Story",
+            "hint": ""
+          },
+          "back": "Symbol Sītā embodies śrī (prosperity) and dharma at home."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "సారాంశం",
+            "hint": ""
+          },
+          "back": "జనకుని కనుగొనిక హలంతో పొలం దున్నుతుండగా దొరికింది. విధి రామునితో ఏకం కావడం భవితవ్యము. ప్రతీక సీత శ్రీత్వం, గృహధర్మాన్ని ప్రతిబింబిస్తుంది."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "లజ్జ, కరుణ, స్థైర్యం; లక్ష్మీ అమ్సం."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "హలంతో పొలం దున్నుతుండగా దొరికింది."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "రామునితో ఏకం కావడం భవితవ్యము."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "సీత శ్రీత్వం, గృహధర్మాన్ని ప్రతిబింబిస్తుంది."
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "सारांश",
+            "hint": ""
+          },
+          "back": "जनक की प्राप्ति हल से खेत जोतते समय मिलीं। भाग्य राम से मिलन नियति। प्रतीक सीता गृह-धर्म और श्री की मूर्ति।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "लज्जा, करुणा, धैर्य; लक्ष्मी का अंश।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "हल से खेत जोतते समय मिलीं।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "सीता गृह-धर्म और श्री की मूर्ति।"
+        }
+      ]
+    },
+    {
+      "id": "15_lesson_15",
+      "order": 15,
+      "title": {
+        "en": "Return to Ayodhya with the Brides",
+        "te": "వధువులతో అయోధ్యకు ప్రస్థానం",
+        "hi": "वधुओं सहित अयोध्या प्रस्थान"
+      },
+      "flipCards": [
+        {
+          "lang": "en",
+          "front": {
+            "title": "Summary",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 15 Rāma Breaks the Bow 100 5 20 Permission At Viśvāmitra’s bidding, Rāma approaches the bow. Stringing the bow He lifts and draws it; the bow breaks thunderously. Auspicious sign The earth resounds; devas rejoice."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "At Viśvāmitra’s bidding, Rāma approaches the bow."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "He lifts and draws it; the bow breaks thunderously."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "The earth resounds; devas rejoice."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Rāma wins Sītā’s hand in marriage."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Story",
+            "hint": ""
+          },
+          "back": "Result Rāma wins Sītā’s hand in marriage."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "సారాంశం",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 15 Rāma Breaks the Bow 100 5 20 అనుమతి ముని ఆదేశంతో రాముని ముందడుగు. ధనుస్సు కట్టడం ఎత్తి వెయ్యగా ఘోషతో విరిగిపోవు. శుభసూచన భూమి నిండా నాదం; దేవతల ఆనందం."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "ముని ఆదేశంతో రాముని ముందడుగు."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "ఎత్తి వెయ్యగా ఘోషతో విరిగిపోవు."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "భూమి నిండా నాదం; దేవతల ఆనందం."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "సీతావరం రామునికి లభ్యం."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "కథ",
+            "hint": ""
+          },
+          "back": "ఫలితం సీతావరం రామునికి లభ్యం."
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "सारांश",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 15 Rāma Breaks the Bow 100 5 20 आज्ञा ऋषि के संकेत पर राम आगे बढ़ते हैं। धनुष चढ़ाना उठाया, खींचा—धनुष गर्जना से टूटा। शकुन धरती गूंजी; देव प्रसन्न।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "ऋषि के संकेत पर राम आगे बढ़ते हैं।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "उठाया, खींचा—धनुष गर्जना से टूटा।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "धरती गूंजी; देव प्रसन्न।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "कथा",
+            "hint": ""
+          },
+          "back": "फल सीता का वरण राम को।"
+        }
+      ]
+    },
+    {
+      "id": "16_lesson_16",
+      "order": 16,
+      "title": {
+        "en": "Vishvāmitra’s Earlier Life: Vasiṣṭha & Nandinī",
+        "te": "విశ్వామిత్రుని పూర్వకథ — వశిష్ఠుడు & నందిని",
+        "hi": "विश्वामित्र का पूर्व इतिहास — वसिष्ठ व नंदिनी"
+      },
+      "flipCards": [
+        {
+          "lang": "en",
+          "front": {
+            "title": "Summary",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 16 The Four Weddings: Rāma–Sītā and Brothers 100 5 20 Weddings arranged Dasharatha invited; alliances sealed. Four weddings Rāma–Sītā, Lakṣmaṇa–Urmilā, Bharata–Māndavī, Śatrughna–Śrutakīrti. Festivities Ayodhyā and Mithilā celebrate together."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "The Four Weddings: Rāma–Sītā and Brothers"
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Dasharatha invited; alliances sealed."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Rāma–Sītā, Lakṣmaṇa–Urmilā, Bharata–Māndavī, Śatrughna–Śrutakīrti."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Ayodhyā and Mithilā celebrate together."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Story",
+            "hint": ""
+          },
+          "back": "Blessings Elders bless the couples for dharmic lives."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "సారాంశం",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 16 The Four Weddings: Rāma–Sītā and Brothers 100 5 20 వివాహ ఏర్పాట్లు దశరథ ఆహ్వానం; బంధుత్వం బలపడింది. నాలుగు వివాహాలు రామ–సీత, లక్ష్మణ–ఊర్మిళ, భరత–మాండవీ, శత్రుఘ్న–శ్రుతకీర్తి. ఉత్సవం అయోధ్య–మిథిలా సంబరాలు."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "దశరథ ఆహ్వానం; బంధుత్వం బలపడింది."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "రామ–సీత, లక్ష్మణ–ఊర్మిళ, భరత–మాండవీ, శత్రుఘ్న–శ్రుతకీర్తి."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "అయోధ్య–మిథిలా సంబరాలు."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "ధార్మిక గ్రహస్థాశ్రమానికి ఆశీస్సులు."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "కథ",
+            "hint": ""
+          },
+          "back": "ఆశీర్వచనాలు ధార్మిక గ్రహస్థాశ్రమానికి ఆశీస్సులు."
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "सारांश",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 16 The Four Weddings: Rāma–Sītā and Brothers 100 5 20 विवाह-व्यवस्था दशरथ आमंत्रित; बंधुता दृढ़। चार विवाह राम–सीता, लक्ष्मण–ऊर्मिला, भरत–मांडवी, शत्रुघ्न–श्रुतकीर्ति। उत्सव अयोध्या–मिथिला आनंदित।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "दशरथ आमंत्रित; बंधुता दृढ़।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "राम–सीता, लक्ष्मण–ऊर्मिला, भरत–मांडवी, शत्रुघ्न–श्रुतकीर्ति।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "अयोध्या–मिथिला आनंदित।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "धार्मिक गृहस्थ-जीवन के लिए।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "कथा",
+            "hint": ""
+          },
+          "back": "आशीर्वाद धार्मिक गृहस्थ-जीवन के लिए।"
+        }
+      ]
+    },
+    {
+      "id": "17_lesson_17",
+      "order": 17,
+      "title": {
+        "en": "Triśaṅku and the Alternate Heaven",
+        "te": "త్రిశంకు స్వర్గం",
+        "hi": "त्रिशंकु और वैकल्पिक स्वर्ग"
+      },
+      "flipCards": [
+        {
+          "lang": "en",
+          "front": {
+            "title": "Summary",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 17 Paraśurāma’s Arrival and Reconciliation 100 5 20 Paraśurāma’s arrival Confronts Rāma over breaking Śiva’s bow. Challenge Offers Viṣṇu’s bow to test Rāma’s prowess. Resolution Rāma strings it effortlessly; Paraśurāma’s fury subsides."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Paraśurāma’s Arrival and Reconciliation"
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Paraśurāma’s arrival"
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Confronts Rāma over breaking Śiva’s bow."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Offers Viṣṇu’s bow to test Rāma’s prowess."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Story",
+            "hint": ""
+          },
+          "back": "Reconciliation He recognizes Rāma’s divinity and departs."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "సారాంశం",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 17 Paraśurāma’s Arrival and Reconciliation 100 5 20 పరశురాముని ఆగమనం శివధనుస్సు విరగడం పై ఆగ్రహం. సవాలు విష్ణుధనుస్సుతో పరీక్ష. పరిష్కారం రాముడు సులభంగా కట్టగా, కోపం శాంతించింది."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "శివధనుస్సు విరగడం పై ఆగ్రహం."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "విష్ణుధనుస్సుతో పరీక్ష."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "రాముడు సులభంగా కట్టగా, కోపం శాంతించింది."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "దైవత్వం గ్రహించి, పరశురాముడు వెళ్లిపోయాడు."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "కథ",
+            "hint": ""
+          },
+          "back": "సమ్మతి దైవత్వం గ్రహించి, పరశురాముడు వెళ్లిపోయాడు."
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "सारांश",
+            "hint": ""
+          },
+          "back": "चुनौती विष्णु धनुष परिक्षण। समाधान राम सहजता से चढ़ाते हैं; रोष शांत। मान्यता परशुराम दिव्यता स्वीकार कर प्रस्थान करते हैं।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "शिव धनुष टूटने पर रोष।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "विष्णु धनुष परिक्षण।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "राम सहजता से चढ़ाते हैं; रोष शांत।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "परशुराम दिव्यता स्वीकार कर प्रस्थान करते हैं।"
+        }
+      ]
+    },
+    {
+      "id": "18_lesson_18",
+      "order": 18,
+      "title": {
+        "en": "Śunaśśepa’s Deliverance",
+        "te": "శునశ్షేప విమోచనం",
+        "hi": "शुनःशेप का उद्धार"
+      },
+      "flipCards": [
+        {
+          "lang": "en",
+          "front": {
+            "title": "Summary",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 18 Return to Ayodhyā: Blessings and Joy 100 5 20 Return journey Newlyweds return to Ayodhyā with joy. Citizens’ welcome City is adorned; people rejoice. Family unity Harmony among brothers and queens."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Return to Ayodhyā: Blessings and Joy"
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Newlyweds return to Ayodhyā with joy."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "City is adorned; people rejoice."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Harmony among brothers and queens."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Story",
+            "hint": ""
+          },
+          "back": "Foreshadowing Seeds for future trials are subtly sown."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "సారాంశం",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 18 Return to Ayodhyā: Blessings and Joy 100 5 20 తిరుగు ప్రస్థానం కొత్త వధూవరులు అయోధ్యకు పయనం. ప్రజల ఆనందం నగరం శోభాయమానం. కుటుంబ ఏకతా సోదర ప్రేమ, రాణుల సఖ్యత."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "కొత్త వధూవరులు అయోధ్యకు పయనం."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "సోదర ప్రేమ, రాణుల సఖ్యత."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "వెనుకటి కాండలకు వంతెన."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "కథ",
+            "hint": ""
+          },
+          "back": "సూచన వెనుకటి కాండలకు వంతెన."
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "सारांश",
+            "hint": ""
+          },
+          "back": "जन-आनंद नगर सजता है, हर्षोल्लास। कुटुम्ब-एकता भाइयों और माताओं में सौहार्द। संकेत भविष्य घटनाओं की भूमिका।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "नव-विवाहित अयोध्या लौटते हैं।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "नगर सजता है, हर्षोल्लास।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "भाइयों और माताओं में सौहार्द।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "भविष्य घटनाओं की भूमिका।"
+        }
+      ]
+    },
+    {
+      "id": "19_lesson_19",
+      "order": 19,
+      "title": {
+        "en": "Bhagiratha & the Descent of Gaṅgā",
+        "te": "భాగీరథుడు & గంగావతరణం",
+        "hi": "भागीरथ तथा गंगा अवतरण"
+      },
+      "flipCards": [
+        {
+          "lang": "en",
+          "front": {
+            "title": "Summary",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 19 Rāma’s Qualities (Guṇas) and Dharma in Bāla Kāṇḍa 100 5 20 Guṇas of Rāma Truth, compassion, courage, restraint, devotion to dharma. Leadership Protects the weak, respects elders, keeps promises. Ideal son & prince Balances obedience with righteous action."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Rāma’s Qualities (Guṇas) and Dharma in Bāla Kāṇḍa"
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Truth, compassion, courage, restraint, devotion to dharma."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Protects the weak, respects elders, keeps promises."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Balances obedience with righteous action."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Story",
+            "hint": ""
+          },
+          "back": "Takeaway Dharma is active goodness, not mere rule-following."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "సారాంశం",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 19 Rāma’s Qualities (Guṇas) and Dharma in Bāla Kāṇḍa 100 5 20 రామ గుణాలు సత్యం, కరుణ, ధైర్యం, నియమం, ధర్మ నిస్తత్వం. నాయకత్వం బలహీనులకు రక్షణ, వాగ్దానపాలన. ఆదర్శ కుమారుడు విధేయతతో ధర్మాచరణ."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "సత్యం, కరుణ, ధైర్యం, నియమం, ధర్మ నిస్తత్వం."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "బలహీనులకు రక్షణ, వాగ్దానపాలన."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "ధర్మం క్రియాశీల సద్గుణం."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "కథ",
+            "hint": ""
+          },
+          "back": "బోధ ధర్మం క్రియాశీల సద్గుణం."
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "सारांश",
+            "hint": ""
+          },
+          "back": "नेतृत्व दुर्बलों की रक्षा, वचन-पालन। आदर्श पुत्र आज्ञापालन और धर्माचरण। सीख धर्म सक्रिय सद्गुण है।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "सत्य, करुणा, साहस, संयम, धर्मनिष्ठा।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "दुर्बलों की रक्षा, वचन-पालन।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "आज्ञापालन और धर्माचरण।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "धर्म सक्रिय सद्गुण है।"
+        }
+      ]
+    },
+    {
+      "id": "20_lesson_20",
+      "order": 20,
+      "title": {
+        "en": "Sagara’s Sons and the Lineage Purified",
+        "te": "సగరుడి పుత్రులు & వంశ శోధనం",
+        "hi": "सगरपुत्र और वंश की शुद्धि"
+      },
+      "flipCards": [
+        {
+          "lang": "en",
+          "front": {
+            "title": "Summary",
+            "hint": ""
+          },
+          "back": "Ramayana Bala Kanda 20 Summary of Bāla Kāṇḍa: Themes and Takeaways 100 5 Themes Dharma, humility, compassion, righteous strength, destiny. Arc of Bāla Kāṇḍa From divine conception to sacred marriage. Lessons for life Self-mastery, service, courage with compassion."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Summary of Bāla Kāṇḍa: Themes and Takeaways"
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Dharma, humility, compassion, righteous strength, destiny."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "From divine conception to sacred marriage."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Key Point",
+            "hint": ""
+          },
+          "back": "Self-mastery, service, courage with compassion."
+        },
+        {
+          "lang": "en",
+          "front": {
+            "title": "Story",
+            "hint": ""
+          },
+          "back": "Bridge to next Kāṇḍa Sets stage for Ayodhyā Kāṇḍa and exile."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "సారాంశం",
+            "hint": ""
+          },
+          "back": "బాలకాండ ప్రయాణం దైవావతారం నుంచి పవిత్ర వివాహం వరకు. జీవన పాఠాలు ఇంద్రియనిగ్రహం, సేవ, కరుణతో ధైర్యం. తరువాత అయోధ్యకాండానికి పునాదులు."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "ధర్మం, వినయం, కరుణ, ధైర్యం, విధి."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "దైవావతారం నుంచి పవిత్ర వివాహం వరకు."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "ఇంద్రియనిగ్రహం, సేవ, కరుణతో ధైర్యం."
+        },
+        {
+          "lang": "te",
+          "front": {
+            "title": "ముఖ్య అంశం",
+            "hint": ""
+          },
+          "back": "అయోధ్యకాండానికి పునాదులు."
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "सारांश",
+            "hint": ""
+          },
+          "back": "बाला काण्ड का विस्तार दैवी जन्म से पावन विवाह तक। जीवन-पाठ इंद्रियनिग्रह, सेवा, करुणा सहित साहस। अगला चरण अयोध्या काण्ड की पृष्ठभूमि।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "धर्म, विनय, करुणा, वीरता, नियति।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "बाला काण्ड का विस्तार"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "दैवी जन्म से पावन विवाह तक।"
+        },
+        {
+          "lang": "hi",
+          "front": {
+            "title": "मुख्य बिंदु",
+            "hint": ""
+          },
+          "back": "इंद्रियनिग्रह, सेवा, करुणा सहित साहस।"
+        }
+      ]
+    }
+  ]
+}

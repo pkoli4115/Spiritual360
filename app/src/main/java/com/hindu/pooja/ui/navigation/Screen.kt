@@ -21,6 +21,9 @@ sealed class Screen(val route: String) {
     // 🔹 Featured → Ramakoti
     object Ramakoti : Screen("featured/ramakoti")
 
+    // 🔹 Featured → Bala Kanda Flip Cards (NEW)
+    object BalaKandaFlip : Screen("featured/balakanda")
+
     // 🔹 Donations (from Donate CTA)
     object Donations : Screen("donations")
 

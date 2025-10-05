@@ -11,7 +11,7 @@ import com.hindu.pooja.ui.navigation.Screen
 
 /**
  * Featured tab/page.
- * Currently only contains the Ramakoti card.
+ * Now contains Ramakoti and Bala Kanda Flip Cards.
  */
 @Composable
 fun FeaturedScreen(navController: NavController) {
@@ -23,9 +23,14 @@ fun FeaturedScreen(navController: NavController) {
 
         Spacer(Modifier.height(12.dp))
 
-        // 🔸 Ramakoti Card
+        // 🔸 Ramakoti
         FeaturedRamakotiCard {
             navController.navigate(Screen.Ramakoti.route)
+        }
+
+        // 🔸 Bala Kanda — Flip Cards (NEW)
+        FeaturedBalaKandaCard {
+            navController.navigate(Screen.BalaKandaFlip.route)
         }
     }
 }
@@ -55,9 +60,37 @@ private fun FeaturedRamakotiCard(onOpen: () -> Unit) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(Modifier.height(4.dp))
-            Button(onClick = onOpen) {
-                Text("Open Ramakoti")
-            }
+            Button(onClick = onOpen) { Text("Open Ramakoti") }
+        }
+    }
+}
+
+@Composable
+private fun FeaturedBalaKandaCard(onOpen: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+            .clickable { onOpen() },
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Text(
+                text = "Bala Kanda — Flip Cards",
+                style = MaterialTheme.typography.titleMedium
+            )
+            Text(
+                text = "20 Bala Kanda lessons with flip cards (EN/TE/HI) and TTS. Learn the story with quick swipes.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(Modifier.height(4.dp))
+            Button(onClick = onOpen) { Text("Open Bala Kanda") }
         }
     }
 }

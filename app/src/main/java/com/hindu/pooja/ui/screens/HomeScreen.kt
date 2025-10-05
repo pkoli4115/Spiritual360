@@ -9,6 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -64,7 +65,7 @@ fun HomeScreen(
     // Donate row visibility
     var showDonateRow by rememberSaveable { mutableStateOf(true) }
 
-    // Use DonationConfig from DonationSection.kt (do NOT redeclare here)
+    // Use DonationConfig from DonationSection.kt (already in your project)
     val upiId = DonationConfig.upiId
     val payeeName = DonationConfig.payeeName
     val note = DonationConfig.note
@@ -92,15 +93,31 @@ fun HomeScreen(
                 )
             }
 
-            // 🔸 Featured section (header + single Ramakoti card)
+            // 🔸 Featured section (header + horizontally scrollable cards)
             item {
                 FeaturedSectionHeader(
                     onViewAll = { navController.navigate(Screen.Featured.route) }
                 )
                 Spacer(Modifier.height(8.dp))
-                FeaturedRamakotiCard(
-                    onOpen = { navController.navigate(Screen.Ramakoti.route) }
-                )
+
+                LazyRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentPadding = PaddingValues(horizontal = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    item {
+                        FeaturedRamakotiCard(
+                            onOpen = { navController.navigate(Screen.Ramakoti.route) }
+                        )
+                    }
+                    item {
+                        // Navigate via NavHost route (no Activity reference)
+                        FeaturedBalaKandaCard(
+                            onOpen = { navController.navigate(Screen.BalaKandaFlip.route) }
+                        )
+                    }
+                }
+
                 Spacer(Modifier.height(16.dp))
             }
 
@@ -206,8 +223,8 @@ private fun FeaturedSectionHeader(onViewAll: () -> Unit) {
 private fun FeaturedRamakotiCard(onOpen: () -> Unit) {
     Card(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 4.dp)
+            .width(280.dp)      // width for horizontal card
+            .heightIn(min = 160.dp)
             .clickable { onOpen() }
     ) {
         Column(
@@ -217,11 +234,35 @@ private fun FeaturedRamakotiCard(onOpen: () -> Unit) {
             Text("Ramakoti", style = MaterialTheme.typography.titleMedium)
             Text(
                 "Write Jai Sri Ram (English / हिंदी / తెలుగు). Unlimited. Daily streaks, reminders & cloud sync.",
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodySmall, // <-- fixed typo
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(Modifier.height(4.dp))
             Button(onClick = onOpen) { Text("Open Ramakoti") }
+        }
+    }
+}
+
+@Composable
+private fun FeaturedBalaKandaCard(onOpen: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .width(280.dp)      // width for horizontal card
+            .heightIn(min = 160.dp)
+            .clickable { onOpen() }
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Text("Bala Kanda — Flip Cards", style = MaterialTheme.typography.titleMedium)
+            Text(
+                "20 Bala Kanda lessons with flip cards (EN/TE/HI) and TTS. Learn the story with quick swipes.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(Modifier.height(4.dp))
+            Button(onClick = onOpen) { Text("Open Bala Kanda") }
         }
     }
 }

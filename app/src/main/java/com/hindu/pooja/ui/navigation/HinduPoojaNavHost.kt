@@ -11,6 +11,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.google.firebase.auth.FirebaseAuth
 import com.hindu.pooja.feature.ramakoti.ui.RamakotiScreen
+// NEW: import FlipCard screen
+import com.hindu.pooja.feature.elearning.ui.FlipCardScreen
 import com.hindu.pooja.feature.ramakoti.ui.RamakotiIntroScreen
 import com.hindu.pooja.ui.kids.findit.FindItGameScreen
 import com.hindu.pooja.ui.kids.findit.GameResultScreen
@@ -66,8 +68,7 @@ fun HinduPoojaNavHost(
         composable(Screen.Login.route) { LoginScreen(navController = navController) }
         composable(Screen.Splash.route) { Text("Splash Screen (placeholder)") }
 
-        // --- Ramakoti flow ---
-        // Use the existing Screen.Ramakoti to open the INTRO first
+        // --- Featured flows ---
         composable(Screen.Ramakoti.route) {
             RamakotiIntroScreen(
                 navController = navController,
@@ -77,6 +78,15 @@ fun HinduPoojaNavHost(
         // Writer page route (navigated from Intro NEXT)
         composable("ramakoti/writer") {
             RamakotiScreen(navController = navController)
+        }
+
+        // NEW: Bala Kanda Flip Cards route
+        composable(Screen.BalaKandaFlip.route) {
+            FlipCardScreen(
+                initialLessonIndex = 0,
+                initialLang = "en",
+                onBack = { navController.popBackStack() }
+            )
         }
 
         // Donations placeholder
