@@ -7,6 +7,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.VolumeOff
+import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -30,48 +32,77 @@ fun WikiLessonReaderScreen(
 ) {
     val context = LocalContext.current
     val module = remember { SimpleLessonRepo.loadTeWikiSimple(context) }
+
     var index by remember { mutableIntStateOf(initialIndex.coerceIn(0, module.lessons.lastIndex)) }
     val lesson: SimpleLesson = module.lessons[index]
 
-    // TTS
+    // --- TTS with toggle ---
     val tts = remember { TtsHelper(context) }
+    var isSpeaking by remember { mutableStateOf(false) }
+
     LaunchedEffect(Unit) { tts.applyLanguage("te") }
+    // Stop & reset when lesson changes
+    LaunchedEffect(index) {
+        tts.stop()
+        isSpeaking = false
+    }
+    // Cleanup
     DisposableEffect(Unit) { onDispose { tts.shutdown() } }
 
     val saffron = Color(0xFFFF9933)
-    val pageBg = Color(0xFFFFF3E3)
+    val cream = Color(0xFFFFF3E3)
     val textColor = Color(0xFF2B1E0A)
 
-    BackHandler { onBack() }
+    BackHandler {
+        // ensure TTS stopped when leaving
+        tts.stop()
+        isSpeaking = false
+        onBack()
+    }
 
     Scaffold(
         containerColor = saffron,
         topBar = {
             TopAppBar(
-                title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = "Bala Kanda — ",
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            color = Color.White
-                        )
-                        Text("పాఠం", color = Color.White, fontWeight = FontWeight.Bold)
-                    }
-                },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = {
+                        tts.stop()
+                        isSpeaking = false
+                        onBack()
+                    }) {
                         Icon(Icons.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
                     }
                 },
+                title = {
+                    Text(
+                        text = "బాలకాండము కథ",
+                        color = Color.White,
+                        fontSize = 18.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                },
                 actions = {
-                    TextButton(onClick = {
-                        tts.stop()
-                        tts.speak(lesson.content)
-                    }) { Text("చదవండి", color = Color.White) }
-
+                    IconButton(
+                        onClick = {
+                            if (!isSpeaking) {
+                                tts.stop()
+                                tts.speak(lesson.content)
+                                isSpeaking = true
+                            } else {
+                                tts.stop()
+                                isSpeaking = false
+                            }
+                        }
+                    ) {
+                        val icon = if (isSpeaking) Icons.Filled.VolumeOff else Icons.Filled.VolumeUp
+                        val label = if (isSpeaking) "Stop reading" else "Read"
+                        Icon(icon, contentDescription = label, tint = Color.White)
+                    }
                     if (onTakeQuiz != null) {
-                        TextButton(onClick = onTakeQuiz) { Text("Take Quiz", color = Color.White) }
+                        TextButton(onClick = onTakeQuiz) {
+                            Text("Take Quiz", color = Color.White)
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = saffron)
@@ -83,30 +114,31 @@ fun WikiLessonReaderScreen(
                 .fillMaxSize()
                 .background(saffron)
                 .padding(padding)
-                .padding(16.dp)
+                .padding(12.dp)
         ) {
-            // Big “page”
             Card(
-                colors = CardDefaults.cardColors(containerColor = pageBg),
+                colors = CardDefaults.cardColors(containerColor = cream),
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
             ) {
                 Column(
                     modifier = Modifier
+                        .fillMaxSize()
                         .padding(20.dp)
-                        .verticalScroll(rememberScrollState())
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.Top
                 ) {
                     Text(
                         text = lesson.title,
-                        style = MaterialTheme.typography.headlineSmall,
+                        fontSize = 26.sp,
+                        lineHeight = 30.sp,
                         color = textColor,
                         fontWeight = FontWeight.Bold
                     )
-                    Spacer(Modifier.height(12.dp))
+                    Spacer(Modifier.height(14.dp))
                     Text(
                         text = lesson.content,
-                        // big, flashcard-like
                         fontSize = 22.sp,
                         lineHeight = 30.sp,
                         color = textColor
@@ -122,20 +154,39 @@ fun WikiLessonReaderScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 OutlinedButton(
-                    onClick = { if (index > 0) { tts.stop(); index-- } },
+                    onClick = {
+                        if (index > 0) {
+                            tts.stop()
+                            isSpeaking = false
+                            index--
+                        }
+                    },
                     enabled = index > 0
-                ) { Text("మునుపటి పాఠం") }
+                ) { Text("మునుపటి పాఠం", fontSize = 16.sp) }
 
                 Text(
                     text = "పాఠం ${index + 1} / ${module.lessons.size}",
+                    style = MaterialTheme.typography.bodyMedium,
                     color = Color.White,
                     fontWeight = FontWeight.SemiBold
                 )
 
                 Button(
-                    onClick = { if (index < module.lessons.lastIndex) { tts.stop(); index++ } },
-                    enabled = index < module.lessons.lastIndex
-                ) { Text("తర్వాతి పాఠం") }
+                    onClick = {
+                        tts.stop()
+                        isSpeaking = false
+                        if (index < module.lessons.lastIndex) {
+                            index++
+                        } else {
+                            onTakeQuiz?.invoke()
+                        }
+                    }
+                ) {
+                    Text(
+                        if (index < module.lessons.lastIndex) "తర్వాతి పాఠం" else "Start Quiz",
+                        fontSize = 16.sp
+                    )
+                }
             }
         }
     }
