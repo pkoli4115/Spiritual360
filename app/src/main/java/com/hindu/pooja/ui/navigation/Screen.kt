@@ -3,9 +3,9 @@ package com.hindu.pooja.ui.navigation
 import android.net.Uri
 
 sealed class Screen(val route: String) {
-    // Core tabs
+    // Tabs
     object Home : Screen("home")
-    object Featured : Screen("featured")        // Tab + page
+    object Featured : Screen("featured")
     object Kids : Screen("kids")
     object Profile : Screen("profile")
     object Settings : Screen("settings")
@@ -18,29 +18,27 @@ sealed class Screen(val route: String) {
     object PersonalDetails : Screen("personal_details")
     object Splash : Screen("splash")
 
-    // 🔹 Featured → Ramakoti
+    // Featured → Ramakoti (unchanged)
     object Ramakoti : Screen("featured/ramakoti")
 
-    // 🔹 Featured → Bala Kanda Flip Cards (NEW)
-    object BalaKandaFlip : Screen("featured/balakanda")
+    // eLearning
+    object BalaKandaFlip : Screen("featured/balakanda")                 // (keep if you still want flips)
+    object BalaKandaWikiSimple : Screen("featured/balakanda/wiki")      // NEW reader
+    object BalaKandaQuiz : Screen("featured/balakanda/quiz")            // NEW quiz
 
-    // 🔹 Donations (from Donate CTA)
+    // Donations
     object Donations : Screen("donations")
 
-    // Pooja categories
+    // Content routes
     object Poojas : Screen("poojas/{fileName}") {
-        fun createRoute(fileName: String): String = "poojas/$fileName"
+        fun createRoute(fileName: String) = "poojas/$fileName"
     }
-
     object Vrathams : Screen("vrathams/{fileName}") {
-        fun createRoute(fileName: String): String = "vrathams/$fileName"
+        fun createRoute(fileName: String) = "vrathams/$fileName"
     }
-
     object Ashtottaras : Screen("ashtottaras/{fileName}") {
-        fun createRoute(fileName: String): String = "ashtottaras/$fileName"
+        fun createRoute(fileName: String) = "ashtottaras/$fileName"
     }
-
-    // Pooja detail
     object PoojaDetail : Screen("pooja_detail/{fileName}") {
         fun createRoute(fileName: String) = "pooja_detail/${Uri.encode(fileName)}"
     }
@@ -49,7 +47,6 @@ sealed class Screen(val route: String) {
     object FindItGame : Screen("find_it_game/{levelFile}") {
         fun createRoute(levelFile: String) = "find_it_game/${Uri.encode(levelFile)}"
     }
-
     object GameResult : Screen("game_result/{levelName}") {
         fun createRoute(levelName: String) = "game_result/${Uri.encode(levelName)}"
     }

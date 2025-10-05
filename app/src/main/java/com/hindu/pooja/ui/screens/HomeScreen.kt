@@ -38,7 +38,7 @@ fun HomeScreen(
     val context = LocalContext.current
     val userName = FirebaseAuth.getInstance().currentUser?.displayName ?: "User"
 
-    // Your existing sections
+    // Existing sections
     val categories = listOf(
         "Daily Poojas" to "daily_index_te.json",
         "Vrathams / Nomulu" to "vrathams_index_te.json",
@@ -65,12 +65,12 @@ fun HomeScreen(
     // Donate row visibility
     var showDonateRow by rememberSaveable { mutableStateOf(true) }
 
-    // Use DonationConfig from DonationSection.kt (already in your project)
+    // Donation config (from your DonationSection.kt)
     val upiId = DonationConfig.upiId
     val payeeName = DonationConfig.payeeName
     val note = DonationConfig.note
 
-    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(id = R.drawable.home_screen),
             contentDescription = null,
@@ -93,7 +93,7 @@ fun HomeScreen(
                 )
             }
 
-            // 🔸 Featured section (header + horizontally scrollable cards)
+            // Featured section (header + horizontal cards)
             item {
                 FeaturedSectionHeader(
                     onViewAll = { navController.navigate(Screen.Featured.route) }
@@ -111,9 +111,9 @@ fun HomeScreen(
                         )
                     }
                     item {
-                        // Navigate via NavHost route (no Activity reference)
+                        // OPEN SIMPLE TELUGU READER (not flip)
                         FeaturedBalaKandaCard(
-                            onOpen = { navController.navigate(Screen.BalaKandaFlip.route) }
+                            onOpen = { navController.navigate(Screen.BalaKandaWikiSimple.route) }
                         )
                     }
                 }
@@ -130,7 +130,7 @@ fun HomeScreen(
                                 context = context,
                                 upiId = upiId,
                                 payeeName = payeeName,
-                                amount = null, // user types amount
+                                amount = null, // user types amount in app
                                 note = note
                             )
                         },
@@ -144,7 +144,9 @@ fun HomeScreen(
             // Extra CTA
             item {
                 Button(
-                    onClick = { navController.navigate("find_it_game/hidden_objects_shiva_scene.json") },
+                    onClick = {
+                        navController.navigate("find_it_game/hidden_objects_shiva_scene.json")
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 12.dp)
@@ -223,7 +225,7 @@ private fun FeaturedSectionHeader(onViewAll: () -> Unit) {
 private fun FeaturedRamakotiCard(onOpen: () -> Unit) {
     Card(
         modifier = Modifier
-            .width(280.dp)      // width for horizontal card
+            .width(280.dp)
             .heightIn(min = 160.dp)
             .clickable { onOpen() }
     ) {
@@ -234,7 +236,7 @@ private fun FeaturedRamakotiCard(onOpen: () -> Unit) {
             Text("Ramakoti", style = MaterialTheme.typography.titleMedium)
             Text(
                 "Write Jai Sri Ram (English / हिंदी / తెలుగు). Unlimited. Daily streaks, reminders & cloud sync.",
-                style = MaterialTheme.typography.bodySmall, // <-- fixed typo
+                style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(Modifier.height(4.dp))
@@ -247,7 +249,7 @@ private fun FeaturedRamakotiCard(onOpen: () -> Unit) {
 private fun FeaturedBalaKandaCard(onOpen: () -> Unit) {
     Card(
         modifier = Modifier
-            .width(280.dp)      // width for horizontal card
+            .width(280.dp)
             .heightIn(min = 160.dp)
             .clickable { onOpen() }
     ) {
@@ -255,9 +257,9 @@ private fun FeaturedBalaKandaCard(onOpen: () -> Unit) {
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            Text("Bala Kanda — Flip Cards", style = MaterialTheme.typography.titleMedium)
+            Text("Bala Kanda — Lessons", style = MaterialTheme.typography.titleMedium)
             Text(
-                "20 Bala Kanda lessons with flip cards (EN/TE/HI) and TTS. Learn the story with quick swipes.",
+                "Read child-friendly Telugu lessons + quiz.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -267,7 +269,7 @@ private fun FeaturedBalaKandaCard(onOpen: () -> Unit) {
     }
 }
 
-/* ---------------- Donate row & placeholders (kept here to avoid unresolved refs) ---------------- */
+/* ---------------- Donate row & placeholders ---------------- */
 
 @Composable
 private fun DonateActionRow(

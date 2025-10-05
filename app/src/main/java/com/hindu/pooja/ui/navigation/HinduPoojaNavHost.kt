@@ -1,8 +1,11 @@
 package com.hindu.pooja.ui.navigation
 
+import android.net.Uri
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -11,9 +14,16 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.google.firebase.auth.FirebaseAuth
 import com.hindu.pooja.feature.ramakoti.ui.RamakotiScreen
-// NEW: import FlipCard screen
-import com.hindu.pooja.feature.elearning.ui.FlipCardScreen
 import com.hindu.pooja.feature.ramakoti.ui.RamakotiIntroScreen
+
+// eLearning (Flipcards + Wiki reader)
+import com.hindu.pooja.feature.elearning.ui.FlipCardScreen
+import com.hindu.pooja.feature.elearning.ui.WikiLessonReaderScreen
+
+// Quiz
+import com.hindu.pooja.feature.quiz.BalaKandaQuizScreen
+import com.hindu.pooja.feature.quiz.BalaKandaQuizRepo
+
 import com.hindu.pooja.ui.kids.findit.FindItGameScreen
 import com.hindu.pooja.ui.kids.findit.GameResultScreen
 import com.hindu.pooja.ui.login.LoginScreen
@@ -75,26 +85,50 @@ fun HinduPoojaNavHost(
                 onNextRoute = "ramakoti/writer"
             )
         }
-        // Writer page route (navigated from Intro NEXT)
         composable("ramakoti/writer") {
             RamakotiScreen(navController = navController)
         }
 
-        // NEW: Bala Kanda Flip Cards route
+        // Flip cards (if you still keep this route)
         composable(Screen.BalaKandaFlip.route) {
             FlipCardScreen(
                 initialLessonIndex = 0,
-                initialLang = "en",
+                initialLang = "te", // you’re driving Telugu right now
                 onBack = { navController.popBackStack() }
             )
         }
 
-        // Donations placeholder
+        // WIKI simple reader (shows full Telugu lessons with “Take Quiz”)
+        composable(Screen.BalaKandaWikiSimple.route) {
+            WikiLessonReaderScreen(
+                onBack = { navController.popBackStack() },
+                initialIndex = 0,
+                onTakeQuiz = { navController.navigate(Screen.BalaKandaQuiz.route) }
+            )
+        }
+
+        // --- Bala Kanda Quiz (15 MCQ, multi-select, pass 80%) ---
+        composable(Screen.BalaKandaQuiz.route) {
+            val context = LocalContext.current
+            // If your repo exposes a different builder (e.g., load(context)), replace default() below.
+            val repo = remember { BalaKandaQuizRepo.default() }
+
+            BalaKandaQuizScreen(
+                repo = repo,
+                onBack = { navController.popBackStack() },
+                onFinish = {
+                    // After quiz finishes, just go back to the Wiki screen for now.
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        // --- Donations placeholder ---
         composable(Screen.Donations.route) {
             Text("Donations screen (wire your UPI/flow here)")
         }
 
-        // --- Content routes (Home) ---
+        // ---------- Content routes (Home) ----------
         composable(
             route = Screen.Poojas.route,
             arguments = listOf(navArgument("fileName") { type = NavType.StringType })

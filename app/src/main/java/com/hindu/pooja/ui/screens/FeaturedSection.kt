@@ -1,8 +1,14 @@
 package com.hindu.pooja.ui.screens
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
@@ -12,93 +18,81 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.hindu.pooja.R
 
 /**
- * Public, reusable Featured section shown on Home and on the Featured tab.
+ * Public Featured section used by the Featured tab/page.
+ * - Keeps Ramakoti navigation exactly as-is
+ * - Adds Bala Kanda (Wiki reader + Quiz) card
+ * - No name collisions with HomeScreen helpers
  */
 @Composable
 fun FeaturedSection(
-    onRamakotiClick: () -> Unit
+    onRamakotiClick: () -> Unit,
+    onBalaKandaClick: () -> Unit
 ) {
-    Column(Modifier.fillMaxWidth()) {
-        // Section header
+    Column(Modifier.padding(horizontal = 8.dp)) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.padding(bottom = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Featured",
+                text = "Highlights",
                 style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold)
             )
         }
 
-        Spacer(Modifier.height(8.dp))
-
-        // You can add more featured items later; starts with Ramakoti
         val items = listOf(
-            FeaturedItem(
+            FeaturedCardData(
                 title = "Ramakoti",
-                subtitle = "Write Jai Sri Ram (EN/HI/TE). Streaks, reminders & cloud sync.",
-                imageRes = R.drawable.ic_stat_ramakoti,
+                subtitle = "Write Jai Sri Ram. Streaks & cloud sync.",
                 onClick = onRamakotiClick
+            ),
+            FeaturedCardData(
+                title = "Bala Kanda — Lessons",
+                subtitle = "Simple Telugu lessons + Take Quiz (15 Qs, 80% pass).",
+                onClick = onBalaKandaClick
             )
         )
 
         LazyRow(
-            modifier = Modifier.fillMaxWidth(),
             contentPadding = PaddingValues(horizontal = 4.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            items(items) { itCard ->
-                FeaturedCard(item = itCard)
+            items(items) { data ->
+                FeaturedCard(data)
+                Spacer(Modifier.width(4.dp))
             }
         }
     }
 }
 
-private data class FeaturedItem(
+private data class FeaturedCardData(
     val title: String,
     val subtitle: String,
-    val imageRes: Int,
     val onClick: () -> Unit
 )
 
 @Composable
-private fun FeaturedCard(item: FeaturedItem) {
+private fun FeaturedCard(data: FeaturedCardData) {
     Card(
         modifier = Modifier
             .width(280.dp)
-            .heightIn(min = 160.dp)
-            .clickable { item.onClick() }
+            .clickable { data.onClick() }
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Image(
-                    painter = painterResource(id = item.imageRes),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(36.dp)
-                        .padding(end = 8.dp)
-                )
-                Text(item.title, style = MaterialTheme.typography.titleMedium)
-            }
+            Text(data.title, style = MaterialTheme.typography.titleMedium)
             Text(
-                item.subtitle,
+                data.subtitle,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(Modifier.height(4.dp))
-            Button(onClick = item.onClick) { Text("Open Ramakoti") }
+            Button(onClick = data.onClick) { Text("Open") }
         }
     }
 }

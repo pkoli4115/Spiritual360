@@ -1,34 +1,26 @@
 package com.hindu.pooja.feature.elearning.ui
 
-import android.widget.Toast
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.Crossfade
-import androidx.compose.foundation.background
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Stop
-import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.hindu.pooja.feature.elearning.*
 import com.hindu.pooja.util.TtsHelper
-
-/* ----------------------------
-   Simple, book-like reader UI
-   ---------------------------- */
 
 @Composable
 fun FlipCardScreen(
@@ -39,233 +31,233 @@ fun FlipCardScreen(
     val context = LocalContext.current
     val module = remember { FlipCardRepository.loadModule(context) }
 
-    // Colors
-    val saffron = Color(0xFFFF9933)     // screen background
-    val pageBg = Color(0xFFFFF3E3)      // light cream page
-    val pageText = Color(0xFF2B1E0A)    // dark brown text (always readable)
-    val pageTextMuted = Color(0xFF6F5438)
-
-    val allLangs = remember(module) { supportedLanguages(module) }
-    var lang by rememberSaveableState(allLangs.firstOrNull() ?: (initialLang ?: "en"))
-
-    var lessonIndex by rememberSaveable {
-        mutableStateOf(initialLessonIndex.coerceIn(0, module.lessons.lastIndex))
-    }
-    var pageIndex by rememberSaveable { mutableStateOf(0) }
-
-    val lesson = module.lessons[lessonIndex]
-    val lessonTitle = titleFor(lesson.title, lang)
-    val pages = remember(lesson, lang) { cardsFor(lesson, lang) }
-
-    // Reset page on lesson/lang change
-    LaunchedEffect(lessonIndex, lang) { pageIndex = 0 }
+    val availableLangs = remember(module) { supportedLanguages(module) }
+    var selectedLang by rememberSaveableState(availableLangs.firstOrNull() ?: (initialLang ?: "en"))
+    var selectedLessonIndex by rememberSaveable { mutableStateOf(initialLessonIndex.coerceIn(0, module.lessons.lastIndex)) }
+    val selectedLesson = module.lessons.getOrNull(selectedLessonIndex) ?: module.lessons.first()
+    val lessonTitle = titleFor(selectedLesson.title, selectedLang)
 
     // TTS
     val tts = remember { TtsHelper(context) }
-    LaunchedEffect(lang) { tts.applyLanguage(lang) }
+    LaunchedEffect(selectedLang) { tts.applyLanguage(selectedLang) }
     DisposableEffect(Unit) { onDispose { tts.shutdown() } }
 
     BackHandler(enabled = onBack != null) { onBack?.invoke() }
 
-    val lessonText = remember(pages) { pages.joinToString("\n\n") { it.back } }
-
     Scaffold(
-        containerColor = saffron,
         topBar = {
-            PlainTopBar(
-                title = "Bala Kanda",
-                onBack = onBack,
-                actions = {
-                    AssistChip(onClick = { lang = "en" }, label = { Text("EN") }, colors = chipColors(lang == "en"))
-                    AssistChip(onClick = { lang = "te" }, label = { Text("TE") }, colors = chipColors(lang == "te"))
-                    AssistChip(onClick = { lang = "hi" }, label = { Text("HI") }, colors = chipColors(lang == "hi"))
-                    Spacer(Modifier.width(8.dp))
-                    IconButton(onClick = {
-                        if (lessonText.isNotBlank()) tts.speak(lessonText)
-                        else Toast.makeText(context, "Nothing to read", Toast.LENGTH_SHORT).show()
-                    }) { Icon(Icons.Filled.VolumeUp, contentDescription = "Read") }
-                    IconButton(onClick = { tts.stop() }) { Icon(Icons.Filled.Stop, contentDescription = "Stop") }
+            // ---- Custom stable app bar (no experimental API) ----
+            Surface(tonalElevation = 2.dp) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .padding(horizontal = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (onBack != null) {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        }
+                    }
+                    Text(
+                        text = "Bala Kanda — $lessonTitle",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(start = 8.dp),
+                        maxLines = 1
+                    )
+                    LanguageToggle(
+                        languages = availableLangs,
+                        selected = selectedLang,
+                        onSelect = { selectedLang = it }
+                    )
                 }
-            )
+            }
         }
     ) { padding ->
         Column(
-            modifier = Modifier
+            Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(12.dp)
         ) {
-            // PAGE (Surface sets its own content color, but we still set Text colors explicitly)
-            Surface(
-                color = pageBg,
-                tonalElevation = 0.dp,
-                shadowElevation = 0.dp,
-                shape = RoundedCornerShape(22.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .clip(RoundedCornerShape(22.dp))
-                    .clickable {
-                        tts.stop() // stop narration when turning page
-                        val lastPage = pages.lastIndex
-                        if (pageIndex < lastPage) {
-                            pageIndex += 1
-                        } else {
-                            // next lesson
-                            val lastLesson = module.lessons.lastIndex
-                            lessonIndex = if (lessonIndex < lastLesson) lessonIndex + 1 else 0
-                            pageIndex = 0
-                        }
-                    }
-            ) {
-                Box(modifier = Modifier.padding(16.dp)) {
-                    Crossfade(
-                        targetState = Pair(lessonIndex, pageIndex),
-                        modifier = Modifier.fillMaxSize(),
-                        label = "page-crossfade"
-                    ) { (_, idx) ->
-                        Column(
-                            modifier = Modifier.fillMaxSize(),
-                            verticalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Column {
-                                // Lesson title
-                                Text(
-                                    text = lessonTitle,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = pageText,
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                                Spacer(Modifier.height(6.dp))
-
-                                // Optional tag (Summary / Key Point / Story)
-                                val tag = pages.getOrNull(idx)?.front?.title
-                                if (!tag.isNullOrBlank()) {
-                                    Text(
-                                        text = tag,
-                                        style = MaterialTheme.typography.labelLarge,
-                                        color = pageTextMuted
-                                    )
-                                    Spacer(Modifier.height(8.dp))
-                                }
-
-                                // Body
-                                val body = pages.getOrNull(idx)?.back.orEmpty()
-                                SelectionContainer {
-                                    Text(
-                                        text = body,
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        color = pageText
-                                    )
-                                }
-                            }
-
-                            // Footer: language + page position
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = languageDisplayName(lang),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = pageTextMuted
-                                )
-                                Text(
-                                    text = "${idx + 1} / ${pages.size}",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = pageTextMuted
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Lesson navigation (no dropdown)
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                TextButton(
-                    onClick = {
-                        tts.stop()
-                        lessonIndex = if (lessonIndex > 0) lessonIndex - 1 else module.lessons.lastIndex
-                        pageIndex = 0
-                    }
-                ) { Text("Previous Lesson") }
-
-                TextButton(
-                    onClick = {
-                        tts.stop()
-                        lessonIndex = if (lessonIndex < module.lessons.lastIndex) lessonIndex + 1 else 0
-                        pageIndex = 0
-                    }
-                ) { Text("Next Lesson") }
-            }
-        }
-    }
-}
-
-/* ----------------------------
-   Stable custom top bar
-   ---------------------------- */
-@Composable
-private fun PlainTopBar(
-    title: String,
-    onBack: (() -> Unit)?,
-    actions: @Composable RowScope.() -> Unit = {}
-) {
-    Surface(tonalElevation = 2.dp) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp)
-                .padding(horizontal = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            if (onBack != null) {
-                IconButton(onClick = onBack) {
-                    Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
-                }
-            }
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(start = 8.dp)
+            LessonPickerRow(
+                lessons = module.lessons,
+                selectedIndex = selectedLessonIndex,
+                onChange = { selectedLessonIndex = it }
             )
-            Row(verticalAlignment = Alignment.CenterVertically, content = actions)
+
+            val cards = remember(selectedLesson, selectedLang) { cardsFor(selectedLesson, selectedLang) }
+
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(vertical = 12.dp)
+            ) {
+                itemsIndexed(cards, key = { idx, _ -> "$selectedLessonIndex-$selectedLang-$idx" }) { _, card ->
+                    FlipCardItem(
+                        frontTitle = card.front.title,
+                        frontHint = card.front.hint,
+                        backText = card.back,
+                        onSpeak = { tts.speak(card.back) },
+                        onStopSpeak = { tts.stop() }
+                    )
+                }
+            }
         }
     }
 }
 
-/* ----------------------------
-   Small helpers
-   ---------------------------- */
 @Composable
-private fun chipColors(selected: Boolean) =
-    AssistChipDefaults.assistChipColors(
-        containerColor = if (selected)
-            MaterialTheme.colorScheme.primaryContainer
-        else
-            MaterialTheme.colorScheme.surfaceVariant,
-        labelColor = if (selected)
-            MaterialTheme.colorScheme.onPrimaryContainer
-        else
-            MaterialTheme.colorScheme.onSurfaceVariant
-    )
+private fun LanguageToggle(
+    languages: List<String>,
+    selected: String,
+    onSelect: (String) -> Unit
+) {
+    Row(
+        modifier = Modifier.padding(end = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        languages.forEach { code ->
+            FilterChip(
+                selected = (code == selected),
+                onClick = { onSelect(code) },
+                label = { Text(languageDisplayName(code)) },
+                modifier = Modifier.padding(end = 6.dp)
+            )
+        }
+    }
+}
 
+/**
+ * Stable lesson picker (no experimental ExposedDropdown APIs).
+ * Uses a FilledTonalButton to open a regular DropdownMenu.
+ */
+@Composable
+private fun LessonPickerRow(
+    lessons: List<Lesson>,
+    selectedIndex: Int,
+    onChange: (Int) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val selectedTitle = titleFor(lessons[selectedIndex].title, "en")
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text("Lesson:", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(end = 8.dp))
+
+        Box {
+            FilledTonalButton(onClick = { expanded = true }) {
+                Text(
+                    selectedTitle,
+                    modifier = Modifier.padding(end = 6.dp),
+                    maxLines = 1
+                )
+                Icon(Icons.Filled.ArrowDropDown, contentDescription = null)
+            }
+
+            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                lessons.forEachIndexed { index, lesson ->
+                    DropdownMenuItem(
+                        text = { Text(titleFor(lesson.title, "en")) },
+                        onClick = {
+                            onChange(index)
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun FlipCardItem(
+    frontTitle: String,
+    frontHint: String,
+    backText: String,
+    onSpeak: () -> Unit,
+    onStopSpeak: () -> Unit
+) {
+    var isFront by remember { mutableStateOf(true) }
+    val rotation by animateFloatAsState(targetValue = if (isFront) 0f else 180f, label = "flip")
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { isFront = !isFront }
+    ) {
+        // Front
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .alpha(if (rotation <= 90f) 1f else 0f)
+                .rotate(rotation)
+        ) {
+            Text(frontTitle, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            if (frontHint.isNotBlank()) {
+                Spacer(Modifier.height(6.dp))
+                Text(frontHint, style = MaterialTheme.typography.bodyMedium)
+            }
+            Spacer(Modifier.height(8.dp))
+            AssistChipsRow(onSpeak = onSpeak, onStopSpeak = onStopSpeak, isBack = false)
+        }
+
+        // Back
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .alpha(if (rotation > 90f) 1f else 0f)
+                .rotate(rotation - 180f)
+        ) {
+            Text(backText, style = MaterialTheme.typography.bodyLarge)
+            Spacer(Modifier.height(8.dp))
+            AssistChipsRow(onSpeak = onSpeak, onStopSpeak = onStopSpeak, isBack = true)
+        }
+    }
+}
+
+@Composable
+private fun AssistChipsRow(
+    onSpeak: () -> Unit,
+    onStopSpeak: () -> Unit,
+    isBack: Boolean
+) {
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        AssistChip(
+            onClick = { if (isBack) onSpeak() else {} },
+            label = { Text(if (isBack) "Speak" else "Flip") }
+        )
+        AssistChip(
+            onClick = onStopSpeak,
+            label = { Text("Stop") }
+        )
+    }
+}
+
+/* ----------------------------
+   Small helpers for saveables
+   ---------------------------- */
 @Composable
 private fun <T> rememberSaveableState(initial: T): MutableState<T> {
     return rememberSaveable { mutableStateOf(initial) }
+}
+
+/* ----------------------------
+   Language display name helper
+   ---------------------------- */
+private fun languageDisplayName(code: String): String = when (code.lowercase()) {
+    "en" -> "English"
+    "te" -> "తెలుగు"
+    "hi" -> "हिन्दी"
+    "ta" -> "தமிழ்"
+    else -> code.uppercase()
 }
