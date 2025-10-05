@@ -2,8 +2,8 @@
 
 package com.hindu.pooja.feature.ramakoti.ui
 
-import android.media.MediaPlayer
 import android.os.Build
+import android.speech.tts.TextToSpeech
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -47,6 +47,7 @@ import com.hindu.pooja.VolumeEvent
 import com.hindu.pooja.model.ramakoti.CellState
 import com.hindu.pooja.viewmodel.RamakotiViewModel
 import kotlinx.coroutines.delay
+import java.util.Locale
 import kotlin.random.Random
 
 @Composable
@@ -55,7 +56,6 @@ fun RamakotiScreen(
     viewModel: RamakotiViewModel = hiltViewModel(),
     initialLanguage: String = "en"
 ) {
-    // initialize once
     LaunchedEffect(Unit) { viewModel.init(initialLanguage) }
 
     val cells by viewModel.cells.collectAsState()
@@ -67,27 +67,39 @@ fun RamakotiScreen(
 
     val context = LocalContext.current
 
-    // 🔊 Bell sound
-    val playBell: () -> Unit = remember {
-        {
-            try {
-                val mp = MediaPlayer.create(context, R.raw.bell_ram)
-                mp?.setOnCompletionListener { it.release() }
-                mp?.start()
-            } catch (_: Exception) { /* ignore */ }
+    /* ---------------- TTS setup ---------------- */
+    var ttsReady by remember { mutableStateOf(false) }
+    val tts = remember { TextToSpeech(context) { status -> ttsReady = (status == TextToSpeech.SUCCESS) } }
+
+    LaunchedEffect(language, ttsReady) {
+        if (!ttsReady) return@LaunchedEffect
+        val langTag = when (language.lowercase()) { "te" -> "te-IN"; "hi" -> "hi-IN"; else -> "en-IN" }
+        val res = tts.setLanguage(Locale.forLanguageTag(langTag))
+        if (res == TextToSpeech.LANG_MISSING_DATA || res == TextToSpeech.LANG_NOT_SUPPORTED) {
+            tts.setLanguage(Locale.forLanguageTag("en-IN"))
         }
+        tts.setSpeechRate(0.95f)
+        tts.setPitch(1.05f)
+    }
+    DisposableEffect(Unit) { onDispose { runCatching { tts.stop() }; runCatching { tts.shutdown() } } }
+
+    fun chantFor(lang: String): String = when (lang.lowercase()) {
+        "hi" -> "जय श्री राम"
+        "te" -> "జై శ్రీ రామ్"
+        else -> "Jai Shri Ram"
+    }
+    fun speakChant() {
+        if (!ttsReady) return
+        tts.speak(chantFor(language), TextToSpeech.QUEUE_FLUSH, null, "ramakoti_tap")
     }
 
-    // 🔉 Volume key hooks
+    /* --------- Volume key hooks (Audio Mode) --------- */
     LaunchedEffect(audioMode) { RamakotiAudioKeyBus.setActive(audioMode) }
     LaunchedEffect(Unit) {
         RamakotiAudioKeyBus.events.collect { event ->
             if (audioMode) {
                 when (event) {
-                    VolumeEvent.UP -> {
-                        playBell()
-                        viewModel.fillNextCellWithMantra()
-                    }
+                    VolumeEvent.UP -> { speakChant(); viewModel.fillNextCellWithMantra() }
                     VolumeEvent.DOWN -> viewModel.undoLastFillNoop()
                 }
             }
@@ -110,7 +122,12 @@ fun RamakotiScreen(
                             overflow = TextOverflow.Clip
                         )
                         Spacer(Modifier.height(4.dp))
-                        LanguageChipRow(language = language, onChange = viewModel::switchLanguage)
+                        // 🔒 Disable language change after the first write in this batch
+                        LanguageChipRow(
+                            language = language,
+                            onChange = viewModel::switchLanguage,
+                            enabled = completed == 0
+                        )
                     }
                 },
                 navigationIcon = {
@@ -119,31 +136,35 @@ fun RamakotiScreen(
                     }
                 },
                 actions = {
-                    AssistChip(
-                        onClick = { viewModel.setAudioMode(!audioMode) },
-                        leadingIcon = {
-                            Icon(
-                                if (audioMode) Icons.Default.VolumeUp else Icons.Default.VolumeOff,
-                                contentDescription = null
+                    // Proper vertical centering + padding to avoid “dropped” look
+                    Row(
+                        modifier = Modifier
+                            .padding(end = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        AssistChip(
+                            onClick = { viewModel.setAudioMode(!audioMode) },
+                            leadingIcon = {
+                                Icon(
+                                    if (audioMode) Icons.Default.VolumeUp else Icons.Default.VolumeOff,
+                                    contentDescription = null
+                                )
+                            },
+                            label = { Text(if (audioMode) "Audio" else "Tap") },
+                            enabled = true,
+                            colors = AssistChipDefaults.assistChipColors(
+                                containerColor = if (audioMode)
+                                    MaterialTheme.colorScheme.primaryContainer
+                                else
+                                    MaterialTheme.colorScheme.surfaceVariant
                             )
-                        },
-                        label = { Text(if (audioMode) "Audio" else "Tap") },
-                        colors = AssistChipDefaults.assistChipColors(
-                            containerColor = if (audioMode)
-                                MaterialTheme.colorScheme.primaryContainer
-                            else
-                                MaterialTheme.colorScheme.surfaceVariant
                         )
-                    )
+                    }
                 }
             )
         },
         bottomBar = {
-            val buttonText = when (language.lowercase()) {
-                "hi" -> "जय श्री राम"
-                "te" -> "జై శ్రీ రామ్"
-                else -> "Jai Shri Ram"
-            }
+            val buttonText = chantFor(language)
             Surface(tonalElevation = 2.dp) {
                 Box(
                     modifier = Modifier
@@ -152,18 +173,14 @@ fun RamakotiScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Button(
-                        onClick = {
-                            playBell()
-                            viewModel.fillNextCellWithMantra()
-                        },
-                        enabled = completed < 108, // VM will roll to next batch when 108 reached
+                        onClick = { speakChant(); viewModel.fillNextCellWithMantra() },
+                        enabled = completed < 108,
                         modifier = Modifier.fillMaxWidth()
                     ) { Text(buttonText) }
                 }
             }
         }
     ) { pad ->
-        // Use a Box so the celebration overlays everything
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -189,12 +206,17 @@ fun RamakotiScreen(
 /* ---------- helpers ---------- */
 
 @Composable
-private fun LanguageChipRow(language: String, onChange: (String) -> Unit) {
+private fun LanguageChipRow(
+    language: String,
+    onChange: (String) -> Unit,
+    enabled: Boolean
+) {
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         listOf("en" to "EN", "hi" to "HI", "te" to "TE").forEach { (code, label) ->
             AssistChip(
-                onClick = { onChange(code) },
+                onClick = { if (enabled) onChange(code) },
                 label = { Text(label) },
+                enabled = enabled,
                 colors = AssistChipDefaults.assistChipColors(
                     containerColor =
                         if (language == code)
@@ -302,16 +324,13 @@ private fun CelebrationOverlay(onDismiss: () -> Unit) {
                 model = ImageRequest.Builder(context)
                     .data(R.drawable.sri_ram) // drawable/sri_ram.gif
                     .decoderFactory(
-                        if (Build.VERSION.SDK_INT >= 28)
-                            ImageDecoderDecoder.Factory()
-                        else
-                            GifDecoder.Factory()
+                        if (Build.VERSION.SDK_INT >= 28) ImageDecoderDecoder.Factory()
+                        else GifDecoder.Factory()
                     )
                     .build(),
                 contentDescription = "Sri Ram Celebration",
                 modifier = Modifier.size(300.dp)
             )
-
             FlowerShower()
         }
     }
@@ -325,7 +344,6 @@ private fun FlowerShower(
     durationMillis: Int = 4000
 ) {
     val randomSeeds = remember { List(petalCount) { Random(it) } }
-
     val anim = rememberInfiniteTransition(label = "flower")
     val fallProgress by anim.animateFloat(
         initialValue = 0f,
@@ -333,7 +351,6 @@ private fun FlowerShower(
         animationSpec = infiniteRepeatable(tween(durationMillis, easing = LinearEasing)),
         label = "fall"
     )
-
     Canvas(Modifier.fillMaxSize()) {
         val w = size.width
         val h = size.height
