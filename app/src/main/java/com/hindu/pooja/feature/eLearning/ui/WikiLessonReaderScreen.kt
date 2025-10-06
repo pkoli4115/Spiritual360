@@ -57,20 +57,19 @@ fun WikiReaderScreen(
     val scrollState = rememberScrollState()
     LaunchedEffect(index) { scrollState.scrollTo(0) }
 
-    // Back button (system): delegate to onBack (your NavHost currently sends the user home)
+    // Back button (system): delegate to onBack
     BackHandler {
         runCatching { ttsHelper.stop() }; isSpeaking = false
         onBack()
     }
 
-    // ▶ Softer swipe: accumulate horizontal distance; small dp threshold (20.dp)
+    // ▶ Softer swipe
     val density = LocalDensity.current
     val swipeThresholdPx = with(density) { 20.dp.toPx() }  // smaller = easier
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(saffron)
-            // before: .pointerInput(index) { ... }
             .pointerInput(index, safe.size) {
                 var totalDx = 0f
                 detectHorizontalDragGestures(
@@ -126,7 +125,8 @@ fun WikiReaderScreen(
                             runCatching { ttsHelper.stop() }; isSpeaking = false
                         } else {
                             curr?.let { l ->
-                                runCatching { ttsHelper.stop(); ttsHelper.speak(l.content) }
+                                val speakText = stripOnlySequentialPageNumbers(l.content)
+                                runCatching { ttsHelper.stop(); ttsHelper.speak(speakText) }
                                 isSpeaking = true
                             }
                         }
@@ -182,4 +182,37 @@ fun WikiReaderScreen(
             }
         }
     }
+}
+
+/* ------------------ TTS sanitizer: strip only our auto numbers ------------------ */
+/* We only remove auto-added ASCII sequential prefixes like "1. ", "2) ", ...      */
+/* Telugu digits (౦–౯) and non-sequential numbers are left intact for TTS.         */
+
+private fun parseLeadingAsciiNumber(line: String): Pair<Int, String>? {
+    val m = Regex("^\\s*([0-9]+)[\\.)\\-:]?\\s+(.*)$").matchEntire(line) ?: return null
+    val num = m.groupValues[1].toIntOrNull() ?: return null
+    val rest = m.groupValues[2]
+    return num to rest
+}
+
+private fun stripOnlySequentialPageNumbers(text: String): String {
+    val lines = text.lines()
+    if (lines.isEmpty()) return text
+
+    val first = parseLeadingAsciiNumber(lines.firstOrNull().orEmpty()) ?: return text
+    val second = lines.drop(1).firstNotNullOfOrNull { parseLeadingAsciiNumber(it) } ?: return text
+    if (second.first != first.first + 1) return text
+
+    var expected = first.first
+    val out = ArrayList<String>(lines.size)
+    for (line in lines) {
+        val p = parseLeadingAsciiNumber(line)
+        if (p != null && p.first == expected) {
+            out += p.second
+            expected += 1
+        } else {
+            out += line
+        }
+    }
+    return out.joinToString("\n")
 }

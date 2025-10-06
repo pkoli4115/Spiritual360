@@ -1,5 +1,6 @@
 package com.hindu.pooja.feature.ramakoti.ui
 
+import androidx.compose.ui.draw.alpha
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -17,9 +18,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
 import com.hindu.pooja.util.TtsHelper
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import java.util.Locale
 
@@ -35,30 +38,36 @@ fun RamakotiIntroScreen(
     val context = LocalContext.current
     var introText by remember { mutableStateOf<String?>(null) } // null = loading
 
-    // ---- TTS ----
+    // ---- TTS with readiness guards ----
     val tts = remember { TtsHelper(context) }
     var isSpeaking by remember { mutableStateOf(false) }
+    var ttsReady by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        // Telugu by default for this intro
-        runCatching { tts.applyLanguage("te") }
         introText = withContext(Dispatchers.IO) { loadRamakotiIntroFromAssets(context) }
+
+        // wait for engine to bind
+        repeat(40) {
+            if (tts.isReady()) return@repeat
+            delay(50)
+        }
+        ttsReady = tts.isReady()
+        if (ttsReady) runCatching { tts.applyLanguage("te") }
     }
-    // Stop TTS if text changes
+
     LaunchedEffect(introText) {
-        runCatching { tts.stop() }
+        if (ttsReady) runCatching { tts.stop() }
         isSpeaking = false
     }
+
     DisposableEffect(Unit) {
-        onDispose { runCatching { tts.shutdown() } }
+        onDispose { if (ttsReady) runCatching { tts.shutdown() } }
     }
 
     fun speakOrStop() {
-        val txt = introText
-        if (txt.isNullOrBlank()) return
-        // avoid reading the error message (starts with ⚠️)
+        val txt = introText ?: return
+        if (!ttsReady) return
         if (txt.trim().startsWith("⚠️")) return
-
         if (isSpeaking) {
             runCatching { tts.stop() }
             isSpeaking = false
@@ -72,14 +81,10 @@ fun RamakotiIntroScreen(
         containerColor = saffron,
         bottomBar = {
             Surface(tonalElevation = 2.dp) {
-                Box(
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(12.dp)
-                ) {
+                Box(Modifier.fillMaxWidth().padding(12.dp)) {
                     Button(
                         onClick = {
-                            runCatching { tts.stop() } // don’t bleed into next screen
+                            if (ttsReady) runCatching { tts.stop() }
                             isSpeaking = false
                             navController.navigate(onNextRoute)
                         },
@@ -106,20 +111,27 @@ fun RamakotiIntroScreen(
                     .padding(horizontal = 12.dp, vertical = 6.dp)
             ) {
                 Box(Modifier.fillMaxSize()) {
-                    // TTS button (top-right inside the card)
-                    IconButton(
-                        onClick = { speakOrStop() },
+
+                    // Big, always-on-top TTS button (click guarded; visually dim when disabled)
+                    val fabEnabled = ttsReady && !introText.isNullOrBlank() && !introText!!.trim().startsWith("⚠️")
+                    SmallFloatingActionButton(
+                        onClick = { if (fabEnabled) speakOrStop() },
+                        containerColor = saffron,
+                        contentColor = Color.White,
                         modifier = Modifier
                             .align(Alignment.TopEnd)
-                            .padding(8.dp)
+                            .padding(12.dp)
+                            .size(56.dp)
+                            .zIndex(1f)
+                            .then(if (!fabEnabled) Modifier.alpha(0.45f) else Modifier)
                     ) {
                         Icon(
                             imageVector = if (isSpeaking) Icons.Filled.VolumeOff else Icons.Filled.VolumeUp,
-                            contentDescription = if (isSpeaking) "Stop reading" else "Read aloud",
-                            tint = saffron
+                            contentDescription = if (isSpeaking) "Stop reading" else "Read aloud"
                         )
                     }
 
+                    // Content
                     when (val txt = introText) {
                         null -> {
                             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -149,18 +161,13 @@ fun RamakotiIntroScreen(
     }
 }
 
-/* -------------------------- Asset loader (robust) -------------------------- */
+/* -------------------------- Asset loader (same) --------------------------- */
 
 private fun loadRamakotiIntroFromAssets(ctx: android.content.Context): String {
     val dir = "eLearning"
     val targetBase = "ramakotiintro"
 
-    val candidates = listOf(
-        "RamakotiIntro",
-        "RamakotiIntro.txt",
-        "RamakotiIntro.md"
-    )
-
+    val candidates = listOf("RamakotiIntro", "RamakotiIntro.txt", "RamakotiIntro.md")
     for (cand in candidates) {
         val path = "$dir/$cand"
         if (assetExists(ctx, path)) return readAsset(ctx, path)
