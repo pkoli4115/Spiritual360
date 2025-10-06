@@ -1,71 +1,190 @@
 package com.hindu.pooja.feature.ramakoti.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.VolumeOff
+import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.hindu.pooja.util.TtsHelper
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.util.Locale
 
 @Composable
 fun RamakotiIntroScreen(
     navController: NavController,
-    onNextRoute: String // e.g., "ramakoti/writer"
+    onNextRoute: String
 ) {
+    val saffron = Color(0xFFFF9933)
+    val cream = Color(0xFFFFF3E3)
+    val textColor = Color(0xFF2B1E0A)
+
+    val context = LocalContext.current
+    var introText by remember { mutableStateOf<String?>(null) } // null = loading
+
+    // ---- TTS ----
+    val tts = remember { TtsHelper(context) }
+    var isSpeaking by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        // Telugu by default for this intro
+        runCatching { tts.applyLanguage("te") }
+        introText = withContext(Dispatchers.IO) { loadRamakotiIntroFromAssets(context) }
+    }
+    // Stop TTS if text changes
+    LaunchedEffect(introText) {
+        runCatching { tts.stop() }
+        isSpeaking = false
+    }
+    DisposableEffect(Unit) {
+        onDispose { runCatching { tts.shutdown() } }
+    }
+
+    fun speakOrStop() {
+        val txt = introText
+        if (txt.isNullOrBlank()) return
+        // avoid reading the error message (starts with ⚠️)
+        if (txt.trim().startsWith("⚠️")) return
+
+        if (isSpeaking) {
+            runCatching { tts.stop() }
+            isSpeaking = false
+        } else {
+            runCatching { tts.stop(); tts.speak(txt) }
+            isSpeaking = true
+        }
+    }
+
     Scaffold(
+        containerColor = saffron,
         bottomBar = {
             Surface(tonalElevation = 2.dp) {
-                Box(Modifier.fillMaxWidth().padding(12.dp)) {
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp)
+                ) {
                     Button(
-                        onClick = { navController.navigate(onNextRoute) },
+                        onClick = {
+                            runCatching { tts.stop() } // don’t bleed into next screen
+                            isSpeaking = false
+                            navController.navigate(onNextRoute)
+                        },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text("NEXT")
                         Spacer(Modifier.width(8.dp))
-                        Icon(Icons.Default.ArrowForward, contentDescription = null)
+                        Icon(Icons.Filled.ArrowForward, contentDescription = null)
                     }
                 }
             }
         }
     ) { pad ->
-        Column(
+        Box(
             Modifier
-                .padding(pad)
                 .fillMaxSize()
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(pad)
+                .background(saffron)
         ) {
-            Text("మా ఆశయం", style = MaterialTheme.typography.headlineSmall)
-            Spacer(Modifier.height(8.dp))
-            Text(
-                """
-“శ్రీరామ” అని రాయడం యుగయుగాలుగా కొనసాగుతున్న పవిత్ర సాధన.
-ఈ డిజిటల్ శ్రీరామకోటిలో ఎక్కడ ఉన్నా, ఎప్పుడైనా సులభంగా
-ఈ సేవలో పాల్గొనండి.
+            Card(
+                colors = CardDefaults.cardColors(containerColor = cream),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 12.dp, vertical = 6.dp)
+            ) {
+                Box(Modifier.fillMaxSize()) {
+                    // TTS button (top-right inside the card)
+                    IconButton(
+                        onClick = { speakOrStop() },
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (isSpeaking) Icons.Filled.VolumeOff else Icons.Filled.VolumeUp,
+                            contentDescription = if (isSpeaking) "Stop reading" else "Read aloud",
+                            tint = saffron
+                        )
+                    }
 
-ఒక్కో 108 లేఖనాల తరువాత ఘంటానాదం, పుష్పవర్షం జరుగుతుంది.
-మీ పురోగతి భద్రంగా నిల్వవుండి జీవితాంతం లెక్కలతో కొనసాగుతుంది.
-
-ప్రత్యేకంగా వృద్ధులు, చూపు సమస్య ఉన్న భక్తుల కోసం:
-• టైపింగ్ అవసరం లేదు — పెద్ద బటన్‌పై ఒక్క ట్యాప్‌తో “జై శ్రీరామ్”
-• టాక్‌బ్యాక్‌ సహకారం, పెద్ద అక్షరాలు, హై-కాన్ట్రాస్ట్ రంగులు
-• వైబ్రేషన్/ఘంటా శబ్దంతో ప్రతి జపానికి ప్రతిస్పందన
-• ఐచ్చిక “ఆడియో మోడ్” — వాల్యూం అప్ = జపం, వాల్యూం డౌన్ = అన్‌డూ
-• ఆఫ్‌లైన్‌లో పనిచేస్తుంది; తరువాత ఆటో సింక్
-
-మా సంకల్పం: అందరికీ శ్రీరామనామాన్ని అలవాటుగా చేసి భక్తి భావాన్ని పెంచడం.
-జై శ్రీరామ్ ✨
-                """.trimIndent(),
-                textAlign = TextAlign.Start,
-                style = MaterialTheme.typography.bodyLarge
-            )
+                    when (val txt = introText) {
+                        null -> {
+                            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                CircularProgressIndicator(color = saffron)
+                            }
+                        }
+                        else -> {
+                            val scroll = rememberScrollState()
+                            Text(
+                                text = txt,
+                                color = textColor,
+                                textAlign = TextAlign.Start,
+                                style = MaterialTheme.typography.bodyLarge.copy(
+                                    fontSize = 20.sp,
+                                    lineHeight = 28.sp
+                                ),
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(20.dp)
+                                    .verticalScroll(scroll)
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }
+
+/* -------------------------- Asset loader (robust) -------------------------- */
+
+private fun loadRamakotiIntroFromAssets(ctx: android.content.Context): String {
+    val dir = "eLearning"
+    val targetBase = "ramakotiintro"
+
+    val candidates = listOf(
+        "RamakotiIntro",
+        "RamakotiIntro.txt",
+        "RamakotiIntro.md"
+    )
+
+    for (cand in candidates) {
+        val path = "$dir/$cand"
+        if (assetExists(ctx, path)) return readAsset(ctx, path)
+    }
+
+    val files = runCatching { ctx.assets.list(dir)?.toList().orEmpty() }.getOrElse { emptyList() }
+    val match = files.firstOrNull { it.lowercase(Locale.ROOT).startsWith(targetBase) }
+    if (match != null) return readAsset(ctx, "$dir/$match")
+
+    return buildString {
+        appendLine("⚠️ Unable to load intro file.")
+        appendLine("Place a file named \"RamakotiIntro\" (any case, optional .txt/.md) in assets/$dir/")
+        appendLine()
+        if (files.isNotEmpty()) {
+            appendLine("Found in $dir/:")
+            files.forEach { appendLine("• $it") }
+        } else {
+            appendLine("No files found under assets/$dir/")
+        }
+    }.trim()
+}
+
+private fun assetExists(ctx: android.content.Context, path: String): Boolean =
+    runCatching { ctx.assets.open(path).close(); true }.getOrDefault(false)
+
+private fun readAsset(ctx: android.content.Context, path: String): String =
+    ctx.assets.open(path).use { it.readBytes().toString(Charsets.UTF_8) }.trim()
