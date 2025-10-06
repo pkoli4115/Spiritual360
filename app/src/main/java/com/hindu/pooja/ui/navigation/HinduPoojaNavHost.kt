@@ -17,8 +17,10 @@ import com.hindu.pooja.feature.ramakoti.ui.RamakotiScreen
 import com.hindu.pooja.feature.ramakoti.ui.RamakotiIntroScreen
 
 // eLearning (Flipcards + Wiki reader)
-import com.hindu.pooja.feature.elearning.ui.FlipCardScreen
-import com.hindu.pooja.feature.elearning.ui.WikiLessonReaderScreen
+// REMOVED: import com.hindu.pooja.feature.elearning.ui.WikiLessonReaderScreen
+import com.hindu.pooja.feature.elearning.ui.WikiReaderScreen
+import com.hindu.pooja.feature.elearning.ui.Lesson
+import com.hindu.pooja.feature.elearning.SimpleLessonRepo
 
 // Quiz
 import com.hindu.pooja.feature.quiz.BalaKandaQuizScreen
@@ -31,8 +33,10 @@ import com.hindu.pooja.ui.personal.EditProfileScreen
 import com.hindu.pooja.ui.personal.FirstTimeProfileScreen
 import com.hindu.pooja.ui.screens.*
 import com.hindu.pooja.viewmodel.ProfileViewModel
+import com.hindu.pooja.util.TtsHelper
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
+import org.json.JSONObject
 
 @Composable
 fun HinduPoojaNavHost(
@@ -89,37 +93,41 @@ fun HinduPoojaNavHost(
             RamakotiScreen(navController = navController)
         }
 
-        // Flip cards (if you still keep this route)
-        composable(Screen.BalaKandaFlip.route) {
-            FlipCardScreen(
-                initialLessonIndex = 0,
-                initialLang = "te", // you’re driving Telugu right now
-                onBack = { navController.popBackStack() }
-            )
-        }
-
-        // WIKI simple reader (shows full Telugu lessons with “Take Quiz”)
+               // ---------- Bala Kanda WIKI (now using generic WikiReaderScreen) ----------
         composable(Screen.BalaKandaWikiSimple.route) {
-            WikiLessonReaderScreen(
-                onBack = { navController.popBackStack() },
+            val ctx = LocalContext.current
+            val tts = remember { TtsHelper(ctx) }
+
+            // Load your existing simple wiki lessons and map to the generic Lesson model
+            val module = remember { SimpleLessonRepo.loadTeWikiSimple(ctx) }
+            val lessons = remember(module) {
+                module.lessons.mapIndexed { idx, l ->
+                    Lesson(
+                        id = "bala-wiki-$idx",
+                        title = l.title,
+                        content = l.content
+                    )
+                }
+            }
+
+            WikiReaderScreen(
+                lessons = lessons,
                 initialIndex = 0,
-                onTakeQuiz = { navController.navigate(Screen.BalaKandaQuiz.route) }
+                ttsHelper = tts,
+                title = "బాలకాండము కథ",
+                languageCode = "te",
+                onBack = { navController.popBackStack() },
+                onLastPage = { navController.navigate(Screen.BalaKandaQuiz.route) }
             )
         }
 
-        // --- Bala Kanda Quiz (15 MCQ, multi-select, pass 80%) ---
+        // --- Bala Kanda Quiz ---
         composable(Screen.BalaKandaQuiz.route) {
-            val context = LocalContext.current
-            // If your repo exposes a different builder (e.g., load(context)), replace default() below.
             val repo = remember { BalaKandaQuizRepo.default() }
-
             BalaKandaQuizScreen(
                 repo = repo,
                 onBack = { navController.popBackStack() },
-                onFinish = {
-                    // After quiz finishes, just go back to the Wiki screen for now.
-                    navController.popBackStack()
-                }
+                onFinish = { navController.popBackStack() }
             )
         }
 
@@ -184,5 +192,72 @@ fun HinduPoojaNavHost(
             val levelName = URLDecoder.decode(encoded, StandardCharsets.UTF_8.name())
             GameResultScreen(levelName = levelName, navController = navController)
         }
+
+        // ---------- NEW: Generic Wiki Reader (add-only; safe) ----------
+        composable(
+            route = Screen.WikiReader.route,
+            arguments = listOf(
+                navArgument("file") { type = NavType.StringType },
+                navArgument("title") { type = NavType.StringType },
+                navArgument("lang") { type = NavType.StringType; defaultValue = "te" },
+                navArgument("index") { type = NavType.IntType; defaultValue = 0 }
+            )
+        ) { backStackEntry ->
+            val ctx = LocalContext.current
+
+            val encFile = backStackEntry.arguments?.getString("file").orEmpty()
+            val encTitle = backStackEntry.arguments?.getString("title").orEmpty()
+            val lang = backStackEntry.arguments?.getString("lang") ?: "te"
+            val initialIndex = backStackEntry.arguments?.getInt("index") ?: 0
+
+            val file = URLDecoder.decode(encFile, StandardCharsets.UTF_8.name())
+            val screenTitle = URLDecoder.decode(encTitle, StandardCharsets.UTF_8.name())
+
+            val tts = remember { TtsHelper(ctx) }
+
+            val lessons = remember(file) {
+                loadAshtottaraLessonsFromAsset(ctx, file)
+            }
+
+            WikiReaderScreen(
+                lessons = lessons,
+                initialIndex = initialIndex,
+                ttsHelper = tts,
+                title = screenTitle,
+                languageCode = lang,
+                onBack = { navController.popBackStack() },
+                onLastPage = { /* optional */ }
+            )
+        }
     }
+}
+
+/* -------------------- Private helpers (self-contained) -------------------- */
+
+private fun loadAshtottaraLessonsFromAsset(
+    context: android.content.Context,
+    assetPath: String
+): List<Lesson> {
+    val json = context.assets.open(assetPath).use { it.readBytes().toString(Charsets.UTF_8) }
+    val root = JSONObject(json)
+
+    val titleBase = root.optString("name", root.optString("name_en", "Ashtottara"))
+    val id = root.optString("id", "unknown")
+
+    val content = root.optJSONObject("content") ?: JSONObject()
+    val versesArr = content.optJSONArray("verses") ?: return emptyList()
+
+    val out = ArrayList<Lesson>(versesArr.length())
+    for (i in 0 until versesArr.length()) {
+        val verse = versesArr.optString(i)
+        val pageTitle = "$titleBase — ${i + 1}/${versesArr.length()}"
+        out.add(
+            Lesson(
+                id = "ashtottara-$id-$i",
+                title = pageTitle,
+                content = verse
+            )
+        )
+    }
+    return out
 }

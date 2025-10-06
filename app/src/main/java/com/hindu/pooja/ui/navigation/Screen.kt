@@ -50,4 +50,20 @@ sealed class Screen(val route: String) {
     object GameResult : Screen("game_result/{levelName}") {
         fun createRoute(levelName: String) = "game_result/${Uri.encode(levelName)}"
     }
+
+    // ---------- NEW: Generic Wiki Reader (add-only, no behavior change) ----------
+    // Use to open long-form "read mode" from any section (Ashtottara, Daily Pooja, etc.)
+    object WikiReader : Screen("wikiReader?file={file}&title={title}&lang={lang}&index={index}") {
+        fun createRoute(
+            file: String,
+            title: String,
+            lang: String = "te",
+            index: Int = 0
+        ): String {
+            val encFile = Uri.encode(file)
+            val encTitle = Uri.encode(title)
+            val encLang = Uri.encode(lang)
+            return "wikiReader?file=$encFile&title=$encTitle&lang=$encLang&index=$index"
+        }
+    }
 }
