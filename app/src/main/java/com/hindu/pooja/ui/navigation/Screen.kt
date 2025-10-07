@@ -1,6 +1,8 @@
 package com.hindu.pooja.ui.navigation
 
 import android.net.Uri
+import com.hindu.pooja.feature.quiz.AyodhyaKandaQuizRepo
+import com.hindu.pooja.feature.quiz.BalaKandaQuizScreen
 
 sealed class Screen(val route: String) {
     // Tabs
@@ -23,8 +25,12 @@ sealed class Screen(val route: String) {
 
     // eLearning
     object BalaKandaFlip : Screen("featured/balakanda")                 // (keep if you still want flips)
-    object BalaKandaWikiSimple : Screen("featured/balakanda/wiki")      // NEW reader
-    object BalaKandaQuiz : Screen("featured/balakanda/quiz")            // NEW quiz
+    object BalaKandaWikiSimple : Screen("featured/balakanda/wiki")      // reader
+    object BalaKandaQuiz : Screen("featured/balakanda/quiz")            // quiz
+
+    // NEW: Ayodhya Kanda reader route (matches NavHost "ramayana/ayodhya/wiki")
+    object AyodhyaKandaWiki : Screen("ramayana/ayodhya/wiki")
+    object AyodhyaKandaQuiz : Screen("ramayana/ayodhya/quiz")
 
     // Donations
     object Donations : Screen("donations")
@@ -51,7 +57,7 @@ sealed class Screen(val route: String) {
         fun createRoute(levelName: String) = "game_result/${Uri.encode(levelName)}"
     }
 
-    // ---------- NEW: Generic Wiki Reader (add-only, no behavior change) ----------
+    // ---------- Generic Wiki Reader (add-only, no behavior change) ----------
     // Use to open long-form "read mode" from any section (Ashtottara, Daily Pooja, etc.)
     object WikiReader : Screen("wikiReader?file={file}&title={title}&lang={lang}&index={index}") {
         fun createRoute(

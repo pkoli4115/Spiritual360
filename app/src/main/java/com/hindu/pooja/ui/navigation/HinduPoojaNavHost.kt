@@ -1,6 +1,5 @@
 package com.hindu.pooja.ui.navigation
 
-import android.net.Uri
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -13,19 +12,16 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.google.firebase.auth.FirebaseAuth
-import com.hindu.pooja.feature.ramakoti.ui.RamakotiScreen
-import com.hindu.pooja.feature.ramakoti.ui.RamakotiIntroScreen
-
-// eLearning (Flipcards + Wiki reader)
-// REMOVED: import com.hindu.pooja.feature.elearning.ui.WikiLessonReaderScreen
-import com.hindu.pooja.feature.elearning.ui.WikiReaderScreen
-import com.hindu.pooja.feature.elearning.ui.Lesson
-import com.hindu.pooja.feature.elearning.SimpleLessonRepo
-
+import com.hindu.pooja.ui.ramayana.ramakoti.RamakotiIntroScreen
+import com.hindu.pooja.ui.ramayana.ramakoti.RamakotiScreen
+import com.hindu.pooja.ui.ramayana.reader.WikiReaderScreen.WikiReaderScreen
+import com.hindu.pooja.ui.ramayana.reader.Lesson
+import com.hindu.pooja.ui.ramayana.reader.repo.AyodhyaLessonRepo
+import com.hindu.pooja.ui.ramayana.reader.repo.BalaLessonRepo
+import com.hindu.pooja.feature.quiz.AyodhyaKandaQuizRepo
 // Quiz
-import com.hindu.pooja.feature.quiz.BalaKandaQuizScreen
 import com.hindu.pooja.feature.quiz.BalaKandaQuizRepo
-
+import com.hindu.pooja.feature.quiz.BalaKandaQuizScreen
 import com.hindu.pooja.ui.kids.findit.FindItGameScreen
 import com.hindu.pooja.ui.kids.findit.GameResultScreen
 import com.hindu.pooja.ui.login.LoginScreen
@@ -93,22 +89,13 @@ fun HinduPoojaNavHost(
             RamakotiScreen(navController = navController)
         }
 
-               // ---------- Bala Kanda WIKI (now using generic WikiReaderScreen) ----------
+        // ---------- Bala Kanda WIKI (reader) ----------
         composable(Screen.BalaKandaWikiSimple.route) {
             val ctx = LocalContext.current
             val tts = remember { TtsHelper(ctx) }
 
-            // Load your existing simple wiki lessons and map to the generic Lesson model
-            val module = remember { SimpleLessonRepo.loadTeWikiSimple(ctx) }
-            val lessons = remember(module) {
-                module.lessons.mapIndexed { idx, l ->
-                    Lesson(
-                        id = "bala-wiki-$idx",
-                        title = l.title,
-                        content = l.content
-                    )
-                }
-            }
+            val module = remember { BalaLessonRepo.loadTeWikiSimple(ctx) }
+            val lessons = remember(module) { module.lessons }
 
             WikiReaderScreen(
                 lessons = lessons,
@@ -124,6 +111,15 @@ fun HinduPoojaNavHost(
         // --- Bala Kanda Quiz ---
         composable(Screen.BalaKandaQuiz.route) {
             val repo = remember { BalaKandaQuizRepo.default() }
+            BalaKandaQuizScreen(
+                repo = repo,
+                onBack = { navController.popBackStack() },
+                onFinish = { navController.popBackStack() }
+            )
+        }
+        // --- Ayodhya Kanda Quiz ---
+        composable(Screen.AyodhyaKandaQuiz.route) {
+            val repo = remember { AyodhyaKandaQuizRepo.default() }
             BalaKandaQuizScreen(
                 repo = repo,
                 onBack = { navController.popBackStack() },
@@ -193,7 +189,7 @@ fun HinduPoojaNavHost(
             GameResultScreen(levelName = levelName, navController = navController)
         }
 
-        // ---------- NEW: Generic Wiki Reader (add-only; safe) ----------
+        // ---------- Generic Wiki Reader (asset-driven) ----------
         composable(
             route = Screen.WikiReader.route,
             arguments = listOf(
@@ -229,6 +225,26 @@ fun HinduPoojaNavHost(
                 onLastPage = { /* optional */ }
             )
         }
+
+        // ---------- Ayodhya Kanda WIKI (same reader as Bala) ----------
+        composable(route = "ramayana/ayodhya/wiki") {
+            val ctx = LocalContext.current
+            val tts = remember { TtsHelper(ctx) }
+
+            val module = remember { AyodhyaLessonRepo.loadTeWikiSimple(ctx) }
+            val lessons = remember(module) { module.lessons }
+
+            WikiReaderScreen(
+                lessons = lessons,
+                initialIndex = 0,
+                ttsHelper = tts,
+                title = "అయోధ్యకాండము కథ",
+                languageCode = "te",
+                onBack = { navController.popBackStack() },
+                onLastPage = { navController.navigate(Screen.AyodhyaKandaQuiz.route) } // ✅ FIX
+            )
+        }
+
     }
 }
 

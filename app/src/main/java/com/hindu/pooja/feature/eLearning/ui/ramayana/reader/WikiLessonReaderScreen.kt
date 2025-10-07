@@ -1,5 +1,6 @@
-package com.hindu.pooja.feature.elearning.ui
+package com.hindu.pooja.ui.ramayana.reader.WikiReaderScreen
 
+import com.hindu.pooja.ui.ramayana.reader.Lesson
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -37,8 +38,9 @@ fun WikiReaderScreen(
     title: String,
     languageCode: String? = null,
     onBack: () -> Unit,
-    onLastPage: (() -> Unit)? = null
-) {
+    onLastPage: () -> Unit = {} // ✅ non-nullable default no-op
+)
+ {
     val saffron = Color(0xFFFF9933)
     val cream = Color(0xFFFFF3E3)
     val textColor = Color(0xFF2B1E0A)

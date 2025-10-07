@@ -8,8 +8,8 @@ import com.hindu.pooja.data.PoojaContentLoader
 import com.hindu.pooja.model.PoojaDetail
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import com.hindu.pooja.feature.elearning.ui.WikiReaderScreen
-import com.hindu.pooja.feature.elearning.ui.Lesson
+import com.hindu.pooja.ui.ramayana.reader.WikiReaderScreen.WikiReaderScreen
+import com.hindu.pooja.ui.ramayana.reader.Lesson
 import com.hindu.pooja.util.TtsHelper
 import org.json.JSONArray
 import org.json.JSONObject

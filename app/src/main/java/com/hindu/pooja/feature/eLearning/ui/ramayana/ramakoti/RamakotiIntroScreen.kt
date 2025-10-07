@@ -1,4 +1,4 @@
-package com.hindu.pooja.feature.ramakoti.ui
+package com.hindu.pooja.ui.ramayana.ramakoti
 
 import androidx.compose.ui.draw.alpha
 import androidx.compose.foundation.background

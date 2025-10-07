@@ -68,7 +68,7 @@ fun HomeScreen(
     val payeeName = DonationConfig.payeeName
     val note = DonationConfig.note
 
-    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+    @Suppress BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(id = R.drawable.home_screen),
             contentDescription = null,
@@ -112,6 +112,12 @@ fun HomeScreen(
                         // Keep this opening the wiki/reader flow
                         FeaturedBalaKandaCard(
                             onOpen = { navController.navigate(Screen.BalaKandaWikiSimple.route) }
+                        )
+                    }
+                    item {
+                        // Ayodhyakanda — Reader entry
+                        FeaturedAyodhyaCard(
+                            onOpen = { navController.navigate("ramayana/ayodhya/wiki") }
                         )
                     }
                 }
@@ -282,7 +288,38 @@ private fun FeaturedBalaKandaCard(onOpen: () -> Unit) {
     }
 }
 
+@Composable
+private fun FeaturedAyodhyaCard(onOpen: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .width(FeaturedCardWidth)
+            .height(FeaturedCardHeight)
+            .clickable { onOpen() }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Text("Ayodhya Kanda — Lessons", style = MaterialTheme.typography.titleMedium)
+            Text(
+                "Ayodhyakanda in Telugu (reader view) with TTS.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis
+            )
+            Spacer(Modifier.weight(1f))
+            Button(onClick = onOpen, modifier = Modifier.fillMaxWidth()) {
+                Text("Open Ayodhya Kanda")
+            }
+        }
+    }
+}
+
 /* ---------------- Donate row & placeholders ---------------- */
+// (remaining code unchanged)
 
 @Composable
 private fun DonateActionRow(

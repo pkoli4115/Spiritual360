@@ -1,6 +1,6 @@
 @file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 
-package com.hindu.pooja.feature.ramakoti.ui
+package com.hindu.pooja.ui.ramayana.ramakoti
 
 import android.os.Build
 import android.speech.tts.TextToSpeech

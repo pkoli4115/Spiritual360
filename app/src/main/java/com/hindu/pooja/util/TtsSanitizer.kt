@@ -43,3 +43,42 @@ fun stripOnlySequentialPageNumbers(text: String): String {
     }
     return out.joinToString("\n")
 }
+
+/**
+ * Lightweight sanitizer used before TTS:
+ * 1) Strip our auto page numbers (ASCII 1., 2., …) — preserves real Telugu digits.
+ * 2) Normalize excessive spaces.
+ * 3) Collapse 3+ newlines to 2.
+ * 4) Drop simple citation artifacts like [12].
+ * 5) Remove stray bullet glyphs.
+ */
+class TtsSanitizer(
+    private val normalizeWhitespace: Boolean = true,
+    private val collapseMultipleNewlines: Boolean = true
+) {
+    fun sanitize(input: String): String {
+        var t = input
+
+        // 1) remove our generated page numbering (safe heuristic)
+        t = stripOnlySequentialPageNumbers(t)
+
+        // 2) normalize whitespace (keep single spaces; preserve newlines)
+        if (normalizeWhitespace) {
+            t = t.replace(Regex("[\\t\\x0B\\f\\r\\u00A0]+"), " ")
+            t = t.replace(Regex(" {2,}"), " ")
+        }
+
+        // 3) collapse many newlines to max 2 in a row
+        if (collapseMultipleNewlines) {
+            t = t.replace(Regex("\\n{3,}"), "\n\n")
+        }
+
+        // 4) drop simple [1], [23] style citation markers
+        t = t.replace(Regex("\\[[0-9]{1,3}]"), "")
+
+        // 5) clean stray bullet dots
+        t = t.replace(Regex("[•]+"), "")
+
+        return t.trim()
+    }
+}
