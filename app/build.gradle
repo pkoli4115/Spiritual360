@@ -5,7 +5,7 @@ plugins {
     id 'dagger.hilt.android.plugin'
     id 'com.google.gms.google-services'
     id 'com.google.firebase.crashlytics'
-    // id 'com.google.firebase.firebase-perf'   // ← removed (not using Perf)
+    // id 'com.google.firebase.firebase-perf'
     id 'org.jetbrains.kotlin.plugin.serialization' version '1.9.22'
 }
 
@@ -40,6 +40,7 @@ android {
 
     buildFeatures { compose true }
 
+    // ✅ Keep compiler at 1.5.10 to match Kotlin 1.9.22
     composeOptions {
         kotlinCompilerExtensionVersion "1.5.10"
     }
@@ -50,18 +51,21 @@ android {
 }
 
 dependencies {
-    // ===== Compose =====
+    // ===== Compose (BOM keeps versions aligned) =====
     implementation platform('androidx.compose:compose-bom:2023.10.01')
     implementation 'androidx.compose.ui:ui'
-    implementation 'androidx.compose.ui:ui-tooling-preview'
-    implementation 'androidx.compose.material3:material3'
-    implementation 'androidx.compose.material:material-icons-extended'
-    implementation 'androidx.activity:activity-compose:1.8.2'
     implementation 'androidx.compose.foundation:foundation'
-    implementation 'androidx.compose.ui:ui-tooling'
+    implementation 'androidx.compose.material3:material3'        // keep single entry (no explicit version)
+    implementation 'androidx.compose.material:material-icons-extended'
+    implementation 'androidx.compose.ui:ui-tooling-preview'
+    debugImplementation 'androidx.compose.ui:ui-tooling'          // tooling only in debug
 
-    // ===== Navigation =====
+    // ===== Activity & Navigation (single versions) =====
+    implementation 'androidx.activity:activity-compose:1.8.2'    // keep 1.8.2 (remove 1.9.2)
     implementation 'androidx.navigation:navigation-compose:2.7.7'
+
+    // ⭐ Splash API (needed for installSplashScreen)
+    implementation "androidx.core:core-splashscreen:1.0.1"
 
     // ===== Lifecycle =====
     implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0'
@@ -72,52 +76,48 @@ dependencies {
     kapt 'com.google.dagger:hilt-compiler:2.50'
     implementation 'androidx.hilt:hilt-navigation-compose:1.1.0'
 
-    // ===== WorkManager (reminders) =====
+    // ===== WorkManager =====
     implementation "androidx.work:work-runtime-ktx:2.9.0"
 
-    // ===== Room (Ramakoti storage) =====
+    // ===== Room =====
     implementation "androidx.room:room-runtime:2.6.1"
     implementation "androidx.room:room-ktx:2.6.1"
     kapt "androidx.room:room-compiler:2.6.1"
 
-    // ===== DataStore (prefs: reminders + language) =====
+    // ===== DataStore =====
     implementation "androidx.datastore:datastore-preferences:1.1.1"
 
-    // ===== Firebase (BOM keeps versions aligned) =====
+    // ===== Firebase (BOM) =====
     implementation platform('com.google.firebase:firebase-bom:33.3.0')
     implementation 'com.google.firebase:firebase-auth-ktx'
     implementation 'com.google.firebase:firebase-firestore-ktx'
-    implementation 'com.google.firebase:firebase-storage-ktx'     // keep if you upload avatars/images
-    implementation 'com.google.firebase:firebase-analytics-ktx'   // optional; remove if you don’t want analytics
+    implementation 'com.google.firebase:firebase-storage-ktx'
+    implementation 'com.google.firebase:firebase-analytics-ktx'
     implementation 'com.google.firebase:firebase-crashlytics-ktx'
-    // implementation 'com.google.firebase:firebase-perf-ktx'      // ← removed
+
+    // App Check (Play Integrity in prod, Debug in debug builds)
+    implementation "com.google.firebase:firebase-appcheck-playintegrity:17.1.1"
+    debugImplementation "com.google.firebase:firebase-appcheck-debug:17.1.1"
 
     // ===== Sign-in =====
     implementation 'com.google.android.gms:play-services-auth:20.7.0'
-    implementation 'com.facebook.android:facebook-android-sdk:latest.release' // pin a version in prod
-    // ===== Flip cards =====
+    implementation 'com.facebook.android:facebook-android-sdk:latest.release'
 
-    implementation "com.google.code.gson:gson:2.10.1"
-    implementation "androidx.compose.material3:material3:1.2.1"
-    implementation "androidx.activity:activity-compose:1.9.2"
-    implementation "androidx.compose.foundation:foundation"
-    // ===== Coil (images) =====
+    // ===== Images (Coil) =====
     implementation "io.coil-kt:coil-compose:2.6.0"
+    implementation "io.coil-kt:coil-gif:2.6.0"
 
-    // ===== Coroutines =====
+    // ===== JSON / Coroutines =====
+    implementation 'com.google.code.gson:gson:2.10.1'
+    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3'
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3"
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3'
 
-    // ===== Optional utilities (remove if unused) =====
-    implementation "com.google.accompanist:accompanist-flowlayout:0.30.1" // remove if not using flow layouts
-    implementation 'com.google.code.gson:gson:2.10.1'                     // remove if only using kotlinx-serialization
-    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3'// remove if only using Gson
-    implementation 'com.squareup.okhttp3:okhttp:4.12.0'                    // remove if not calling external APIs
-//=======GIF support via Coil===================
-    implementation("io.coil-kt:coil-compose:2.6.0")
-    implementation("io.coil-kt:coil-gif:2.6.0")
+    // ===== Optional utilities =====
+    implementation "com.google.accompanist:accompanist-flowlayout:0.30.1"
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
 
-    // ===== Optional security (remove if not encrypting) =====
+    // ===== Optional security =====
     implementation 'androidx.security:security-crypto:1.1.0-alpha03'
 }
 

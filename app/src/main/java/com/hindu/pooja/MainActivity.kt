@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.core.splashscreen.SplashScreen
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import androidx.navigation.compose.rememberNavController
 import com.hindu.pooja.ui.navigation.BottomNavItem
@@ -30,7 +32,6 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 enum class VolumeEvent { UP, DOWN }
 
 object RamakotiAudioKeyBus {
-    // only capture keys when a listener on Ramakoti screen is active & audio mode is ON
     @Volatile private var active: Boolean = false
     fun setActive(enabled: Boolean) { active = enabled }
 
@@ -56,19 +57,28 @@ class MainActivity : ComponentActivity() {
             private set
     }
 
+    @Volatile
+    private var splashReady = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Android 12+ system splash (with compat on older versions)
+        val splash: SplashScreen = installSplashScreen()
+        splash.setKeepOnScreenCondition { !splashReady }
+
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
         // Facebook SDK init
         FacebookSdk.sdkInitialize(applicationContext)
         AppEventsLogger.activateApp(application)
-
         fbCallbackManager = CallbackManager.Factory.create()
 
         setContent {
             HinduPoojaAppContent()
         }
+
+        // Release the system splash once content is set up
+        splashReady = true
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -76,21 +86,17 @@ class MainActivity : ComponentActivity() {
         fbCallbackManager.onActivityResult(requestCode, resultCode, data)
     }
 
-    // Intercept hardware volume keys while Audio Mode is active on Ramakoti screen
-    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-        if (event.action == KeyEvent.ACTION_DOWN) {
-            when (event.keyCode) {
-                KeyEvent.KEYCODE_VOLUME_UP -> {
-                    val consumed = RamakotiAudioKeyBus.emit(VolumeEvent.UP)
-                    if (consumed) return true
-                }
-                KeyEvent.KEYCODE_VOLUME_DOWN -> {
-                    val consumed = RamakotiAudioKeyBus.emit(VolumeEvent.DOWN)
-                    if (consumed) return true
-                }
+    // Handle volume keys via onKeyDown (avoid restricted dispatchKeyEvent)
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        when (keyCode) {
+            KeyEvent.KEYCODE_VOLUME_UP -> {
+                if (RamakotiAudioKeyBus.emit(VolumeEvent.UP)) return true
+            }
+            KeyEvent.KEYCODE_VOLUME_DOWN -> {
+                if (RamakotiAudioKeyBus.emit(VolumeEvent.DOWN)) return true
             }
         }
-        return super.dispatchKeyEvent(event)
+        return super.onKeyDown(keyCode, event)
     }
 }
 

@@ -1,5 +1,15 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Your existing app theme -->
     <style name="Theme.HinduPoojaApp" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:statusBarColor" tools:targetApi="l">@android:color/black</item>
     </style>
+
+    <!-- System Splash theme -->
+    <style name="Theme.Spiritual360.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/saffron</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/applauncher</item>
+        <item name="postSplashScreenTheme">@style/Theme.HinduPoojaApp</item>
+    </style>
+
 </resources>

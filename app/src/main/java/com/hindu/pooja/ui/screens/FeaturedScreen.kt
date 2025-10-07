@@ -9,6 +9,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.hindu.pooja.ui.navigation.Screen
 
+@OptIn(ExperimentalMaterial3Api::class) // ← Opt-in to use Card(onClick)
 private val FEATURED_TILE_HEIGHT = 160.dp
 
 @Composable
@@ -35,6 +36,7 @@ fun FeaturedScreen(navController: NavController) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FeaturedRamakotiTile(onOpen: () -> Unit) {
     Card(
@@ -55,6 +57,7 @@ private fun FeaturedRamakotiTile(onOpen: () -> Unit) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FeaturedBalaKandaTile(onOpen: () -> Unit) {
     Card(
@@ -75,6 +78,7 @@ private fun FeaturedBalaKandaTile(onOpen: () -> Unit) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FeaturedAyodhyaTile(onOpen: () -> Unit) {
     Card(

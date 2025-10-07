@@ -6,4 +6,9 @@
     <color name="secondary">#00897B</color>
     <color name="background">#FAF5EF</color>
     <color name="error">#B00020</color>
+    <color name="saffron_solid">#FF9933</color>
+    <color name="saffron">#FF9933</color>
+    <color name="saffron_dark">#E2852B</color>
+    <color name="splash_icon_tint">#FFFFFFFF</color>
+
 </resources>

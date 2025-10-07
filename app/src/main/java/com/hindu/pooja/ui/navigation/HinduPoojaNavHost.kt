@@ -40,8 +40,8 @@ fun HinduPoojaNavHost(
     modifier: Modifier = Modifier
 ) {
     val profileViewModel: ProfileViewModel = hiltViewModel()
-    val start = if (FirebaseAuth.getInstance().currentUser == null)
-        Screen.Login.route else Screen.Home.route
+    val start = Screen.Splash.route   // always start at Splash
+
 
     NavHost(
         navController = navController,
@@ -76,7 +76,9 @@ fun HinduPoojaNavHost(
             EditProfileScreen(navController = navController)
         }
         composable(Screen.Login.route) { LoginScreen(navController = navController) }
-        composable(Screen.Splash.route) { Text("Splash Screen (placeholder)") }
+        composable(Screen.Splash.route) {
+            SplashScreen(navController = navController)
+        }
 
         // --- Featured flows ---
         composable(Screen.Ramakoti.route) {

@@ -1,61 +1,74 @@
 package com.hindu.pooja.ui.login
 
 import android.app.Activity
-import android.util.Log
+import android.content.Context
+import android.content.ContextWrapper
+import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.facebook.FacebookCallback
+import com.facebook.FacebookException
+import com.facebook.login.LoginManager
+import com.facebook.login.LoginResult
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.firebase.auth.FacebookAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
-import com.google.firebase.auth.FacebookAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import com.hindu.pooja.R
 import com.hindu.pooja.ui.navigation.Screen
+import com.hindu.pooja.ui.theme.AshokaBlue
+import com.hindu.pooja.ui.theme.Cream
+import com.hindu.pooja.ui.theme.IndiaGreen
+import com.hindu.pooja.ui.theme.Saffron
 import com.hindu.pooja.viewmodel.LoginViewModel
+import com.hindu.pooja.MainActivity // fb callback manager holder
 
-// Facebook SDK
-import com.facebook.login.LoginManager
-import com.facebook.login.LoginResult
-import com.facebook.FacebookCallback
-import com.facebook.FacebookException
-import com.hindu.pooja.MainActivity
-
-/** Wrapper to avoid ambiguous default parameter calls */
 @Composable
-fun LoginScreen(
-    navController: NavController
-) {
+fun LoginScreen(navController: NavController) {
     val vm: LoginViewModel = hiltViewModel()
     LoginScreen(navController = navController, viewModel = vm)
 }
 
-/** Main composable – explicit VM param (no default) */
 @Composable
 fun LoginScreen(
     navController: NavController,
     viewModel: LoginViewModel
 ) {
     val context = LocalContext.current
-    val activity = remember { activityFrom(context) }
-    val auth = FirebaseAuth.getInstance()
+    val activity = remember { findActivity(context) }
+    val auth = remember { FirebaseAuth.getInstance() }
     var isLoading by remember { mutableStateOf(false) }
 
-    // --- Google Sign-In client ---
+    // --- Google client ---
     val googleClient = remember {
         GoogleSignIn.getClient(
             context,
@@ -73,18 +86,15 @@ fun LoginScreen(
         try {
             val account = task.result
             if (account != null) {
-                Log.d("AuthFlow", "Google login SUCCESS: account=${account.email}")
                 val cred = GoogleAuthProvider.getCredential(account.idToken, null)
                 isLoading = true
                 auth.signInWithCredential(cred)
                     .addOnSuccessListener {
-                        Log.d("AuthFlow", "Firebase Auth with Google OK, uid=${it.user?.uid}")
                         logProviders()
                         ensureMinimalProfileAndRoute(navController) { isLoading = false }
                     }
                     .addOnFailureListener {
                         isLoading = false
-                        Log.e("AuthFlow", "Firebase Auth with Google FAILED", it)
                         Toast.makeText(context, "Google sign-in failed: ${it.message}", Toast.LENGTH_SHORT).show()
                     }
             } else {
@@ -92,174 +102,287 @@ fun LoginScreen(
             }
         } catch (e: Exception) {
             isLoading = false
-            Log.e("AuthFlow", "Google Sign-In exception", e)
             Toast.makeText(context, "Google Sign-In failed: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
 
-    // --- Facebook Login setup ---
+    // --- Facebook login ---
     val fbCallbackManager = remember { MainActivity.fbCallbackManager }
-
     DisposableEffect(Unit) {
         val callback = object : FacebookCallback<LoginResult> {
             override fun onSuccess(result: LoginResult) {
-                Log.d("AuthFlow", "Facebook login SUCCESS: accessToken=${result.accessToken.userId}")
                 val credential = FacebookAuthProvider.getCredential(result.accessToken.token)
                 isLoading = true
                 auth.signInWithCredential(credential)
                     .addOnSuccessListener {
-                        Log.d("AuthFlow", "Firebase Auth with Facebook OK, uid=${it.user?.uid}")
                         logProviders()
                         ensureMinimalProfileAndRoute(navController) { isLoading = false }
                     }
                     .addOnFailureListener { e ->
                         isLoading = false
-                        Log.e("AuthFlow", "Firebase Auth with Facebook FAILED", e)
                         Toast.makeText(context, "Facebook sign-in failed: ${e.message}", Toast.LENGTH_SHORT).show()
                     }
             }
             override fun onCancel() {
-                Log.d("AuthFlow", "Facebook login CANCELLED")
                 Toast.makeText(context, "Facebook login cancelled", Toast.LENGTH_SHORT).show()
             }
             override fun onError(error: FacebookException) {
-                Log.e("AuthFlow", "Facebook login ERROR", error)
                 Toast.makeText(context, "Facebook error: ${error.message}", Toast.LENGTH_SHORT).show()
             }
         }
         LoginManager.getInstance().registerCallback(fbCallbackManager, callback)
-        onDispose { }
+        onDispose { /* no-op */ }
     }
 
-    // --- UI ---
-    Box(modifier = Modifier.fillMaxSize()) {
-        Image(
-            painter = painterResource(id = R.drawable.login_background),
-            contentDescription = null,
-            contentScale = ContentScale.FillBounds,
-            modifier = Modifier.matchParentSize()
-        )
-
+    // ---------- UI ----------
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Brush.verticalGradient(listOf(Saffron, Cream)))
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .padding(horizontal = 24.dp, vertical = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Surface(color = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f), tonalElevation = 4.dp) {
+            // 🇮🇳 Flag (Compose)
+            DrawIndianFlag(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(120.dp)
+            )
+
+            Spacer(Modifier.height(20.dp))
+
+            // App icon + (small professional caption)
+            Image(
+                painter = painterResource(id = R.drawable.applauncher),
+                contentDescription = "Spiritual360 App Logo",
+                contentScale = ContentScale.Fit,
+                modifier = Modifier.size(140.dp)
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = "Spiritual360",
+                color = Color(0xFF6A1B09), // rich brown that pairs with saffron
+                fontSize = 20.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+
+            // 🔒 Secured by Firebase
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(top = 8.dp)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_lock),
+                    contentDescription = "Secured by Firebase",
+                    tint = Color(0xFF757575),
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "Secured by Firebase",
+                    color = Color(0xFF757575),
+                    fontSize = 13.sp
+                )
+            }
+
+            Spacer(Modifier.height(28.dp))
+
+            // Buttons container (glass card)
+            Surface(
+                color = Color.White.copy(alpha = 0.85f),
+                tonalElevation = 6.dp,
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .shadow(8.dp, RoundedCornerShape(16.dp))
+            ) {
                 Column(
-                    modifier = Modifier
-                        .padding(24.dp)
-                        .fillMaxWidth(),
+                    modifier = Modifier.padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("Login to Spiritual360", style = MaterialTheme.typography.headlineSmall)
-                    Spacer(Modifier.height(24.dp))
                     if (isLoading) {
-                        CircularProgressIndicator()
+                        CircularProgressIndicator(color = Saffron)
                     } else {
-                        // Google
+                        // ---- Google button with icon ----
                         Button(
                             onClick = {
                                 isLoading = true
-                                Log.d("AuthFlow", "Google button clicked → launching intent")
                                 googleClient.signOut().addOnCompleteListener {
                                     launcher.launch(googleClient.signInIntent)
                                 }
                             },
-                            modifier = Modifier.fillMaxWidth()
-                        ) { Text("Continue with Google") }
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(50.dp),
+                            shape = RoundedCornerShape(30.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+                            elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_google_logo),
+                                    contentDescription = "Google logo",
+                                    tint = Color.Unspecified,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                                Spacer(Modifier.width(12.dp))
+                                Text(
+                                    "Continue with Google",
+                                    color = Color.Black,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
 
-                        Spacer(Modifier.height(12.dp))
+                        Spacer(Modifier.height(16.dp))
 
-                        // Facebook
+                        // ---- Facebook button with icon ----
                         Button(
                             onClick = {
                                 val act = activity
                                 if (act == null) {
                                     Toast.makeText(context, "No activity context", Toast.LENGTH_SHORT).show()
                                 } else {
-                                    Log.d("AuthFlow", "Facebook button clicked → starting FB login flow")
                                     LoginManager.getInstance()
                                         .logInWithReadPermissions(act, listOf("email", "public_profile"))
                                 }
                             },
-                            modifier = Modifier.fillMaxWidth()
-                        ) { Text("Continue with Facebook") }
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(50.dp),
+                            shape = RoundedCornerShape(30.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1877F2)),
+                            elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_facebook_logo),
+                                    contentDescription = "Facebook logo",
+                                    tint = Color.Unspecified,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                                Spacer(Modifier.width(12.dp))
+                                Text(
+                                    "Continue with Facebook",
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
                     }
                 }
+            }
+
+            Spacer(Modifier.weight(1f))
+
+            // Footer (Powered by QTI Labs)
+            Column(
+                modifier = Modifier.padding(bottom = 8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(text = "Powered by", style = MaterialTheme.typography.labelLarge)
+                Spacer(Modifier.height(6.dp))
+                Image(
+                    painter = painterResource(id = R.drawable.qtilabs),
+                    contentDescription = "QTI Labs",
+                    modifier = Modifier
+                        .height(40.dp)
+                        .clickable {
+                            val i = android.content.Intent(
+                                android.content.Intent.ACTION_VIEW,
+                                Uri.parse("https://qtilabs.com")
+                            )
+                            context.startActivity(i)
+                        },
+                    contentScale = ContentScale.Fit
+                )
             }
         }
     }
 }
 
-/** Upsert a minimal profile in `users/{uid}` every login, then navigate to Home. */
+/* ---------------- Flag drawing ---------------- */
+
+@Composable
+fun DrawIndianFlag(modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier) {
+        val stripe = size.height / 3f
+
+        // Saffron, White, Green bands
+        drawRoundRect(
+            color = Saffron,
+            topLeft = Offset(0f, 0f),
+            size = Size(size.width, stripe),
+            cornerRadius = CornerRadius(16f, 16f)
+        )
+        drawRoundRect(
+            color = Color.White,
+            topLeft = Offset(0f, stripe),
+            size = Size(size.width, stripe),
+            cornerRadius = CornerRadius(0f, 0f)
+        )
+        drawRoundRect(
+            color = IndiaGreen,
+            topLeft = Offset(0f, stripe * 2),
+            size = Size(size.width, stripe),
+            cornerRadius = CornerRadius(16f, 16f)
+        )
+
+        // Ashoka Chakra
+        val center = Offset(size.width / 2f, stripe + stripe / 2f)
+        val radius = stripe / 2.5f
+        drawCircle(color = AshokaBlue, radius = radius, center = center, style = Stroke(5f))
+        for (i in 0 until 24) {
+            val angle = Math.toRadians((i * 15).toDouble())
+            val x = center.x + (radius - 6f) * kotlin.math.cos(angle).toFloat()
+            val y = center.y + (radius - 6f) * kotlin.math.sin(angle).toFloat()
+            drawLine(color = AshokaBlue, start = center, end = Offset(x, y), strokeWidth = 3f)
+        }
+    }
+}
+
+/* ---------------- helpers ---------------- */
+
+private fun findActivity(context: Context): Activity? {
+    var ctx: Context? = context
+    while (ctx is ContextWrapper) {
+        if (ctx is Activity) return ctx
+        ctx = ctx.baseContext
+    }
+    return null
+}
+
+private fun logProviders() {
+    val user = FirebaseAuth.getInstance().currentUser ?: return
+    val providers = user.providerData.joinToString { it.providerId }
+    android.util.Log.d("AuthFlow", "Signed in as ${user.uid} via [$providers]")
+}
+
 private fun ensureMinimalProfileAndRoute(
     navController: NavController,
     onDone: () -> Unit
 ) {
-    val auth = FirebaseAuth.getInstance()
-    val uid = auth.currentUser?.uid ?: return onDone()
-    val user = auth.currentUser
-    val ref = FirebaseFirestore.getInstance().collection("users").document(uid)
-
-    val provider = when {
-        user?.providerData?.any { it.providerId.contains("facebook") } == true -> "Facebook"
-        user?.providerData?.any { it.providerId.contains("google") } == true -> "Google"
-        else -> "Email/Password"
-    }
-
-    val freshPid = "HP-" + java.util.UUID.randomUUID().toString().substring(0, 8).uppercase()
-    val base = hashMapOf(
-        "uid" to uid,
-        "profileId" to freshPid, // will keep existing if present
-        "fullName" to (user?.displayName ?: ""),
-        "email" to (user?.email ?: ""),
-        "phone" to (user?.phoneNumber ?: ""),
-        "photoUrl" to (user?.photoUrl?.toString() ?: ""),
-        "loginProvider" to provider
+    val user = FirebaseAuth.getInstance().currentUser ?: return onDone()
+    val db = FirebaseFirestore.getInstance()
+    val profile = mapOf(
+        "uid" to user.uid,
+        "displayName" to (user.displayName ?: ""),
+        "email" to (user.email ?: ""),
+        "photoUrl" to (user.photoUrl?.toString() ?: ""),
+        "updatedAt" to com.google.firebase.Timestamp.now()
     )
-
-    ref.get()
-        .addOnSuccessListener { snap ->
-            val data = if (snap.exists()) {
-                val existingPid = snap.getString("profileId")
-                if (!existingPid.isNullOrBlank()) base.apply { put("profileId", existingPid) } else base
-            } else base
-
-            ref.set(data, SetOptions.merge())
-                .addOnCompleteListener {
-                    onDone()
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(0) { inclusive = true }
-                        launchSingleTop = true
-                    }
-                }
+    db.collection("users").document(user.uid)
+        .set(profile, SetOptions.merge())
+        .addOnCompleteListener {
+            onDone()
+            navController.navigate(Screen.Home.route) {
+                popUpTo(0) { inclusive = true }
+                launchSingleTop = true
+            }
         }
-        .addOnFailureListener {
-            ref.set(base, SetOptions.merge())
-                .addOnCompleteListener {
-                    onDone()
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(0) { inclusive = true }
-                        launchSingleTop = true
-                    }
-                }
-        }
-}
-
-private fun activityFrom(context: android.content.Context): Activity? =
-    when (context) {
-        is Activity -> context
-        is android.content.ContextWrapper -> activityFrom(context.baseContext)
-        else -> null
-    }
-
-/** Log which providers are linked to the current Firebase user */
-private fun logProviders() {
-    val user = FirebaseAuth.getInstance().currentUser
-    user?.providerData?.forEach {
-        Log.d("AuthFlow", "Provider: ${it.providerId}, UID=${it.uid}, email=${it.email}")
-    }
 }

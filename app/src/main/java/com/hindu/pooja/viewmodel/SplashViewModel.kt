@@ -1,46 +1,44 @@
-package com.hindu.pooja.viewmodel
+package com.hindu.pooja.ui.screens
 
 import androidx.lifecycle.ViewModel
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
+import androidx.lifecycle.viewModelScope
+import com.google.firebase.appcheck.FirebaseAppCheck
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 
-sealed class SplashNavigation {
-    object ToLogin : SplashNavigation()
-    object ToPersonalDetails : SplashNavigation()
-    object ToHome : SplashNavigation()
+sealed class SplashState {
+    data object Checking : SplashState()
+    data object Ok : SplashState()
+    data class Failed(val message: String) : SplashState()
 }
 
 class SplashViewModel : ViewModel() {
 
-    private val _navigationState = MutableStateFlow<SplashNavigation?>(null)
-    val navigationState: StateFlow<SplashNavigation?> = _navigationState
-
-    private val auth = FirebaseAuth.getInstance()
-    private val db = FirebaseFirestore.getInstance()
+    private val _state = MutableStateFlow<SplashState>(SplashState.Checking)
+    val state: StateFlow<SplashState> = _state
 
     init {
-        checkLoginAndProfile()
+        checkApp()
     }
 
-    private fun checkLoginAndProfile() {
-        val currentUser = auth.currentUser
-        if (currentUser == null) {
-            _navigationState.value = SplashNavigation.ToLogin
-        } else {
-            val uid = currentUser.uid
-            db.collection("userProfiles").document(uid).get()
-                .addOnSuccessListener { document ->
-                    if (document.exists()) {
-                        _navigationState.value = SplashNavigation.ToHome
-                    } else {
-                        _navigationState.value = SplashNavigation.ToPersonalDetails
+    fun checkApp() {
+        viewModelScope.launch {
+            try {
+                // Force refresh = false is fine; if you want to always hit server use true.
+                FirebaseAppCheck.getInstance()
+                    .getAppCheckToken(false)
+                    .addOnSuccessListener {
+                        _state.value = SplashState.Ok
                     }
-                }
-                .addOnFailureListener {
-                    _navigationState.value = SplashNavigation.ToLogin
-                }
+                    .addOnFailureListener { e ->
+                        _state.value = SplashState.Failed(
+                            e.message ?: "App attestation failed."
+                        )
+                    }
+            } catch (e: Exception) {
+                _state.value = SplashState.Failed(e.message ?: "App attestation failed.")
+            }
         }
     }
 }
