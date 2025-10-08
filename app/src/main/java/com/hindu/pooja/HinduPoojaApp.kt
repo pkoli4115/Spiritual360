@@ -9,17 +9,21 @@ import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderF
 import dagger.hilt.android.HiltAndroidApp
 
 @HiltAndroidApp
+// if not, the code below doesn't require it.
+// import com.hindu.pooja.BuildConfig
+
 class HinduPoojaApp : Application() {
+
     override fun onCreate() {
         super.onCreate()
-
-        // Initialize Firebase
         FirebaseApp.initializeApp(this)
 
-        // Install Firebase App Check provider early (before any Firebase access)
         try {
             val appCheck = FirebaseAppCheck.getInstance()
+
+            // Robust check that doesn’t depend on BuildConfig
             val isDebug = (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
+
             if (isDebug) {
                 appCheck.installAppCheckProviderFactory(
                     DebugAppCheckProviderFactory.getInstance()
@@ -30,7 +34,8 @@ class HinduPoojaApp : Application() {
                 )
             }
         } catch (_: Exception) {
-            // Do not crash if Play Services are unavailable; your splash handles failure UI
+            // Ignore to avoid crashing if Play Services are missing;
+            // your splash will show failure state instead.
         }
     }
 }

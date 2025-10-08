@@ -1,4 +1,12 @@
-<?xml version="1.0" encoding="utf-8"?>
-<selector xmlns:android="http://schemas.android.com/apk/res/android">
-
-</selector>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108"
+    android:tint="@color/splash_icon_tint">
+    <!-- Use a simplified white Om path; placeholder circle here so file compiles.
+         Replace <path> with your Om vector path when you have it. -->
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M54,6a48,48 0 1,0 0,96a48,48 0 1,0 0,-96z"/>
+</vector>

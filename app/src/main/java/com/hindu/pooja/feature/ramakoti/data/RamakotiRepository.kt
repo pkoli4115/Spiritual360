@@ -8,6 +8,7 @@ import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
@@ -130,6 +131,8 @@ class RamakotiRepository @Inject constructor(
     /**
      * Mark a batch as committed (only if completedCells == 108) and increment
      * /ramakotiProgress/{uid}.totalCount by 108 — all within a single transaction.
+     *
+     * ❗️Fix: if the root totals doc doesn't exist (first-time user), we create it (upsert).
      */
     suspend fun commitBatchAndIncrementTotal(batchId: String) {
         val uid = userId()
@@ -140,6 +143,11 @@ class RamakotiRepository @Inject constructor(
             // 1) All reads FIRST
             val batchSnap = t.get(batchRef)
             val rootSnap = t.get(rootRef)
+
+            // Guard against missing batch doc
+            if (!batchSnap.exists()) {
+                throw IllegalStateException("Batch $batchId does not exist")
+            }
 
             // If already committed, exit gracefully
             if (batchSnap.getString("status") == "committed") return@runTransaction null
@@ -157,7 +165,27 @@ class RamakotiRepository @Inject constructor(
                     "committedAt" to FieldValue.serverTimestamp()
                 )
             )
-            t.update(rootRef, mapOf("totalCount" to currentTotal + 108))
+
+            // Upsert totals: create if missing, else update
+            if (!rootSnap.exists()) {
+                t.set(
+                    rootRef,
+                    mapOf(
+                        "totalCount" to 108,
+                        "createdAt" to FieldValue.serverTimestamp(),
+                        "updatedAt" to FieldValue.serverTimestamp()
+                    ),
+                    SetOptions.merge()
+                )
+            } else {
+                t.update(
+                    rootRef,
+                    mapOf(
+                        "totalCount" to (currentTotal + 108),
+                        "updatedAt" to FieldValue.serverTimestamp()
+                    )
+                )
+            }
 
             null
         }.await()
