@@ -20,15 +20,15 @@ sealed class Screen(val route: String) {
     object PersonalDetails : Screen("personal_details")
     object Splash : Screen("splash")
 
-    // Featured → Ramakoti (unchanged)
-    object Ramakoti : Screen("featured/ramakoti")
+    // ✅ Normalized Ramakoti route
+    object Ramakoti : Screen("ramakoti")
 
     // eLearning
-    object BalaKandaFlip : Screen("featured/balakanda")                 // (keep if you still want flips)
-    object BalaKandaWikiSimple : Screen("featured/balakanda/wiki")      // reader
-    object BalaKandaQuiz : Screen("featured/balakanda/quiz")            // quiz
+    object BalaKandaFlip : Screen("featured/balakanda")
+    object BalaKandaWikiSimple : Screen("featured/balakanda/wiki")
+    object BalaKandaQuiz : Screen("featured/balakanda/quiz")
 
-    // NEW: Ayodhya Kanda reader route (matches NavHost "ramayana/ayodhya/wiki")
+    // Ayodhya Kanda reader / quiz
     object AyodhyaKandaWiki : Screen("ramayana/ayodhya/wiki")
     object AyodhyaKandaQuiz : Screen("ramayana/ayodhya/quiz")
 
@@ -57,8 +57,7 @@ sealed class Screen(val route: String) {
         fun createRoute(levelName: String) = "game_result/${Uri.encode(levelName)}"
     }
 
-    // ---------- Generic Wiki Reader (add-only, no behavior change) ----------
-    // Use to open long-form "read mode" from any section (Ashtottara, Daily Pooja, etc.)
+    // Generic Wiki Reader
     object WikiReader : Screen("wikiReader?file={file}&title={title}&lang={lang}&index={index}") {
         fun createRoute(
             file: String,

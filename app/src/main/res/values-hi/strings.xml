@@ -9,12 +9,12 @@
     <string name="enter_otp">ओटीपी दर्ज करें</string>
     <string name="personal_info">व्यक्तिगत जानकारी</string>
     <string name="your_name">आपका नाम</string>
-    <string name="father_name">पिता का नाम</string>
-    <string name="mother_name">माता का नाम</string>
     <string name="gothram">गोत्र</string>
     <string name="nakshatram">नक्षत्र</string>
     <string name="number_of_children">बच्चों की संख्या</string>
     <string name="save_continue">सहेजें और जारी रखें</string>
+    <string name="ramakoti_progress">Progress</string>
+    <string name="ramakoti_completed_celebration">Jai Shri Ram! Completed 108!</string>
 
     <!-- Phase 2 -->
     <string name="poojas">पूजा</string>
@@ -31,4 +31,16 @@
     <string name="menu_profile_desc">अपनी प्रोफाइल देखें</string>
     <string name="menu_settings_desc">ऐप सेटिंग्स एवं प्राथमिकताएँ</string>
     <string name="coming_soon">जल्द आ रहा है!</string>
+
+    <!-- Ramakoti Phase 1: gating + actions -->
+    <string name="export_pdf">Export PDF</string>
+    <string name="generate_certificate">Generate Certificate</string>
+    <string name="pdf_saved_to">PDF saved to:\n%s</string>
+    <string name="certificate_saved_to">Certificate saved to:\n%s</string>
+    <string name="ramakoti_total_completed">Total completed: %1$s</string>
+    <string name="ok">OK</string>
+    <string name="ramakoti_gate_message">
+        You have completed %1$s Ramakoti so far. Please complete 1 Crore to generate %2$s.
+    </string>
 </resources>
+

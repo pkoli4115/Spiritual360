@@ -1,245 +1,112 @@
-// FILE: app/src/main/java/com/hindu/pooja/feature/ramakoti/data/RamakotiRepository.kt
 package com.hindu.pooja.feature.ramakoti.data
 
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.DocumentSnapshot
-import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.FirebaseFirestoreException
-import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.tasks.await
-import javax.inject.Inject
 
-class RamakotiRepository @Inject constructor(
+/**
+ * Source of truth for Ramakoti "journey" fields stored in:
+ * users/{uid}/ramakoti/ramakotiJourney
+ *
+ * NOTE:
+ *  - Per-tap increments are handled by RamakotiSyncManager (transactional).
+ *  - This repository only reads the journey doc and performs safe MERGE writes
+ *    for actions like resetting the batch or starting the next crore.
+ */
+class RamakotiRepository(
     private val auth: FirebaseAuth,
     private val db: FirebaseFirestore
 ) {
 
-    /* ------------------------- Public API used by ViewModel ------------------------- */
+    data class Journey(
+        val totalCount: Long = 0L,
+        val currentBatchCount: Int = 0,
+        val currentCrore: Int = 1,
+        val language: String = "en"
+    )
 
-    /** Return the latest in-progress batch, or (null, emptyList) if none exists. */
-    suspend fun getActiveBatchOrNull(language: String): Pair<String?, List<Any?>> {
-        val uid = userId()
-        val col = batchesCol(uid)
+    private fun uid(): String =
+        auth.currentUser?.uid ?: throw IllegalStateException("Not signed in")
 
-        // Preferred: server-side filter + order (requires composite index)
-        try {
-            val qs = col
-                .whereEqualTo("status", "in_progress")
-                .orderBy("batchNumber", Query.Direction.DESCENDING)
-                .orderBy(FieldPath.documentId(), Query.Direction.DESCENDING)
-                .limit(1)
-                .get()
-                .await()
+    private fun journeyDoc() = db.collection("users")
+        .document(uid())
+        .collection("ramakoti")
+        .document("ramakotiJourney")
 
-            val doc = qs.documents.firstOrNull()
-            if (doc != null) {
-                val cells = ensure108(readCells(doc))
-                return doc.id to cells
-            }
-        } catch (e: FirebaseFirestoreException) {
-            // If index is missing, fall back to client-side max
-            if (e.code != FirebaseFirestoreException.Code.FAILED_PRECONDITION) throw e
-        }
-
-        // Fallback
-        val all = col.get().await().documents
-        val latest = all
-            .asSequence()
-            .filter { it.getString("status") == "in_progress" }
-            .maxByOrNull { it.getLong("batchNumber") ?: 0L }
-
-        return if (latest == null) null to emptyList()
-        else latest.id to ensure108(readCells(latest))
-    }
-
-    /** Create a brand-new in-progress batch prefilled with 108 empty cells. */
-    suspend fun createNewInProgressBatch(language: String): Pair<String, List<Any?>> {
-        val uid = userId()
-        val col = batchesCol(uid)
-
-        // Determine next batch number (best-effort)
-        val lastNum = try {
-            col.orderBy("batchNumber", Query.Direction.DESCENDING)
-                .limit(1)
-                .get()
-                .await()
-                .documents
-                .firstOrNull()
-                ?.getLong("batchNumber")
-                ?.toInt() ?: 0
-        } catch (_: Exception) {
-            0
-        }
-        val nextNum = lastNum + 1
-
-        val initialCells = (0 until 108).map { i ->
-            mapOf(
-                "index" to (i + 1),
-                "filled" to false,
-                "value" to "",
-                "lang" to language.uppercase(),
-                "ts" to 0L
-            )
-        }
-
-        val ref = col.document()
-        val data = mapOf(
-            "status" to "in_progress",
-            "batchNumber" to nextNum,
-            "createdAt" to FieldValue.serverTimestamp(),
-            "completedCells" to 0,
-            "cells" to initialCells
-        )
-        ref.set(data).await()
-        return ref.id to initialCells
-    }
-
-    /** Fill one cell (1-based index). No-op if already filled. */
-    suspend fun fillCell(
-        batchId: String,
-        index: Int,
-        value: String,
-        lang: String,
-        ts: Long
-    ) {
-        val uid = userId()
-        val ref = batchesCol(uid).document(batchId)
-
-        db.runTransaction { t ->
-            val snap = t.get(ref)
-            val cells = readCells(snap).toMutableList()
-
-            val pos = (index - 1).coerceIn(0, 107)
-            val cur = (cells[pos] as? Map<*, *>)?.toMutableMap() ?: mutableMapOf()
-            if (cur["filled"] == true) return@runTransaction null // already filled
-
-            cur["filled"] = true
-            cur["value"] = value
-            cur["lang"] = lang
-            cur["ts"] = ts
-            cells[pos] = cur
-
-            val completed = (snap.getLong("completedCells")?.toInt() ?: 0) + 1
-            t.update(ref, mapOf("cells" to cells, "completedCells" to completed))
-            null
-        }.await()
-    }
-
-    /**
-     * Mark a batch as committed (only if completedCells == 108) and increment
-     * /ramakotiProgress/{uid}.totalCount by 108 — all within a single transaction.
-     *
-     * ❗️Fix: if the root totals doc doesn't exist (first-time user), we create it (upsert).
-     */
-    suspend fun commitBatchAndIncrementTotal(batchId: String) {
-        val uid = userId()
-        val rootRef = db.collection("ramakotiProgress").document(uid)
-        val batchRef = rootRef.collection("batches").document(batchId)
-
-        db.runTransaction { t ->
-            // 1) All reads FIRST
-            val batchSnap = t.get(batchRef)
-            val rootSnap = t.get(rootRef)
-
-            // Guard against missing batch doc
-            if (!batchSnap.exists()) {
-                throw IllegalStateException("Batch $batchId does not exist")
-            }
-
-            // If already committed, exit gracefully
-            if (batchSnap.getString("status") == "committed") return@runTransaction null
-
-            val completed = batchSnap.getLong("completedCells")?.toInt() ?: 0
-            require(completed == 108) { "Cannot commit before 108 cells" }
-
-            val currentTotal = rootSnap.getLong("totalCount")?.toInt() ?: 0
-
-            // 2) All writes AFTER reads
-            t.update(
-                batchRef,
+    /** Read journey; create with defaults if it does not exist (MERGE). */
+    suspend fun getJourney(): Journey {
+        val ref = journeyDoc()
+        val snap = ref.get().await()
+        if (!snap.exists()) {
+            val j = Journey()
+            ref.set(
                 mapOf(
-                    "status" to "committed",
-                    "committedAt" to FieldValue.serverTimestamp()
-                )
-            )
-
-            // Upsert totals: create if missing, else update
-            if (!rootSnap.exists()) {
-                t.set(
-                    rootRef,
-                    mapOf(
-                        "totalCount" to 108,
-                        "createdAt" to FieldValue.serverTimestamp(),
-                        "updatedAt" to FieldValue.serverTimestamp()
-                    ),
-                    SetOptions.merge()
-                )
-            } else {
-                t.update(
-                    rootRef,
-                    mapOf(
-                        "totalCount" to (currentTotal + 108),
-                        "updatedAt" to FieldValue.serverTimestamp()
-                    )
-                )
-            }
-
-            null
-        }.await()
-    }
-
-    /** Read totalCount from /ramakotiProgress/{uid}. */
-    suspend fun readTotalCount(): Int? {
-        val uid = userId()
-        val snap = db.collection("ramakotiProgress").document(uid).get().await()
-        return snap.getLong("totalCount")?.toInt()
+                    "totalCount" to j.totalCount,
+                    "currentBatchCount" to j.currentBatchCount,
+                    "currentCrore" to j.currentCrore,
+                    "language" to j.language,
+                    "updatedAt" to FieldValue.serverTimestamp()
+                ),
+                SetOptions.merge()
+            ).await()
+            return j
+        }
+        return Journey(
+            totalCount = snap.getLong("totalCount") ?: 0L,
+            currentBatchCount = (snap.getLong("currentBatchCount") ?: 0L).toInt(),
+            currentCrore = (snap.getLong("currentCrore") ?: 1L).toInt(),
+            language = snap.getString("language") ?: "en"
+        )
     }
 
     /**
-     * ✅ Lifetime total from committed batches ONLY.
-     * Sums up committed batches (capped at 108 per batch to be safe with legacy docs).
+     * Reset the batch counter to 0 (after 108 celebration).
+     * Uses MERGE so there is no base-version conflict.
      */
-    suspend fun readCommittedTotalCount(): Int {
-        val uid = userId()
-        val committed = batchesCol(uid)
-            .whereEqualTo("status", "committed")
-            .get()
-            .await()
-
-        // Prefer completedCells if present; cap at 108 to avoid over-counting.
-        var total = 0
-        for (doc in committed.documents) {
-            val cellsCount = (doc.getLong("completedCells")?.toInt() ?: 108).coerceAtMost(108)
-            total += cellsCount
-        }
-        return total
+    suspend fun resetBatchCounter(): Journey {
+        val ref = journeyDoc()
+        ref.set(
+            mapOf(
+                "currentBatchCount" to 0,
+                "updatedAt" to FieldValue.serverTimestamp()
+            ),
+            SetOptions.merge()
+        ).await()
+        return getJourney()
     }
 
-    /* --------------------------------- Helpers -------------------------------- */
+    /**
+     * Start the next crore: increments currentCrore and resets batch to 0.
+     * Uses MERGE to avoid FAILED_PRECONDITION.
+     */
+    suspend fun startSecondCrore(): Journey {
+        val ref = journeyDoc()
+        // read existing to compute nextCrore safely
+        val snap = ref.get().await()
+        val current = (snap.getLong("currentCrore") ?: 1L).toInt()
+        val next = current + 1
 
-    private fun userId(): String =
-        auth.currentUser?.uid ?: throw IllegalStateException("User not signed in")
-
-    private fun batchesCol(uid: String) =
-        db.collection("ramakotiProgress").document(uid).collection("batches")
-
-    private fun readCells(snap: DocumentSnapshot): List<Any?> {
-        val raw = snap.get("cells") as? List<Any?> ?: emptyList()
-        return ensure108(raw)
+        ref.set(
+            mapOf(
+                "currentCrore" to next,
+                "currentBatchCount" to 0,
+                "updatedAt" to FieldValue.serverTimestamp()
+            ),
+            SetOptions.merge()
+        ).await()
+        return getJourney()
     }
 
-    /** Ensure there are always 108 entries (used by readers). */
-    private fun ensure108(existing: List<Any?>): List<Any?> =
-        (0 until 108).map { i ->
-            existing.getOrNull(i) ?: mapOf(
-                "index" to (i + 1),
-                "filled" to false,
-                "value" to "",
-                "lang" to "EN",
-                "ts" to 0L
-            )
-        }
+    /** Update preferred language on the journey doc. */
+    suspend fun updateLanguage(language: String) {
+        journeyDoc().set(
+            mapOf(
+                "language" to language,
+                "updatedAt" to FieldValue.serverTimestamp()
+            ),
+            SetOptions.merge()
+        ).await()
+    }
 }

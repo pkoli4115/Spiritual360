@@ -9,12 +9,14 @@
     <string name="enter_otp">Enter OTP</string>
     <string name="personal_info">Personal Info</string>
     <string name="your_name">Your Name</string>
-    <string name="father_name">Father\'s Name</string>
-    <string name="mother_name">Mother\'s Name</string>
     <string name="gothram">Gothram</string>
     <string name="nakshatram">Nakshatram</string>
     <string name="number_of_children">Number of Children</string>
     <string name="save_continue">Save &amp; Continue</string>
+
+    <!-- Added for Ramakoti Phase 1 -->
+    <string name="ramakoti_progress">Progress</string>
+    <string name="ramakoti_completed_celebration">Jai Shri Ram! Completed 108!</string>
 
     <!-- Phase 2 -->
     <string name="poojas">Poojas</string>
@@ -40,5 +42,14 @@
     <string name="facebook_app_id" translatable="false">1145171540885194</string>
     <string name="facebook_client_token" translatable="false">06e38f35b0c2670aeb4266074d2550e3</string>
     <string name="fb_login_protocol_scheme" translatable="false">fb1145171540885194</string>
-
+    <!-- Ramakoti Phase 1: gating + actions -->
+    <string name="export_pdf">Export PDF</string>
+    <string name="generate_certificate">Generate Certificate</string>
+    <string name="pdf_saved_to">PDF saved to:\n%s</string>
+    <string name="certificate_saved_to">Certificate saved to:\n%s</string>
+    <string name="ramakoti_total_completed">Total completed: %1$s</string>
+    <string name="ok">OK</string>
+    <string name="ramakoti_gate_message">
+        You have completed %1$s Ramakoti so far. Please complete 1 Crore to generate %2$s.
+    </string>
 </resources>

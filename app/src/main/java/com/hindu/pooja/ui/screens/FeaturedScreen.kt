@@ -9,7 +9,6 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.hindu.pooja.ui.navigation.Screen
 
-@OptIn(ExperimentalMaterial3Api::class) // ← Opt-in to use Card(onClick)
 private val FEATURED_TILE_HEIGHT = 160.dp
 
 @Composable

@@ -1,213 +1,263 @@
-package com.hindu.pooja.feature.ramakoti.viewmodel
+package com.hindu.pooja.feature.ramakoti
 
-import androidx.lifecycle.ViewModel
+import com.hindu.pooja.feature.ramakoti.data.RamakotiExportUploader.ExportType
+import android.app.Application
+import androidx.core.net.toUri
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.hindu.pooja.feature.ramakoti.data.RamakotiRepository
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.storage.FirebaseStorage
+import com.hindu.pooja.feature.ramakoti.data.*
+import com.hindu.pooja.feature.ramakoti.sync.RamakotiSyncManager
+import com.hindu.pooja.feature.ramakoti.util.RamakotiPdfGenerator
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.*
 
-/**
- * ViewModel exposes:
- * - grid (108 cells) state for current active batch
- * - totalCount / croreCount stats
- * - language preference
- * - actions: tap cell, autofill remaining, switch language
- *
- * No Compose imports here; pure state flows so UI can observe safely.
- */
-class RamakotiViewModel(
-    private val repo: RamakotiRepository = RamakotiRepository()
-) : ViewModel() {
+/** UI model */
+data class RamakotiUiState(
+    val totalCount: Long = 0,
+    val currentBatchCount: Int = 0,
+    val currentCrore: Int = 1,
+    val language: String = "en",
+    val lifetimeCount: Int = 0,
+    val lifetimeBatches: Int = 0,
+    val showCelebration: Boolean = false,
+    val canStartSecondCrore: Boolean = false,
+    val lastExportUrl: String? = null,
+    val lastCertificateId: String? = null,
+    val lastLocalFile: File? = null,
+    val error: String? = null
+)
 
-    // ---------------- UI State Models ----------------
-    data class GridState(
-        val batchId: String? = null,
-        val index: Long = 0L,
-        val cells: List<Boolean> = List(108) { false },
-        val filled: Int = 0,
-        val committed: Boolean = false
-    ) {
-        val isComplete: Boolean get() = filled >= 108
-    }
+class RamakotiViewModel(app: Application) : AndroidViewModel(app) {
 
-    data class StatsState(
-        val totalCount: Long = 0L,
-        val croreCount: Int = 0,
-        val currentCroreNumber: Int = 1,
-        val language: String = "EN"
-    )
+    private val auth = FirebaseAuth.getInstance()
+    private val db = FirebaseFirestore.getInstance()
+    private val storage = FirebaseStorage.getInstance()
 
-    data class UiState(
-        val loading: Boolean = true,
-        val error: String? = null,
-        val grid: GridState = GridState(),
-        val stats: StatsState = StatsState()
-    )
+    private val repo = RamakotiRepository(auth, db)
+    private val phase2 = RamakotiPhase2Repository(auth, db)
+    private val certRepo = CertificateRepository()
+    private val sync = RamakotiSyncManager(auth, db)
 
-    private val _ui = MutableStateFlow(UiState())
-    val ui: StateFlow<UiState> = _ui.asStateFlow()
+    private var metaListener: ListenerRegistration? = null
+    private val _ui = MutableStateFlow(RamakotiUiState())
+    val ui: StateFlow<RamakotiUiState> = _ui
 
-    private var currentUid: String? = null
-
-    // ---------------- Public API ----------------
-
-    fun init(uid: String) {
-        if (uid == currentUid && !_ui.value.loading) return
-        currentUid = uid
-        _ui.update { it.copy(loading = true, error = null) }
-
-        // Load stats + ensure an active batch
+    /** rebind when user changes */
+    private val authListener = FirebaseAuth.AuthStateListener { firebaseAuth ->
+        val newUid = firebaseAuth.currentUser?.uid
         viewModelScope.launch {
-            try {
-                // Observe stats live
-                observeStats(uid)
-
-                // Ensure batch
-                val batch = repo.ensureActiveBatch(uid)
-                _ui.update {
-                    it.copy(
-                        loading = false,
-                        grid = it.grid.copy(
-                            batchId = batch.id,
-                            index = batch.index,
-                            cells = batch.cells,
-                            filled = batch.filled,
-                            committed = batch.committed
-                        )
+            _ui.value = RamakotiUiState(language = _ui.value.language)
+            metaListener?.remove()
+            if (newUid != null) {
+                try {
+                    sync.ensureMetaInitialized()
+                    startMetaListener()
+                    val j = repo.getJourney()
+                    _ui.value = _ui.value.copy(
+                        totalCount = j.totalCount,
+                        currentBatchCount = j.currentBatchCount,
+                        currentCrore = j.currentCrore,
+                        language = j.language,
+                        error = null
                     )
+                } catch (t: Throwable) {
+                    _ui.value = _ui.value.copy(error = t.message ?: t.toString())
                 }
-            } catch (e: Exception) {
-                _ui.update { it.copy(loading = false, error = e.message ?: "Failed to initialize") }
             }
         }
     }
 
-    fun setLanguage(language: String) {
-        val uid = currentUid ?: return
+    init {
         viewModelScope.launch {
             try {
-                repo.setLanguage(uid, language)
-                _ui.update { it.copy(stats = it.stats.copy(language = language)) }
-            } catch (e: Exception) {
-                _ui.update { it.copy(error = e.message) }
+                val j = repo.getJourney()
+                _ui.value = _ui.value.copy(
+                    totalCount = j.totalCount,
+                    currentBatchCount = j.currentBatchCount,
+                    currentCrore = j.currentCrore,
+                    language = j.language
+                )
+                sync.ensureMetaInitialized()
+                startMetaListener()
+            } catch (t: Throwable) {
+                _ui.value = _ui.value.copy(error = t.message ?: t.toString())
+            }
+        }
+        FirebaseAuth.getInstance().addAuthStateListener(authListener)
+    }
+
+    /** listens to lifetime meta counts */
+    private fun startMetaListener() {
+        val uid = auth.currentUser?.uid ?: return
+        val metaRef = db.collection("users").document(uid)
+            .collection("ramakoti_meta").document("meta")
+
+        metaListener?.remove()
+        metaListener = metaRef.addSnapshotListener { snap, err ->
+            if (err != null) {
+                _ui.value = _ui.value.copy(error = err.message)
+                return@addSnapshotListener
+            }
+            val life = snap?.getLong("lifetimeCount")?.toInt() ?: 0
+            val batches = snap?.getLong("batches")?.toInt() ?: 0
+            _ui.value = _ui.value.copy(
+                lifetimeCount = life,
+                lifetimeBatches = batches
+            )
+        }
+    }
+
+    /** tick next Jai Sri Ram */
+    fun tickNext() {
+        viewModelScope.launch {
+            try {
+                val r = sync.addCount(1)
+                val newBatch = r.todayCountAfter % 108
+                val newTotal = _ui.value.totalCount + 1
+
+                var showCelebration = r.justCompleted108
+                var canStartSecond = _ui.value.canStartSecondCrore
+
+                if (r.justCompleted108) repo.resetBatchCounter()
+
+                val (isCrore, _) = phase2.isCroreMilestone(newTotal)
+                if (isCrore) canStartSecond = true
+
+                _ui.value = _ui.value.copy(
+                    totalCount = newTotal,
+                    currentBatchCount = if (showCelebration) 0 else newBatch,
+                    showCelebration = showCelebration,
+                    canStartSecondCrore = canStartSecond,
+                    error = null
+                )
+            } catch (t: Throwable) {
+                _ui.value = _ui.value.copy(error = t.message ?: t.toString())
             }
         }
     }
 
-    fun tapCell(cellIndex: Int, value: Boolean) {
-        val uid = currentUid ?: return
-        val batchId = _ui.value.grid.batchId ?: return
-        if (cellIndex !in 0..107) return
+    fun onCelebrationShown() {
+        _ui.value = _ui.value.copy(showCelebration = false)
+    }
 
+    fun startSecondCrore() {
         viewModelScope.launch {
             try {
-                val updated = repo.toggleCell(uid, batchId, cellIndex, value)
-                _ui.update {
-                    it.copy(
-                        grid = it.grid.copy(
-                            batchId = updated.id,
-                            index = updated.index,
-                            cells = updated.cells,
-                            filled = updated.filled,
-                            committed = updated.committed
-                        ),
-                        // If the batch got committed, we may now have a new active batch; preload it
-                        loading = false
-                    )
-                }
-
-                if (updated.committed) {
-                    // Preload the next active batch so UI remains smooth
-                    val next = repo.ensureActiveBatch(uid)
-                    _ui.update {
-                        it.copy(
-                            grid = it.grid.copy(
-                                batchId = next.id,
-                                index = next.index,
-                                cells = next.cells,
-                                filled = next.filled,
-                                committed = next.committed
-                            )
-                        )
-                    }
-                }
-            } catch (e: Exception) {
-                _ui.update { it.copy(error = e.message) }
+                val j = repo.startSecondCrore()
+                _ui.value = _ui.value.copy(
+                    totalCount = j.totalCount,
+                    currentBatchCount = j.currentBatchCount,
+                    currentCrore = j.currentCrore,
+                    canStartSecondCrore = false,
+                    error = null
+                )
+            } catch (t: Throwable) {
+                _ui.value = _ui.value.copy(error = t.message ?: t.toString())
             }
         }
     }
 
-    /** Long-press helper to auto-fill remaining cells to 108. */
-    fun autofillRemaining() {
-        val uid = currentUid ?: return
+    /** export full grid honoring lifetime */
+    fun exportGrid(onDone: (() -> Unit)? = null) {
         viewModelScope.launch {
             try {
-                val updated = repo.fillRemaining(uid)
-                _ui.update {
-                    it.copy(
-                        grid = it.grid.copy(
-                            batchId = updated.id,
-                            index = updated.index,
-                            cells = updated.cells,
-                            filled = updated.filled,
-                            committed = updated.committed
-                        )
+                val ctx = getApplication<Application>().applicationContext
+                val gridFile = RamakotiPdfGenerator.generateGridPdf(
+                    context = ctx,
+                    input = RamakotiPdfGenerator.GridInput(
+                        languageCode = ui.value.language,
+                        pageTitle = "Sri Rama Namam — 1 to 108",
+                        lifetimeCount = ui.value.lifetimeCount,
+                        currentBatchCount = ui.value.currentBatchCount
                     )
-                }
-                if (updated.committed) {
-                    val next = repo.ensureActiveBatch(uid)
-                    _ui.update {
-                        it.copy(
-                            grid = it.grid.copy(
-                                batchId = next.id,
-                                index = next.index,
-                                cells = next.cells,
-                                filled = next.filled,
-                                committed = next.committed
-                            )
-                        )
-                    }
-                }
-            } catch (e: Exception) {
-                _ui.update { it.copy(error = e.message) }
+                )
+
+                val url = RamakotiExportUploader.uploadAndRecord(
+                    auth = auth,
+                    storage = storage,
+                    db = db,
+                    localFileUri = gridFile.toUri(),
+                    fileName = gridFile.name,
+                    type = ExportType.PDF_GRID
+                )
+
+                _ui.value = _ui.value.copy(
+                    lastExportUrl = url,
+                    lastLocalFile = gridFile,
+                    error = null
+                )
+                onDone?.invoke()
+            } catch (t: Throwable) {
+                _ui.value = _ui.value.copy(error = t.message ?: t.toString())
             }
         }
     }
 
-    // ---------------- Internals ----------------
-    private fun observeStats(uid: String) {
-        viewModelScope.launch {
-            repo.observeStats(uid).collect { s ->
-                _ui.update {
-                    it.copy(
-                        stats = it.stats.copy(
-                            totalCount = s.totalCount,
-                            croreCount = s.croreCount,
-                            currentCroreNumber = s.currentCroreNumber,
-                            language = s.language
-                        )
-                    )
-                }
-            }
-        }
-        // Also do a one-time fetch to ensure doc exists and fill initial values fast
+    /** generate certificate with offline QR */
+    fun generateCertificate(milestoneText: String) {
         viewModelScope.launch {
             try {
-                val s = repo.getStats(uid)
-                _ui.update {
-                    it.copy(
-                        stats = it.stats.copy(
-                            totalCount = s.totalCount,
-                            croreCount = s.croreCount,
-                            currentCroreNumber = s.currentCroreNumber,
-                            language = s.language
-                        )
+                val ctx = getApplication<Application>().applicationContext
+                val today = SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(Date())
+                val displayName = auth.currentUser?.displayName ?: "Devotee"
+
+                val result = certRepo.generateAndOptionallyUpload(
+                    context = ctx,
+                    uid = auth.currentUser?.uid ?: error("Not signed in"),
+                    input = CertificateInput(
+                        devoteeName = displayName,
+                        countText = milestoneText,
+                        dateText = today,
+                        language = ui.value.language,
+                        verificationUrl = "",
+                        templateBitmap = null
+                    ),
+                    uploadToStorage = false
+                )
+
+                val url = RamakotiExportUploader.uploadAndRecord(
+                    auth = auth,
+                    storage = storage,
+                    db = db,
+                    localFileUri = result.localPdf.toUri(),
+                    fileName = result.localPdf.name,
+                    type = ExportType.CERTIFICATE,
+                    extraMeta = mapOf("certificateId" to result.certificateId)
+                )
+
+                val (isCrore, croreNum) = phase2.isCroreMilestone(ui.value.totalCount)
+                if (isCrore) {
+                    phase2.onCroreCompleted(
+                        croreNumber = croreNum,
+                        totalAtCompletion = ui.value.totalCount,
+                        certificateId = result.certificateId,
+                        certificateUrl = url
                     )
                 }
-            } catch (_: Exception) { /* ignore */ }
+
+                _ui.value = _ui.value.copy(
+                    lastExportUrl = url,
+                    lastCertificateId = result.certificateId,
+                    lastLocalFile = result.localPdf,
+                    error = null
+                )
+            } catch (t: Throwable) {
+                _ui.value = _ui.value.copy(error = t.message ?: t.toString())
+            }
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        metaListener?.remove()
+        FirebaseAuth.getInstance().removeAuthStateListener(authListener)
     }
 }
