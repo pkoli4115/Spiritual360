@@ -1,7 +1,7 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
 package com.hindu.pooja.feature.ramakoti.ui
-
+import com.hindu.pooja.ui.ramakoti.LanguageChipRow
 import android.Manifest
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -18,8 +18,6 @@ import com.google.firebase.auth.FirebaseAuth
 import com.hindu.pooja.feature.ramakoti.data.LanguagePreferenceManager
 import com.hindu.pooja.feature.ramakoti.prefs.RamakotiPreferences
 import com.hindu.pooja.feature.ramakoti.reminders.ReminderScheduler
-import com.hindu.pooja.ui.navigation.Screen
-import com.hindu.pooja.ui.ramakoti.LanguageChipRow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -86,10 +84,14 @@ fun LanguageSelectionScreen(
 
                     // Persist choices
                     langMgr.setLanguageFor(uid, lang) // per-user
-                    prefs.setTargetCount(target)       // device (your current prefs scope)
-                    prefs.setReminderEnabled(true)
+                    prefs.setTargetCount(target)       // device scope (your current usage)
 
-                    // Schedule daily reminder at 07:00
+                    // Reset prompt/cert guards so old-target prompt won't reappear
+                    prefs.clearLastPromptedForTarget()
+                    prefs.markCertIssuedFor(0)
+
+                    // Enable daily reminder at 07:00 by default
+                    prefs.setReminderEnabled(true)
                     scheduler.scheduleDaily(hour24 = 7, minute = 0)
 
                     // Ask POST_NOTIFICATIONS on Android 13+
@@ -97,8 +99,8 @@ fun LanguageSelectionScreen(
                         notifPerm.launch(Manifest.permission.POST_NOTIFICATIONS)
                     }
 
-                    // Proceed to Ramakoti
-                    navController.navigate(Screen.Ramakoti.route) {
+                    // Go straight to writer
+                    navController.navigate("ramakoti/writer") {
                         popUpTo("ramakoti/language") { inclusive = true }
                         launchSingleTop = true
                     }

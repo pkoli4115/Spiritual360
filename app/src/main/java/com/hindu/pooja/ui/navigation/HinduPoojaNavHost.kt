@@ -1,9 +1,8 @@
 package com.hindu.pooja.ui.navigation
-import com.hindu.pooja.feature.ramakoti.RamakotiViewModel
+
 import androidx.compose.ui.Modifier
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
@@ -41,10 +40,6 @@ import com.hindu.pooja.feature.ramakoti.ui.LanguageSelectionScreen
 import com.hindu.pooja.feature.ramakoti.ui.CertificateScreen
 
 // Language guard (one-shot read to avoid race)
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.LaunchedEffect
 import kotlinx.coroutines.flow.first
 import com.hindu.pooja.feature.ramakoti.data.LanguagePreferenceManager
 
@@ -104,7 +99,6 @@ fun HinduPoojaNavHost(
         // ✅ Canonical Ramakoti entry with per-user language guard
         composable(Screen.Ramakoti.route) {
             val ctx = LocalContext.current
-            // FIX: use singleton accessor, not the private constructor
             val langMgr = remember { LanguagePreferenceManager.getInstance(ctx) }
             var lang: String? by remember { mutableStateOf(null) }
 
@@ -136,8 +130,14 @@ fun HinduPoojaNavHost(
         // Writer screen
         composable("ramakoti/writer") {
             val vm: com.hindu.pooja.feature.ramakoti.RamakotiViewModel = hiltViewModel()
-            RamakotiWriterScreen(vm = vm)
+            RamakotiWriterScreen(
+                vm = vm,
+                onPickNextTarget = {
+                    navController.navigate("ramakoti/language") { launchSingleTop = true }
+                }
+            )
         }
+
         // Certificate preview
         composable("ramakoti/certificate") {
             CertificateScreen(milestoneCountText = "1 Crore Sri Rama Namas Completed")
@@ -279,7 +279,7 @@ fun HinduPoojaNavHost(
         composable("profile/certificates") { CertificatesScreen() }
         composable("profile/reflections") { ReflectionsScreen() }
 
-        // Language selection
+        // Language selection (picker)
         composable("ramakoti/language") { LanguageSelectionScreen(navController) }
 
         // Certificate preview

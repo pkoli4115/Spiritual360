@@ -67,7 +67,7 @@ class RamakotiViewModel @Inject constructor(
     private val prefs: RamakotiPreferences
 ) : ViewModel() {
 
-    // use your original singletons (matches your working code)
+    // Use your singletons (matches your working setup)
     private val auth = FirebaseAuth.getInstance()
     private val db = FirebaseFirestore.getInstance()
     private val storage = FirebaseStorage.getInstance()
@@ -85,24 +85,30 @@ class RamakotiViewModel @Inject constructor(
     private var pendingTaps = 0
     private var writeInProgress = false
 
-    // guard to avoid duplicate auto-issuance per target
-    private var lastIssuedForTarget = 0
-
-    // NEW: remember if we’ve already shown the “continue?” prompt for this target
-    private var promptedForTarget: Int? = null
+    // guards
+    private var lastIssuedForTarget = 0                 // from prefs.lastCertForTarget
+    private var lastPromptedPersisted = 0               // from prefs.lastPromptedForTarget
 
     init {
-        // Observe target & last-issued guard
+        // Observe target changes → re-check auto-issue
         viewModelScope.launch {
             prefs.targetCount.collectLatest { t ->
                 _ui.value = _ui.value.copy(targetCount = t)
                 maybeAutoIssue(_ui.value.lifetimeCount, t)
             }
         }
+        // Observe last issued guard
         viewModelScope.launch {
             prefs.lastCertForTarget.collectLatest { last ->
                 lastIssuedForTarget = last
                 maybeAutoIssue(_ui.value.lifetimeCount, _ui.value.targetCount)
+            }
+        }
+        // NEW: observe persisted “prompted once” guard
+        viewModelScope.launch {
+            prefs.lastPromptedForTarget.collectLatest { prompted ->
+                lastPromptedPersisted = prompted
+                // no immediate UI change; used inside maybeAutoIssue
             }
         }
 
@@ -114,7 +120,7 @@ class RamakotiViewModel @Inject constructor(
     fun refreshFromServer() {
         viewModelScope.launch {
             try {
-                // Ensure baseline docs exist (your existing behavior)
+                // Ensure baseline docs exist
                 sync.ensureMetaInitialized()
 
                 // (Re)start live listener for lifetime/meta
@@ -158,7 +164,7 @@ class RamakotiViewModel @Inject constructor(
                 targetReached = reached,
                 error = null
             )
-            // Optionally also persist batch state to journey doc
+            // Optionally persist batch state to journey doc
             viewModelScope.launch { writeBatchStateToFirestore() }
             maybeAutoIssue(life, _ui.value.targetCount)
         }
@@ -166,7 +172,7 @@ class RamakotiViewModel @Inject constructor(
 
     /** Single source of truth for any increment (button, volume, etc.) */
     fun tickNext() {
-        // 🔒 hard guard: never go past the selected target
+        // hard guard: never go past the selected target
         if (_ui.value.targetReached) return
         pendingTaps++
         if (!writeInProgress) flushPending()
@@ -184,7 +190,7 @@ class RamakotiViewModel @Inject constructor(
                     }
                     pendingTaps--
 
-                    // Atomic server-side increment (your original)
+                    // Atomic server-side increment
                     sync.addCount(1)
 
                     // Optimistic local UI update (listener will confirm shortly)
@@ -227,10 +233,9 @@ class RamakotiViewModel @Inject constructor(
         if (life < target) return
         if (target <= 0) return
 
-        // If we already issued for this target, prompt only ONCE per target
+        // If a certificate already exists for this target, prompt only once per target (persisted)
         if (!force && lastIssuedForTarget == target) {
-            if (promptedForTarget != target) {
-                promptedForTarget = target
+            if (lastPromptedPersisted != target) {
                 _ui.value = _ui.value.copy(showNextTargetPrompt = true)
             }
             return
@@ -275,7 +280,7 @@ class RamakotiViewModel @Inject constructor(
                     extraMeta = mapOf("certificateId" to result.certificateId, "targetCount" to target)
                 )
 
-                // mark guard
+                // mark guards
                 prefs.markCertIssuedFor(target)
                 lastIssuedForTarget = target
 
@@ -288,7 +293,8 @@ class RamakotiViewModel @Inject constructor(
                     lastLocalFile = result.localPdf,
                     showNextTargetPrompt = true
                 )
-                promptedForTarget = target // we just showed/will show it once
+                // Also persist that we've shown/handled the prompt for this target
+                // (the actual toggle to false happens when user taps a dialog button)
             } catch (t: Throwable) {
                 _ui.value = _ui.value.copy(
                     isIssuingCertificate = false,
@@ -314,11 +320,14 @@ class RamakotiViewModel @Inject constructor(
         _ui.value = _ui.value.copy(certificateError = null)
     }
 
-    fun onNextTargetDecision(accept: Boolean, onNavigateToPicker: () -> Unit) {
-        // Mark that we handled the prompt for this target so it doesn't re-open.
-        promptedForTarget = _ui.value.targetCount
-        _ui.value = _ui.value.copy(showNextTargetPrompt = false)
-        if (accept) onNavigateToPicker()
+    /** Screen passes nav lambda here for "Choose next target"; Not now passes default. */
+    fun onNextTargetDecision(accept: Boolean, onNavigateToPicker: () -> Unit = {}) {
+        viewModelScope.launch {
+            // Persist that we already prompted for THIS target → won't reopen after process death
+            prefs.setLastPromptedForTarget(_ui.value.targetCount)
+            _ui.value = _ui.value.copy(showNextTargetPrompt = false)
+            if (accept) onNavigateToPicker()
+        }
     }
 
     // -------- Optional: persist batch state also to journey doc --------

@@ -33,12 +33,15 @@ import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
+// Import your BlessingCardScreen
+import com.hindu.pooja.feature.ramakoti.ui.BlessingCardScreen
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RamakotiWriterScreen(
     vm: RamakotiViewModel = hiltViewModel(),
     reminderVm: ReminderVm = hiltViewModel(),
-    onPickNextTarget: (() -> Unit)? = null // pass nav: { navController.navigate("ramakoti/language") }
+    onPickNextTarget: (() -> Unit)? = null // pass { navController.navigate("ramakoti/language") }
 ) {
     val ui by vm.ui.collectAsState()
     val ctx = LocalContext.current
@@ -63,6 +66,20 @@ fun RamakotiWriterScreen(
         soundId = sp.load(ctx, R.raw.jaisriramtone, 1)
     }
     DisposableEffect(Unit) { onDispose { soundPool?.release() } }
+
+    // -------- Blessing → Celebration flow controller --------
+    // When a batch completes (ui.showCelebration == true), we first show BlessingCard,
+    // then show the celebration dialog, then clear celebration in VM.
+    var showBlessing by remember { mutableStateOf(false) }
+    var showPostBlessingCelebration by remember { mutableStateOf(false) }
+
+    // Gate the sequence whenever a new batch completion arrives
+    LaunchedEffect(ui.showCelebration) {
+        if (ui.showCelebration) {
+            showBlessing = true
+            showPostBlessingCelebration = false
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -149,32 +166,21 @@ fun RamakotiWriterScreen(
             Spacer(Modifier.height(12.dp))
 
             // Button label + behavior based on certificate states
-            val btnLabel = when {
-                ui.isIssuingCertificate -> "Generating Certificate…"
-                ui.targetReached && ui.certificateUrl != null -> "View Certificate"
-                ui.targetReached -> "Target Completed (Retry)"
-                else -> "Jai Sri Ram"
-            }
-
-            val enabled = when {
-                ui.isIssuingCertificate -> false
-                ui.targetReached && ui.certificateUrl == null -> true   // allow retry
-                ui.targetReached && ui.certificateUrl != null -> true   // allow open
-                else -> !ui.isIncrementBusy
+            val (btnLabel, enabled, onClick) = remember(ui.isIssuingCertificate, ui.certificateUrl, ui.certificateError, ui.targetReached, ui.isIncrementBusy) {
+                when {
+                    ui.isIssuingCertificate -> Triple("Generating Certificate…", false, {})
+                    ui.certificateUrl != null -> Triple("View Certificate", true, { vm.openCertificate(ctx) })
+                    ui.certificateError != null -> Triple("Retry", true, { vm.retryCertificate() })
+                    ui.targetReached -> Triple("Target Completed", false, {})
+                    else -> Triple("Jai Sri Ram", !ui.isIncrementBusy, {
+                        soundPool?.play(soundId, 1f, 1f, 1, 0, 1f)
+                        vm.tickNext()
+                    })
+                }
             }
 
             Button(
-                onClick = {
-                    when {
-                        ui.isIssuingCertificate -> Unit
-                        ui.targetReached && ui.certificateUrl != null -> vm.openCertificate(ctx)
-                        ui.targetReached -> vm.retryCertificate()
-                        else -> {
-                            soundPool?.play(soundId, 1f, 1f, 1, 0, 1f)
-                            vm.tickNext()
-                        }
-                    }
-                },
+                onClick = onClick,
                 enabled = enabled,
                 modifier = Modifier
                     .padding(16.dp)
@@ -186,17 +192,64 @@ fun RamakotiWriterScreen(
         }
     }
 
-    // Celebration dialog for 108 completion (optional)
-    if (ui.showCelebration) {
+    // ---------------- Blessing → Celebration sequence ----------------
+
+    // 1) Blessing Card (shown first when a batch completes)
+    if (ui.showCelebration && showBlessing) {
+        // Use a full-screen dialog to host the BlessingCardScreen + controls
+        androidx.compose.ui.window.Dialog(onDismissRequest = {
+            // If dismissed, still continue to celebration
+            showBlessing = false
+            showPostBlessingCelebration = true
+        }) {
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                tonalElevation = 4.dp,
+                modifier = Modifier.fillMaxWidth().padding(12.dp)
+            ) {
+                Column(Modifier.padding(16.dp)) {
+                    // Blessing message for the just-completed batch
+                    val message = "Completed ${ui.currentBatchNumber - 1} × 108 Sri Rama Namas"
+                    BlessingCardScreen(
+                        devoteeName = "Devotee", // or plumb from profile/auth if you prefer
+                        message = message,
+                        language = ui.language,
+                        verificationUrl = "" // not needed for blessing card
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        TextButton(onClick = {
+                            showBlessing = false
+                            showPostBlessingCelebration = true
+                        }) { Text("Continue") }
+                    }
+                }
+            }
+        }
+    }
+
+    // 2) Celebration dialog (shown AFTER blessing)
+    if (ui.showCelebration && !showBlessing && showPostBlessingCelebration) {
         AlertDialog(
-            onDismissRequest = { vm.clearCelebration() },
+            onDismissRequest = {
+                showPostBlessingCelebration = false
+                vm.clearCelebration()
+            },
             title = { Text("Batch Completed!") },
-            text = { Text("You completed ${ui.currentBatchNumber - 1} batches of 108!") },
-            confirmButton = { TextButton(onClick = { vm.clearCelebration() }) { Text("OK") } }
+            text = { Text("You completed ${ui.currentBatchNumber - 1} full batches of 108!") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showPostBlessingCelebration = false
+                    vm.clearCelebration()
+                }) { Text("OK") }
+            }
         )
     }
 
-    // Certificate error
+    // 3) Certificate error
     ui.certificateError?.let { msg ->
         AlertDialog(
             onDismissRequest = { vm.dismissCertError() },
@@ -206,7 +259,7 @@ fun RamakotiWriterScreen(
         )
     }
 
-    // Prompt to continue to next target
+    // 4) Prompt to continue to next target (wired to navigation)
     if (ui.showNextTargetPrompt) {
         AlertDialog(
             onDismissRequest = { vm.onNextTargetDecision(false) {} },
@@ -268,7 +321,6 @@ private fun showTimePickerDialog(
     val dialog = TimePickerDialog(
         context,
         { _, selectedHour, selectedMinute ->
-            // Save & schedule in a coroutine
             scope.launch {
                 prefs.setReminderEnabled(true)
                 prefs.setReminderHour(selectedHour)
