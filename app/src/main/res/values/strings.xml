@@ -13,6 +13,8 @@
     <string name="nakshatram">Nakshatram</string>
     <string name="number_of_children">Number of Children</string>
     <string name="save_continue">Save &amp; Continue</string>
+    <string name="ramakoti_reminder_title">Ramakoti Reminder</string>
+    <string name="ramakoti_reminder_text">Time to write your Ramakoti.</string>
 
     <!-- Added for Ramakoti Phase 1 -->
     <string name="ramakoti_progress">Progress</string>

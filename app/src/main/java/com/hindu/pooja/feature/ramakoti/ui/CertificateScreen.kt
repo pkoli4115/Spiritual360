@@ -50,7 +50,8 @@ fun CertificateScreen(
     val storage = remember { FirebaseStorage.getInstance() }
     val db = remember { FirebaseFirestore.getInstance() }
     val repo = remember { CertificateRepository() }
-    val langMgr = remember { LanguagePreferenceManager(context) }
+    // ✅ use singleton getter (constructor is private)
+    val langMgr = remember { LanguagePreferenceManager.getInstance(context) }
 
     var generating by remember { mutableStateOf(false) }
     var lastLocalFile by remember { mutableStateOf<File?>(null) }
@@ -61,7 +62,7 @@ fun CertificateScreen(
     val today = remember { SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(Date()) }
     val userName = remember(devoteeName) { devoteeName ?: auth.currentUser?.displayName ?: "Devotee" }
 
-    // 🔁 UPDATED: read per-user language; default to "en" if blank / null
+    // 🔁 Read per-user language; default to "en" if blank / null
     val lang by produceState(initialValue = "en", context, auth.currentUser) {
         val uid = auth.currentUser?.uid
         value = langMgr.languageFlowFor(uid).first().ifBlank { "en" }
@@ -159,7 +160,7 @@ fun CertificateScreen(
                                     db = db,
                                     localFileUri = local.toURI().toString().toUri(),
                                     fileName = local.name,
-                                    type = RamakotiExportUploader.ExportType.CERTIFICATE,
+                                    type = ExportType.CERTIFICATE,
                                     extraMeta = mapOf("certificateId" to result.certificateId)
                                 )
 

@@ -1,9 +1,9 @@
 package com.hindu.pooja.ui.navigation
-
+import com.hindu.pooja.feature.ramakoti.RamakotiViewModel
+import androidx.compose.ui.Modifier
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
@@ -13,7 +13,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.google.firebase.auth.FirebaseAuth
 import com.hindu.pooja.ui.ramayana.ramakoti.RamakotiIntroScreen
-import com.hindu.pooja.feature.ramakoti.ui.RamakotiScreen
+import com.hindu.pooja.feature.ramakoti.ui.RamakotiWriterScreen
 import com.hindu.pooja.ui.ramayana.reader.WikiReaderScreen.WikiReaderScreen
 import com.hindu.pooja.ui.ramayana.reader.Lesson
 import com.hindu.pooja.ui.ramayana.reader.repo.AyodhyaLessonRepo
@@ -104,7 +104,8 @@ fun HinduPoojaNavHost(
         // ✅ Canonical Ramakoti entry with per-user language guard
         composable(Screen.Ramakoti.route) {
             val ctx = LocalContext.current
-            val langMgr = remember { LanguagePreferenceManager(ctx) }
+            // FIX: use singleton accessor, not the private constructor
+            val langMgr = remember { LanguagePreferenceManager.getInstance(ctx) }
             var lang: String? by remember { mutableStateOf(null) }
 
             LaunchedEffect(Unit) {
@@ -133,8 +134,10 @@ fun HinduPoojaNavHost(
         }
 
         // Writer screen
-        composable("ramakoti/writer") { RamakotiScreen() }
-
+        composable("ramakoti/writer") {
+            val vm: com.hindu.pooja.feature.ramakoti.RamakotiViewModel = hiltViewModel()
+            RamakotiWriterScreen(vm = vm)
+        }
         // Certificate preview
         composable("ramakoti/certificate") {
             CertificateScreen(milestoneCountText = "1 Crore Sri Rama Namas Completed")

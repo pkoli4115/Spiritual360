@@ -1,100 +1,137 @@
 package com.hindu.pooja.feature.ramakoti
 
-import com.hindu.pooja.feature.ramakoti.data.RamakotiExportUploader.ExportType
-import android.app.Application
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import androidx.core.net.toUri
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.firestore.SetOptions
 import com.google.firebase.storage.FirebaseStorage
-import com.hindu.pooja.feature.ramakoti.data.*
+import com.hindu.pooja.feature.ramakoti.data.CertificateInput
+import com.hindu.pooja.feature.ramakoti.data.CertificateRepository
+import com.hindu.pooja.feature.ramakoti.data.RamakotiExportUploader
+import com.hindu.pooja.feature.ramakoti.data.RamakotiExportUploader.ExportType
+import com.hindu.pooja.feature.ramakoti.data.RamakotiRepository
+import com.hindu.pooja.feature.ramakoti.prefs.RamakotiPreferences
 import com.hindu.pooja.feature.ramakoti.sync.RamakotiSyncManager
-import com.hindu.pooja.feature.ramakoti.util.RamakotiPdfGenerator
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import java.io.File
+import kotlinx.coroutines.tasks.await
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
+import javax.inject.Inject
+import kotlin.math.floor
 
-/** UI model */
+private const val BATCH_SIZE = 108
+private const val CRORE_SIZE = 10_000_000
+
 data class RamakotiUiState(
-    val totalCount: Long = 0,
+    val totalCount: Long = 0L,
+    val lifetimeCount: Int = 0,
     val currentBatchCount: Int = 0,
+    val currentBatchNumber: Int = 1,
     val currentCrore: Int = 1,
     val language: String = "en",
-    val lifetimeCount: Int = 0,
-    val lifetimeBatches: Int = 0,
+    val targetCount: Int = 10_000_000,
+    val targetReached: Boolean = false,
+    val isIncrementBusy: Boolean = false,
     val showCelebration: Boolean = false,
-    val canStartSecondCrore: Boolean = false,
+
+    // certificate states
+    val isIssuingCertificate: Boolean = false,
+    val certificateUrl: String? = null,
+    val certificateError: String? = null,
+    val showNextTargetPrompt: Boolean = false,
+
+    // legacy/compat
+    val showTargetCompleteDialog: Boolean = false,
     val lastExportUrl: String? = null,
     val lastCertificateId: String? = null,
-    val lastLocalFile: File? = null,
+    val lastLocalFile: java.io.File? = null,
+
     val error: String? = null
 )
 
-class RamakotiViewModel(app: Application) : AndroidViewModel(app) {
+@HiltViewModel
+class RamakotiViewModel @Inject constructor(
+    @ApplicationContext private val appContext: Context,
+    private val prefs: RamakotiPreferences
+) : ViewModel() {
 
+    // use your original singletons (matches your working code)
     private val auth = FirebaseAuth.getInstance()
     private val db = FirebaseFirestore.getInstance()
     private val storage = FirebaseStorage.getInstance()
 
     private val repo = RamakotiRepository(auth, db)
-    private val phase2 = RamakotiPhase2Repository(auth, db)
     private val certRepo = CertificateRepository()
     private val sync = RamakotiSyncManager(auth, db)
 
-    private var metaListener: ListenerRegistration? = null
     private val _ui = MutableStateFlow(RamakotiUiState())
     val ui: StateFlow<RamakotiUiState> = _ui
 
-    /** rebind when user changes */
-    private val authListener = FirebaseAuth.AuthStateListener { firebaseAuth ->
-        val newUid = firebaseAuth.currentUser?.uid
-        viewModelScope.launch {
-            _ui.value = RamakotiUiState(language = _ui.value.language)
-            metaListener?.remove()
-            if (newUid != null) {
-                try {
-                    sync.ensureMetaInitialized()
-                    startMetaListener()
-                    val j = repo.getJourney()
-                    _ui.value = _ui.value.copy(
-                        totalCount = j.totalCount,
-                        currentBatchCount = j.currentBatchCount,
-                        currentCrore = j.currentCrore,
-                        language = j.language,
-                        error = null
-                    )
-                } catch (t: Throwable) {
-                    _ui.value = _ui.value.copy(error = t.message ?: t.toString())
-                }
-            }
-        }
-    }
+    private var metaListener: ListenerRegistration? = null
+
+    // serialize writes
+    private var pendingTaps = 0
+    private var writeInProgress = false
+
+    // guard to avoid duplicate auto-issuance per target
+    private var lastIssuedForTarget = 0
+
+    // NEW: remember if we’ve already shown the “continue?” prompt for this target
+    private var promptedForTarget: Int? = null
 
     init {
+        // Observe target & last-issued guard
+        viewModelScope.launch {
+            prefs.targetCount.collectLatest { t ->
+                _ui.value = _ui.value.copy(targetCount = t)
+                maybeAutoIssue(_ui.value.lifetimeCount, t)
+            }
+        }
+        viewModelScope.launch {
+            prefs.lastCertForTarget.collectLatest { last ->
+                lastIssuedForTarget = last
+                maybeAutoIssue(_ui.value.lifetimeCount, _ui.value.targetCount)
+            }
+        }
+
+        // Initial attach
+        refreshFromServer()
+    }
+
+    /** Call from the screen’s LaunchedEffect(Unit) to ensure live state after back/navigation. */
+    fun refreshFromServer() {
         viewModelScope.launch {
             try {
+                // Ensure baseline docs exist (your existing behavior)
+                sync.ensureMetaInitialized()
+
+                // (Re)start live listener for lifetime/meta
+                startMetaListener()
+
+                // One-shot journey load (language, etc.)
                 val j = repo.getJourney()
                 _ui.value = _ui.value.copy(
                     totalCount = j.totalCount,
-                    currentBatchCount = j.currentBatchCount,
-                    currentCrore = j.currentCrore,
                     language = j.language
                 )
-                sync.ensureMetaInitialized()
-                startMetaListener()
             } catch (t: Throwable) {
                 _ui.value = _ui.value.copy(error = t.message ?: t.toString())
             }
         }
-        FirebaseAuth.getInstance().addAuthStateListener(authListener)
     }
 
-    /** listens to lifetime meta counts */
     private fun startMetaListener() {
         val uid = auth.currentUser?.uid ?: return
         val metaRef = db.collection("users").document(uid)
@@ -107,116 +144,121 @@ class RamakotiViewModel(app: Application) : AndroidViewModel(app) {
                 return@addSnapshotListener
             }
             val life = snap?.getLong("lifetimeCount")?.toInt() ?: 0
-            val batches = snap?.getLong("batches")?.toInt() ?: 0
+            val inBatch = life % BATCH_SIZE
+            val batchNo = floor(life.toDouble() / BATCH_SIZE).toInt() + 1
+            val croreNo = floor(life.toDouble() / CRORE_SIZE).toInt() + 1
+            val reached = life >= _ui.value.targetCount
+
             _ui.value = _ui.value.copy(
                 lifetimeCount = life,
-                lifetimeBatches = batches
+                totalCount = life.toLong(),
+                currentBatchCount = inBatch,
+                currentBatchNumber = batchNo,
+                currentCrore = croreNo,
+                targetReached = reached,
+                error = null
             )
+            // Optionally also persist batch state to journey doc
+            viewModelScope.launch { writeBatchStateToFirestore() }
+            maybeAutoIssue(life, _ui.value.targetCount)
         }
     }
 
-    /** tick next Jai Sri Ram */
+    /** Single source of truth for any increment (button, volume, etc.) */
     fun tickNext() {
+        // 🔒 hard guard: never go past the selected target
+        if (_ui.value.targetReached) return
+        pendingTaps++
+        if (!writeInProgress) flushPending()
+    }
+
+    private fun flushPending() {
         viewModelScope.launch {
+            writeInProgress = true
+            _ui.value = _ui.value.copy(isIncrementBusy = true)
             try {
-                val r = sync.addCount(1)
-                val newBatch = r.todayCountAfter % 108
-                val newTotal = _ui.value.totalCount + 1
+                while (pendingTaps > 0) {
+                    if (_ui.value.targetReached) {
+                        pendingTaps = 0
+                        break
+                    }
+                    pendingTaps--
 
-                var showCelebration = r.justCompleted108
-                var canStartSecond = _ui.value.canStartSecondCrore
+                    // Atomic server-side increment (your original)
+                    sync.addCount(1)
 
-                if (r.justCompleted108) repo.resetBatchCounter()
+                    // Optimistic local UI update (listener will confirm shortly)
+                    val newLife = _ui.value.lifetimeCount + 1
+                    val inBatch = newLife % BATCH_SIZE
+                    val rolled = inBatch == 0
+                    val batchNo = floor(newLife.toDouble() / BATCH_SIZE).toInt() + 1
+                    val croreNo = floor(newLife.toDouble() / CRORE_SIZE).toInt() + 1
+                    val reached = newLife >= _ui.value.targetCount
 
-                val (isCrore, _) = phase2.isCroreMilestone(newTotal)
-                if (isCrore) canStartSecond = true
+                    _ui.value = _ui.value.copy(
+                        lifetimeCount = newLife,
+                        totalCount = newLife.toLong(),
+                        currentBatchCount = if (rolled) 0 else inBatch,
+                        currentBatchNumber = batchNo,
+                        currentCrore = croreNo,
+                        targetReached = reached,
+                        showCelebration = rolled
+                    )
 
-                _ui.value = _ui.value.copy(
-                    totalCount = newTotal,
-                    currentBatchCount = if (showCelebration) 0 else newBatch,
-                    showCelebration = showCelebration,
-                    canStartSecondCrore = canStartSecond,
-                    error = null
-                )
+                    if (reached) maybeAutoIssue(newLife, _ui.value.targetCount)
+                }
             } catch (t: Throwable) {
                 _ui.value = _ui.value.copy(error = t.message ?: t.toString())
+            } finally {
+                writeInProgress = false
+                _ui.value = _ui.value.copy(isIncrementBusy = false)
             }
         }
     }
 
-    fun onCelebrationShown() {
+    /** Called by the UI after showing the celebration for 108 completion. */
+    fun clearCelebration() {
         _ui.value = _ui.value.copy(showCelebration = false)
     }
 
-    fun startSecondCrore() {
-        viewModelScope.launch {
-            try {
-                val j = repo.startSecondCrore()
-                _ui.value = _ui.value.copy(
-                    totalCount = j.totalCount,
-                    currentBatchCount = j.currentBatchCount,
-                    currentCrore = j.currentCrore,
-                    canStartSecondCrore = false,
-                    error = null
-                )
-            } catch (t: Throwable) {
-                _ui.value = _ui.value.copy(error = t.message ?: t.toString())
+    // -------- Certificate flow --------
+
+    private fun maybeAutoIssue(life: Int, target: Int, force: Boolean = false) {
+        if (life < target) return
+        if (target <= 0) return
+
+        // If we already issued for this target, prompt only ONCE per target
+        if (!force && lastIssuedForTarget == target) {
+            if (promptedForTarget != target) {
+                promptedForTarget = target
+                _ui.value = _ui.value.copy(showNextTargetPrompt = true)
             }
+            return
         }
-    }
 
-    /** export full grid honoring lifetime */
-    fun exportGrid(onDone: (() -> Unit)? = null) {
+        _ui.value = _ui.value.copy(
+            isIssuingCertificate = true,
+            certificateError = null,
+            certificateUrl = null
+        )
+
         viewModelScope.launch {
             try {
-                val ctx = getApplication<Application>().applicationContext
-                val gridFile = RamakotiPdfGenerator.generateGridPdf(
-                    context = ctx,
-                    input = RamakotiPdfGenerator.GridInput(
-                        languageCode = ui.value.language,
-                        pageTitle = "Sri Rama Namam — 1 to 108",
-                        lifetimeCount = ui.value.lifetimeCount,
-                        currentBatchCount = ui.value.currentBatchCount
-                    )
-                )
-
-                val url = RamakotiExportUploader.uploadAndRecord(
-                    auth = auth,
-                    storage = storage,
-                    db = db,
-                    localFileUri = gridFile.toUri(),
-                    fileName = gridFile.name,
-                    type = ExportType.PDF_GRID
-                )
-
-                _ui.value = _ui.value.copy(
-                    lastExportUrl = url,
-                    lastLocalFile = gridFile,
-                    error = null
-                )
-                onDone?.invoke()
-            } catch (t: Throwable) {
-                _ui.value = _ui.value.copy(error = t.message ?: t.toString())
-            }
-        }
-    }
-
-    /** generate certificate with offline QR */
-    fun generateCertificate(milestoneText: String) {
-        viewModelScope.launch {
-            try {
-                val ctx = getApplication<Application>().applicationContext
-                val today = SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(Date())
-                val displayName = auth.currentUser?.displayName ?: "Devotee"
+                val user = auth.currentUser ?: error("Not signed in")
+                val milestone = when (target) {
+                    100_000   -> "Completed 1 Lakh Sri Rama Namas"
+                    1_000_000 -> "Completed 10 Lakh Sri Rama Namas"
+                    else      -> "Completed 1 Crore Sri Rama Namas"
+                }
 
                 val result = certRepo.generateAndOptionallyUpload(
-                    context = ctx,
-                    uid = auth.currentUser?.uid ?: error("Not signed in"),
+                    context = appContext,
+                    uid = user.uid,
                     input = CertificateInput(
-                        devoteeName = displayName,
-                        countText = milestoneText,
-                        dateText = today,
-                        language = ui.value.language,
+                        devoteeName = user.displayName ?: "Devotee",
+                        countText = milestone,
+                        dateText = SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(Date()),
+                        language = _ui.value.language,
                         verificationUrl = "",
                         templateBitmap = null
                     ),
@@ -230,34 +272,77 @@ class RamakotiViewModel(app: Application) : AndroidViewModel(app) {
                     localFileUri = result.localPdf.toUri(),
                     fileName = result.localPdf.name,
                     type = ExportType.CERTIFICATE,
-                    extraMeta = mapOf("certificateId" to result.certificateId)
+                    extraMeta = mapOf("certificateId" to result.certificateId, "targetCount" to target)
                 )
 
-                val (isCrore, croreNum) = phase2.isCroreMilestone(ui.value.totalCount)
-                if (isCrore) {
-                    phase2.onCroreCompleted(
-                        croreNumber = croreNum,
-                        totalAtCompletion = ui.value.totalCount,
-                        certificateId = result.certificateId,
-                        certificateUrl = url
-                    )
-                }
+                // mark guard
+                prefs.markCertIssuedFor(target)
+                lastIssuedForTarget = target
 
                 _ui.value = _ui.value.copy(
+                    isIssuingCertificate = false,
+                    certificateUrl = url,
+                    certificateError = null,
                     lastExportUrl = url,
                     lastCertificateId = result.certificateId,
                     lastLocalFile = result.localPdf,
-                    error = null
+                    showNextTargetPrompt = true
                 )
+                promptedForTarget = target // we just showed/will show it once
             } catch (t: Throwable) {
-                _ui.value = _ui.value.copy(error = t.message ?: t.toString())
+                _ui.value = _ui.value.copy(
+                    isIssuingCertificate = false,
+                    certificateError = t.message ?: t.toString()
+                )
             }
         }
+    }
+
+    fun retryCertificate() {
+        val s = _ui.value
+        maybeAutoIssue(s.lifetimeCount, s.targetCount, force = true)
+    }
+
+    fun openCertificate(context: Context) {
+        val url = _ui.value.certificateUrl ?: return
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        context.startActivity(intent)
+    }
+
+    fun dismissCertError() {
+        _ui.value = _ui.value.copy(certificateError = null)
+    }
+
+    fun onNextTargetDecision(accept: Boolean, onNavigateToPicker: () -> Unit) {
+        // Mark that we handled the prompt for this target so it doesn't re-open.
+        promptedForTarget = _ui.value.targetCount
+        _ui.value = _ui.value.copy(showNextTargetPrompt = false)
+        if (accept) onNavigateToPicker()
+    }
+
+    // -------- Optional: persist batch state also to journey doc --------
+    private suspend fun writeBatchStateToFirestore() {
+        val uid = auth.currentUser?.uid ?: return
+        val s = _ui.value
+        val userDoc = db.collection("users").document(uid)
+        val stateDoc = userDoc.collection("ramakoti").document("state")
+        val data = mapOf(
+            "totalCount" to s.lifetimeCount,
+            "currentBatchCount" to s.currentBatchCount,
+            "currentBatchNumber" to s.currentBatchNumber,
+            "language" to s.language
+        )
+        stateDoc.set(data, SetOptions.merge()).await()
+    }
+
+    fun dismissTargetDialog() {
+        _ui.value = _ui.value.copy(showTargetCompleteDialog = false)
     }
 
     override fun onCleared() {
         super.onCleared()
         metaListener?.remove()
-        FirebaseAuth.getInstance().removeAuthStateListener(authListener)
+        metaListener = null
     }
 }

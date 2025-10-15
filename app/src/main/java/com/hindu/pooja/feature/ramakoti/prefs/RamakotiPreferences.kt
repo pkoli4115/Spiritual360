@@ -1,67 +1,77 @@
 package com.hindu.pooja.feature.ramakoti.prefs
 
 import android.content.Context
+import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
-import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import javax.inject.Inject
-import javax.inject.Singleton
-import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.firstOrNull // <-- added
 
-private const val DS_NAME = "ramakoti_prefs"
-private val Context.dataStore by preferencesDataStore(name = DS_NAME)
+private val Context.dataStore by preferencesDataStore(name = "ramakoti_prefs")
 
-enum class RamaLang(val code: String, val display: String, val phrase: String) {
-    EN("en", "English", "Jai Sri Ram"),
-    HI("hi", "हिंदी", "जय श्री राम"),
-    TE("te", "తెలుగు", "జై శ్రీరాం")
-}
+class RamakotiPreferences private constructor(private val context: Context) {
 
-@Singleton
-class RamakotiPreferences @Inject constructor(
-    @ApplicationContext private val appCtx: Context
-) {
-    private object Keys {
-        val REMINDER_ENABLED = booleanPreferencesKey("reminder_enabled")
-        val REMINDER_HOUR = intPreferencesKey("reminder_hour")
-        val REMINDER_MINUTE = intPreferencesKey("reminder_minute")
-        val LANG = stringPreferencesKey("lang_code")
-    }
-
-    val reminderEnabled: Flow<Boolean> =
-        appCtx.dataStore.data.map { it[Keys.REMINDER_ENABLED] ?: false }
-
-    val reminderHour: Flow<Int> =
-        appCtx.dataStore.data.map { it[Keys.REMINDER_HOUR] ?: 7 }
-
-    val reminderMinute: Flow<Int> =
-        appCtx.dataStore.data.map { it[Keys.REMINDER_MINUTE] ?: 0 }
-
-    val language: Flow<RamaLang> =
-        appCtx.dataStore.data.map { prefs ->
-            when (prefs[Keys.LANG] ?: RamaLang.TE.code) {
-                RamaLang.EN.code -> RamaLang.EN
-                RamaLang.HI.code -> RamaLang.HI
-                else -> RamaLang.TE
+    companion object {
+        private var INSTANCE: RamakotiPreferences? = null
+        fun getInstance(context: Context): RamakotiPreferences {
+            return INSTANCE ?: synchronized(this) {
+                INSTANCE ?: RamakotiPreferences(context.applicationContext).also { INSTANCE = it }
             }
         }
 
-    suspend fun setReminderEnabled(value: Boolean) {
-        appCtx.dataStore.edit { it[Keys.REMINDER_ENABLED] = value }
+        private val KEY_TARGET_COUNT = intPreferencesKey("target_count")
+        private val KEY_LAST_CERT_FOR_TARGET = intPreferencesKey("last_cert_for_target")
+
+        // 🔔 Reminder fields
+        private val KEY_REMINDER_ENABLED = booleanPreferencesKey("reminder_enabled")
+        private val KEY_REMINDER_HOUR = intPreferencesKey("reminder_hour")
+        private val KEY_REMINDER_MINUTE = intPreferencesKey("reminder_minute")
     }
 
-    suspend fun setReminderTime(hour: Int, minute: Int) {
-        appCtx.dataStore.edit {
-            it[Keys.REMINDER_HOUR] = hour
-            it[Keys.REMINDER_MINUTE] = minute
-        }
+    /* ----------------- Ramakoti prefs ----------------- */
+    val targetCount: Flow<Int> = context.dataStore.data.map { it[KEY_TARGET_COUNT] ?: 100_000 }
+    val lastCertForTarget: Flow<Int> = context.dataStore.data.map { it[KEY_LAST_CERT_FOR_TARGET] ?: 0 }
+
+    suspend fun setTargetCount(count: Int) {
+        context.dataStore.edit { it[KEY_TARGET_COUNT] = count }
     }
 
-    suspend fun setLanguage(lang: RamaLang) {
-        appCtx.dataStore.edit { it[Keys.LANG] = lang.code }
+    suspend fun markCertIssuedFor(target: Int) {
+        context.dataStore.edit { it[KEY_LAST_CERT_FOR_TARGET] = target }
+    }
+
+    /* ----------------- Reminder prefs ----------------- */
+
+    val reminderEnabled: Flow<Boolean> = context.dataStore.data.map { it[KEY_REMINDER_ENABLED] ?: false }
+    val reminderHour: Flow<Int> = context.dataStore.data.map { it[KEY_REMINDER_HOUR] ?: 7 }
+    val reminderMinute: Flow<Int> = context.dataStore.data.map { it[KEY_REMINDER_MINUTE] ?: 0 }
+
+    suspend fun setReminderEnabled(enabled: Boolean) {
+        context.dataStore.edit { it[KEY_REMINDER_ENABLED] = enabled }
+    }
+
+    suspend fun setReminderHour(hour: Int) {
+        context.dataStore.edit { it[KEY_REMINDER_HOUR] = hour }
+    }
+
+    suspend fun setReminderMinute(minute: Int) {
+        context.dataStore.edit { it[KEY_REMINDER_MINUTE] = minute }
+    }
+
+    /* ----------------- Safe getters (for BootReceiver, Scheduler) ----------------- */
+
+    suspend fun isReminderEnabled(): Boolean {
+        return reminderEnabled.map { it }.firstOrNull() ?: false
+    }
+
+    suspend fun getReminderHour(): Int {
+        return reminderHour.map { it }.firstOrNull() ?: 7
+    }
+
+    suspend fun getReminderMinute(): Int {
+        return reminderMinute.map { it }.firstOrNull() ?: 0
     }
 }

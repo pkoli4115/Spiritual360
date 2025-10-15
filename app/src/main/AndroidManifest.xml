@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.hindu.pooja">
 
-    <!-- Optional but helpful on Android 11+ so the UPI chooser can see apps -->
+    <!-- Optional but helpful so a UPI chooser can discover apps -->
     <queries>
         <intent>
             <action android:name="android.intent.action.VIEW" />
@@ -11,16 +11,18 @@
 
     <!-- Permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
-    <!-- Runtime permission on Android 13+; request it from UI before posting notifications -->
+    <!-- Android 13+; request via runtime dialog before posting notifications -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <!-- To re-schedule WorkManager reminders after device reboot -->
+    <!-- Re-schedule alarms after reboot -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- For AlarmManager#setExact… on Android 12+ (user may need to grant in system settings) -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
 
     <application
         android:name=".HinduPoojaApp"
         android:allowBackup="true"
-        android:label="@string/app_name"
         android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
         android:theme="@style/Theme.HinduPoojaApp"
         android:enableOnBackInvokedCallback="true">
 
@@ -35,10 +37,15 @@
             </intent-filter>
         </activity>
 
-        <!-- Ramakoti reminders: re-schedule on boot -->
+        <!-- Ramakoti reminders: receives the PendingIntent from AlarmManager -->
         <receiver
-            android:name=".feature.ramakoti.reminders.BootReceiver"
-            android:exported="false">
+            android:name="com.hindu.pooja.feature.ramakoti.reminders.ReminderReceiver"
+            android:exported="false" />
+
+        <!-- Re-schedule reminders on device reboot (needs exported=true for BOOT_COMPLETED) -->
+        <receiver
+            android:name="com.hindu.pooja.feature.ramakoti.reminders.BootReceiver"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
@@ -56,7 +63,9 @@
         <provider
             android:name="com.facebook.FacebookContentProvider"
             android:authorities="com.facebook.app.FacebookContentProvider1145171540885194"
-            android:exported="true"/>
+            android:exported="true" />
+
+        <!-- FileProvider for sharing PDFs/exports -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
@@ -72,7 +81,6 @@
             android:name="com.facebook.FacebookActivity"
             android:exported="false"
             android:configChanges="keyboard|keyboardHidden|screenLayout|screenSize|orientation" />
-
         <activity
             android:name="com.facebook.CustomTabActivity"
             android:exported="true">

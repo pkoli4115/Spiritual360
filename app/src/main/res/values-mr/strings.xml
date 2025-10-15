@@ -15,6 +15,8 @@
     <string name="save_continue">जतन करा आणि पुढे जा</string>
     <string name="ramakoti_progress">Progress</string>
     <string name="ramakoti_completed_celebration">Jai Shri Ram! Completed 108!</string>
+    <string name="ramakoti_reminder_title">Jai Sri Ram</string>
+    <string name="ramakoti_reminder_text">Time to write your Ramakoti.</string>
     <!-- Phase 2 -->
     <string name="poojas">पूजा</string>
     <string name="vrathams">व्रत</string>
