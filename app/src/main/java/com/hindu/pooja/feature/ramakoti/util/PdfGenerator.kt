@@ -77,7 +77,7 @@ object PdfGenerator {
             typeface = Typeface.create(Typeface.SERIF, Typeface.BOLD)
             textAlign = Paint.Align.CENTER
         }
-        c.drawText("RAMAKOTI COMPLETION CERTIFICATE", centerX, titleY, titlePaint)
+        c.drawText("RAMANAMA COMPLETION CERTIFICATE", centerX, titleY, titlePaint)
 
         // Image below title
         val imageTop = titleY + 40f
