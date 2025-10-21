@@ -24,7 +24,7 @@ import com.google.firebase.storage.FirebaseStorage
 import com.hindu.pooja.R
 import com.hindu.pooja.feature.ramakoti.data.CertificateInput
 import com.hindu.pooja.feature.ramakoti.data.CertificateRepository
-import com.hindu.pooja.feature.ramakoti.data.LanguagePreferenceManager
+import com.hindu.pooja.feature.ramakoti.prefs.LanguagePreferenceManager
 import com.hindu.pooja.feature.ramakoti.data.RamakotiExportUploader
 import com.hindu.pooja.feature.ramakoti.data.RamakotiExportUploader.ExportType
 import com.hindu.pooja.feature.ramakoti.util.ShareHelper

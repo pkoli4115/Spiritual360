@@ -17,7 +17,7 @@ import androidx.navigation.NavHostController
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.hindu.pooja.feature.ramakoti.data.LanguagePreferenceManager
+import com.hindu.pooja.feature.ramakoti.prefs.LanguagePreferenceManager
 import com.hindu.pooja.feature.ramakoti.prefs.RamakotiPreferences
 import com.hindu.pooja.feature.ramakoti.reminders.ReminderScheduler
 import com.hindu.pooja.ui.navigation.Screen

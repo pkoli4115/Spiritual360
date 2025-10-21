@@ -1,7 +1,7 @@
 package com.hindu.pooja.di
 
 import android.content.Context
-import com.hindu.pooja.feature.ramakoti.data.LanguagePreferenceManager
+import com.hindu.pooja.feature.ramakoti.prefs.LanguagePreferenceManager
 import com.hindu.pooja.feature.ramakoti.data.RamakotiRepository
 import com.hindu.pooja.feature.ramakoti.prefs.RamakotiPreferences
 import com.hindu.pooja.feature.ramakoti.reminders.ReminderScheduler

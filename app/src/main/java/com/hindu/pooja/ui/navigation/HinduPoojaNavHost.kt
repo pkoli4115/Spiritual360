@@ -46,7 +46,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.LaunchedEffect
 import kotlinx.coroutines.flow.first
-import com.hindu.pooja.feature.ramakoti.data.LanguagePreferenceManager
+import com.hindu.pooja.feature.ramakoti.prefs.LanguagePreferenceManager
 
 @Composable
 fun HinduPoojaNavHost(

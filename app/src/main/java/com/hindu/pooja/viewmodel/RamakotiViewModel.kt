@@ -11,10 +11,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
-import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.storage.FirebaseStorage
 import com.hindu.pooja.feature.ramakoti.data.CertificateInput
@@ -91,8 +91,17 @@ class RamakotiViewModel @Inject constructor(
     private var pendingTaps = 0
     private var writeInProgress = false
 
+    // Re-run attach once auth is ready (prevents early-exit when currentUser is null)
+    private val authListener = FirebaseAuth.AuthStateListener { fa ->
+        val user = fa.currentUser
+        Log.d(TAG, "AuthStateListener: user=${user?.uid ?: "null"}")
+        if (user != null) ensureRunAttached()
+    }
+
     init {
-        // Adopt latest target & language from prefs
+        auth.addAuthStateListener(authListener)
+
+        // Adopt latest target & language from prefs (unchanged base behavior)
         viewModelScope.launch {
             prefs.targetCount.collectLatest { t ->
                 Log.d(TAG, "prefs.targetCount -> $t")
@@ -127,10 +136,14 @@ class RamakotiViewModel @Inject constructor(
         attachMetaListener()
     }
 
-    /** Decide which run to attach to (and create a new one only when needed). */
+    /** Decide which run to attach to (and create one when none exists). */
     private fun ensureRunAttached() {
         viewModelScope.launch {
-            val uid = auth.currentUser?.uid ?: return@launch
+            val user = auth.currentUser ?: run {
+                Log.w(TAG, "ensureRunAttached(): uid is null; will retry via AuthStateListener")
+                return@launch
+            }
+            val uid = user.uid
             val prefRunId = prefs.currentRunId.firstOrNullSafe().orEmpty()
             val target = _ui.value.targetCount
             val lang = _ui.value.language
@@ -159,8 +172,7 @@ class RamakotiViewModel @Inject constructor(
                 Log.d(TAG, "Stored runId=$prefRunId is not ACTIVE/missing → will adopt/create")
             }
 
-            // Try to adopt the most recent ACTIVE run (avoid duplicates)
-            // (No orderBy -> avoids composite index requirement; you keep <=1 ACTIVE.)
+            // Try to adopt any ACTIVE run
             val active = db.collection("users").document(uid)
                 .collection("ramakotiRuns")
                 .whereEqualTo("status", "ACTIVE")
@@ -176,7 +188,26 @@ class RamakotiViewModel @Inject constructor(
                 return@launch
             }
 
-            // No ACTIVE run → create new one
+            // -------- First-time user signal (based on YOUR data) --------
+            // IMPORTANT: even if first-time, we STILL create the run right away (failsafe)
+            val runsRef = db.collection("users").document(uid).collection("ramakotiRuns")
+            val anyRunSnap = runsRef.limit(1).get().await()
+            val metaRef = db.collection("users").document(uid)
+                .collection("ramakoti_meta").document("meta")
+            val metaSnap = metaRef.get().await()
+            val isFirstTimeUser = anyRunSnap.isEmpty && !metaSnap.exists()
+
+            if (isFirstTimeUser) {
+                Log.d(TAG, "First-time user detected → raising picker flags (AND creating run).")
+                _ui.value = _ui.value.copy(
+                    canPickNextTarget = true,
+                    showNextTargetPrompt = true
+                )
+                // Do NOT early-return; proceed to create a run so writer is live.
+            }
+            // -------------------------------------------------------------
+
+            // No ACTIVE run → create new one (original working behavior)
             val newId = "run-${System.currentTimeMillis()}"
             val ref = db.collection("users").document(uid)
                 .collection("ramakotiRuns").document(newId)
@@ -229,7 +260,6 @@ class RamakotiViewModel @Inject constructor(
 
             // UI completed ONLY when server value == target
             val reachedExactly = runTotal == target
-            // Completion flow guard (safe even if overshoot)
             val reachedOrBeyond = runTotal >= target
 
             val certUrl  = snap.getString("certificateUrl")
@@ -243,7 +273,7 @@ class RamakotiViewModel @Inject constructor(
                 runTotal = runTotal,
                 currentBatchCount = inBatch,
                 currentBatchNumber = batchNo,
-                targetReached = reachedExactly,     // **server-driven**
+                targetReached = reachedExactly,     // server-driven
                 isIssuingCertificate = false,
                 certificateUrl = certUrl,
                 certificateError = null,
@@ -336,7 +366,6 @@ class RamakotiViewModel @Inject constructor(
                         runTotal = newRunTotal,
                         currentBatchCount = if (rolled) 0 else inBatch,
                         currentBatchNumber = batchNo,
-                        // targetReached stays server-driven → do NOT set here
                         showCelebration = rolled
                     )
                 }
@@ -512,6 +541,7 @@ class RamakotiViewModel @Inject constructor(
         super.onCleared()
         runListener?.remove()
         metaListener?.remove()
+        auth.removeAuthStateListener(authListener)
     }
 }
 

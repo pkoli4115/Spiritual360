@@ -1,29 +1,35 @@
-package com.hindu.pooja.feature.ramakoti.model
+package com.hindu.pooja.feature.ramakoti.i18n
 
 /**
- * Represents a UI language choice.
- *
- * @param code ISO-ish app code: "en", "te", "hi"
- * @param displayName Shown on the selection UI
- * @param sample Short mantra sample in that script (used to preview)
+ * A single UI option for language selection.
  */
 data class LanguageOption(
-    val code: String,
-    val displayName: String,
-    val sample: String
+    val code: String,      // "en", "hi", "te", ...
+    val label: String,     // English / हिन्दी / తెలుగు ...
+    val sample: String     // a short display sample (shown in picker if needed)
 )
 
-/** Default languages for Ramakoti Phase 1. */
+/**
+ * Centralized language registry for Ramakoti. Extend this list to add new languages.
+ * The mantra text returned by [mantraFor] is what goes INSIDE the cells.
+ */
 object RamakotiLanguages {
+
+    // Default options shown in the picker.
     val defaults: List<LanguageOption> = listOf(
-        LanguageOption(code = "en", displayName = "English", sample = "Rama"),
-        LanguageOption(code = "te", displayName = "తెలుగు", sample = "రామ"),
-        LanguageOption(code = "hi", displayName = "हिंदी", sample = "राम"),
+        LanguageOption("en", "English", "Jai Sri Ram"),
+        LanguageOption("hi", "हिन्दी",  "जय श्री राम"),
+        LanguageOption("te", "తెలుగు",  "జై శ్రీ రామ్")
     )
 
-    fun mantraFor(code: String): String = when (code.lowercase()) {
-        "te" -> "రామ"
-        "hi" -> "राम"
-        else -> "Rama"
+    /** Normalize to one of our known codes (fallback "en"). */
+    fun normalize(code: String?): String =
+        defaults.firstOrNull { it.code == code }?.code ?: "en"
+
+    /** Full mantra to render inside each cell for the given code. */
+    fun mantraFor(code: String?): String = when (normalize(code)) {
+        "hi" -> "जय श्री राम"
+        "te" -> "జై శ్రీ రామ్"
+        else -> "Jai Sri Ram"
     }
 }

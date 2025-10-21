@@ -101,7 +101,7 @@ fun RamakotiWriterScreen(
         ) {
             // Header line (RUN progress)
             Text(
-                text = "Run: ${ui.runTotal} • Batch ${ui.currentBatchNumber} (${ui.currentBatchCount}/108) • Target: ${ui.runTotal} / ${ui.targetCount}",
+                text = "Count: ${ui.runTotal} • Batch ${ui.currentBatchNumber} (${ui.currentBatchCount}/108) • Target: ${ui.runTotal} / ${ui.targetCount}",
                 modifier = Modifier.padding(16.dp),
                 style = MaterialTheme.typography.bodyMedium
             )
