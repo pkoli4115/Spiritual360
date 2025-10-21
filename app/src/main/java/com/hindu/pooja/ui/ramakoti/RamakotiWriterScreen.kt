@@ -11,22 +11,25 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.google.firebase.auth.FirebaseAuth
 import com.hindu.pooja.R
 import com.hindu.pooja.feature.ramakoti.RamakotiViewModel
+import com.hindu.pooja.feature.ramakoti.i18n.RamakotiLanguages
+import com.hindu.pooja.feature.ramakoti.prefs.LanguagePreferenceManager
 import com.hindu.pooja.feature.ramakoti.prefs.RamakotiPreferences
 import com.hindu.pooja.feature.ramakoti.reminders.ReminderScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -45,7 +48,7 @@ fun RamakotiWriterScreen(
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    // Make sure Firestore listeners are attached whenever we land here
+    // Ensure Firestore listeners are attached whenever we land here
     LaunchedEffect(Unit) { vm.refreshFromServer() }
 
     /* ---------- SoundPool (tap chime) ---------- */
@@ -65,14 +68,28 @@ fun RamakotiWriterScreen(
     }
     DisposableEffect(Unit) { onDispose { soundPool?.release() } }
 
-    // Localized mantra text shown inside filled cells
-    val mantra = remember(ui.language) {
-        when (ui.language.lowercase()) {
-            "hi" -> "जय श्री राम"
-            "te" -> "జై శ్రీ రామ్"
-            else -> "Jai Sri Ram"
+    // ---- LANGUAGE: prefer run language; fall back to saved preference for safety ----
+    val auth = remember { FirebaseAuth.getInstance() }
+    val effectiveLang by produceState(initialValue = ui.language) {
+        if (value.isBlank() || value == "en") {
+            val uid = auth.currentUser?.uid
+            if (uid != null) {
+                val mgr = LanguagePreferenceManager.getInstance(ctx)
+                val saved = mgr.getLanguageFor(uid) // suspend ok in produceState
+                if (!saved.isNullOrBlank()) value = saved
+            }
         }
     }
+
+    // Localized mantra (cells + active button label)
+    val mantra by remember(effectiveLang) {
+        mutableStateOf(RamakotiLanguages.mantraFor(effectiveLang))
+    }
+
+    // ---- Adaptive grid: 6x18 on phones, 12x9 on larger screens/tablets ----
+    val config = LocalConfiguration.current
+    val columns = if (config.screenWidthDp < 600) 6 else 12
+    val cellHeight = 38.dp // rectangular rows; helps Indic scripts fit
 
     Scaffold(
         topBar = {
@@ -106,21 +123,21 @@ fun RamakotiWriterScreen(
                 style = MaterialTheme.typography.bodyMedium
             )
 
-            // 12 x 9 = 108 grid for RUN
+            // 108 grid (adaptive columns)
             val cells = remember { (1..108).toList() }
             LazyVerticalGrid(
-                columns = GridCells.Fixed(12),
+                columns = GridCells.Fixed(columns),
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
                     .padding(horizontal = 12.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 items(cells) { index ->
                     GridCell(
                         filled = index <= ui.currentBatchCount,
-                        size = 28.dp,
+                        height = cellHeight,
                         text = if (index <= ui.currentBatchCount) mantra else ""
                     )
                 }
@@ -162,12 +179,12 @@ fun RamakotiWriterScreen(
 
             Spacer(Modifier.height(12.dp))
 
-            // Primary button
+            // Primary button (localized label when actively writing)
             val btnLabel = when {
                 ui.isIssuingCertificate -> "Generating Certificate…"
                 ui.targetReached && ui.certificateUrl != null -> "View Certificate"
                 ui.targetReached -> "Target Completed"
-                else -> "Jai Sri Ram"
+                else -> RamakotiLanguages.writerButtonLabel(effectiveLang)
             }
 
             val enabled = when {
@@ -247,25 +264,25 @@ fun RamakotiWriterScreen(
 @Composable
 private fun GridCell(
     filled: Boolean,
-    size: Dp,
+    height: Dp,
     text: String = ""
 ) {
-    val shape = RoundedCornerShape(6.dp)
+    // Excel-like: sharp rectangle, thin border. Grid controls width.
     Box(
         modifier = Modifier
-            .size(size)
-            .clip(shape)
-            .background(if (filled) Color(0xFFFFDCA8) else Color(0xFFFDF6EE))
-            .border(BorderStroke(1.dp, Color(0xFFE7D7C7)), shape),
+            .fillMaxWidth()
+            .height(height)
+            .border(BorderStroke(1.dp, Color(0xFFE0E0E0)))
+            .background(if (filled) Color(0xFFFFE8C7) else Color(0xFFFDF6EE)),
         contentAlignment = Alignment.Center
     ) {
         if (text.isNotBlank()) {
-            // Tiny label; we keep it readable within 28dp
             Text(
                 text = text,
-                style = MaterialTheme.typography.labelSmall,
-                maxLines = 1,
-                textAlign = TextAlign.Center
+                style = MaterialTheme.typography.bodySmall,
+                textAlign = TextAlign.Center,
+                maxLines = 2, // allow wrap; Indic scripts can be taller
+                overflow = TextOverflow.Ellipsis
             )
         }
     }

@@ -17,11 +17,11 @@ import androidx.navigation.NavHostController
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.hindu.pooja.feature.ramakoti.i18n.RamakotiLanguages
 import com.hindu.pooja.feature.ramakoti.prefs.LanguagePreferenceManager
 import com.hindu.pooja.feature.ramakoti.prefs.RamakotiPreferences
 import com.hindu.pooja.feature.ramakoti.reminders.ReminderScheduler
 import com.hindu.pooja.ui.navigation.Screen
-import com.hindu.pooja.ui.ramakoti.LanguageChipRow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.UUID
@@ -42,6 +42,10 @@ fun LanguageSelectionScreen(
 
     var lang by remember { mutableStateOf("en") }
     var target by remember { mutableStateOf(10_000_000) }
+
+    // Dropdown UI state
+    var langExpanded by remember { mutableStateOf(false) }
+    var targetExpanded by remember { mutableStateOf(false) }
 
     val notifPerm = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -64,16 +68,82 @@ fun LanguageSelectionScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // LANGUAGE DROPDOWN
             Text("Choose your preferred language", style = MaterialTheme.typography.titleMedium)
-            LanguageChipRow(language = lang, onChange = { lang = it })
 
-            Spacer(Modifier.height(8.dp))
+            ExposedDropdownMenuBox(
+                expanded = langExpanded,
+                onExpandedChange = { langExpanded = !langExpanded },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                val selectedLabel = RamakotiLanguages.defaults
+                    .firstOrNull { it.code == lang }?.label ?: "English"
 
+                OutlinedTextField(
+                    readOnly = true,
+                    value = selectedLabel,
+                    onValueChange = {},
+                    label = { Text("Language") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = langExpanded) },
+                    modifier = Modifier
+                        .menuAnchor()
+                        .fillMaxWidth()
+                )
+                ExposedDropdownMenu(
+                    expanded = langExpanded,
+                    onDismissRequest = { langExpanded = false }
+                ) {
+                    RamakotiLanguages.defaults.forEach { option ->
+                        DropdownMenuItem(
+                            text = { Text(option.label) },
+                            onClick = {
+                                lang = option.code
+                                langExpanded = false
+                            }
+                        )
+                    }
+                }
+            }
+
+            // TARGET DROPDOWN
             Text("Select your Ramakoti target", style = MaterialTheme.typography.titleMedium)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TargetChip(selected = target == 100_000,   label = "1 Lakh")   { target = 100_000 }
-                TargetChip(selected = target == 1_000_000, label = "10 Lakh")  { target = 1_000_000 }
-                TargetChip(selected = target == 10_000_000,label = "1 Crore")  { target = 10_000_000 }
+
+            val targetOptions = listOf(100_000, 1_000_000, 10_000_000)
+            val targetLabels = mapOf(
+                100_000 to "1 Lakh",
+                1_000_000 to "10 Lakh",
+                10_000_000 to "1 Crore"
+            )
+
+            ExposedDropdownMenuBox(
+                expanded = targetExpanded,
+                onExpandedChange = { targetExpanded = !targetExpanded },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                OutlinedTextField(
+                    readOnly = true,
+                    value = targetLabels[target] ?: target.toString(),
+                    onValueChange = {},
+                    label = { Text("Target") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = targetExpanded) },
+                    modifier = Modifier
+                        .menuAnchor()
+                        .fillMaxWidth()
+                )
+                ExposedDropdownMenu(
+                    expanded = targetExpanded,
+                    onDismissRequest = { targetExpanded = false }
+                ) {
+                    targetOptions.forEach { t ->
+                        DropdownMenuItem(
+                            text = { Text(targetLabels[t] ?: t.toString()) },
+                            onClick = {
+                                target = t
+                                targetExpanded = false
+                            }
+                        )
+                    }
+                }
             }
 
             Spacer(Modifier.height(12.dp))
@@ -82,7 +152,7 @@ fun LanguageSelectionScreen(
                 scope.launch {
                     val uid = auth.currentUser?.uid ?: return@launch
 
-                    // Persist per-user language & selected target (same as today)
+                    // Persist per-user language & selected target (same behavior)
                     langMgr.setLanguageFor(uid, lang)
                     prefs.setTargetCount(target)
 
@@ -96,8 +166,8 @@ fun LanguageSelectionScreen(
                         "uid" to uid,
                         "language" to lang,
                         "targetCount" to target,
-                        "runTotal" to 0,                // shows 0/108, 0/target
-                        "status" to "ACTIVE",           // ACTIVE | COMPLETED | CANCELLED
+                        "runTotal" to 0,
+                        "status" to "ACTIVE",
                         "startedAt" to Timestamp.now()
                     )
                     runDoc.set(runData).addOnSuccessListener {
@@ -113,7 +183,7 @@ fun LanguageSelectionScreen(
                         notifPerm.launch(Manifest.permission.POST_NOTIFICATIONS)
                     }
 
-                    // Go through your canonical entry so Intro shows if you still keep it
+                    // Go through canonical entry so Intro (if any) shows
                     navController.navigate(Screen.Ramakoti.route) {
                         popUpTo("ramakoti/language") { inclusive = true }
                         launchSingleTop = true
@@ -122,18 +192,4 @@ fun LanguageSelectionScreen(
             }) { Text("Continue") }
         }
     }
-}
-
-@Composable
-private fun TargetChip(selected: Boolean, label: String, onClick: () -> Unit) {
-    AssistChip(
-        onClick = onClick,
-        label = { Text(label) },
-        colors = AssistChipDefaults.assistChipColors(
-            containerColor = if (selected)
-                MaterialTheme.colorScheme.primaryContainer
-            else
-                MaterialTheme.colorScheme.surfaceVariant
-        )
-    )
 }
