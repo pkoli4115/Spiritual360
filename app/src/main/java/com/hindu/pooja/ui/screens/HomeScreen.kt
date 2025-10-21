@@ -68,7 +68,8 @@ fun HomeScreen(
     val payeeName = DonationConfig.payeeName
     val note = DonationConfig.note
 
-    @Suppress BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+    @Suppress("UNUSED_VARIABLE")
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(id = R.drawable.home_screen),
             contentDescription = null,
@@ -109,13 +110,13 @@ fun HomeScreen(
                         )
                     }
                     item {
-                        // Keep this opening the wiki/reader flow
+                        // Bala Kanda — existing simple reader
                         FeaturedBalaKandaCard(
                             onOpen = { navController.navigate(Screen.BalaKandaWikiSimple.route) }
                         )
                     }
                     item {
-                        // Ayodhyakanda — Reader entry
+                        // ✅ FIX: This route now exists in the nav graph
                         FeaturedAyodhyaCard(
                             onOpen = { navController.navigate("ramayana/ayodhya/wiki") }
                         )
@@ -213,7 +214,6 @@ private fun FeaturedSectionHeader(onViewAll: () -> Unit) {
     ) {
         Text(
             text = "Featured",
-            // 🔶 Match “Daily Poojas” saffron
             color = MaterialTheme.colorScheme.primary,
             style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold)
         )
@@ -250,7 +250,7 @@ private fun FeaturedRamakotiCard(onOpen: () -> Unit) {
                 maxLines = 3,
                 overflow = TextOverflow.Ellipsis
             )
-            Spacer(Modifier.weight(1f)) // keep buttons aligned at bottom
+            Spacer(Modifier.weight(1f))
             Button(onClick = onOpen, modifier = Modifier.fillMaxWidth()) {
                 Text("Open Ramakoti")
             }
@@ -319,7 +319,6 @@ private fun FeaturedAyodhyaCard(onOpen: () -> Unit) {
 }
 
 /* ---------------- Donate row & placeholders ---------------- */
-// (remaining code unchanged)
 
 @Composable
 private fun DonateActionRow(

@@ -1,23 +1,27 @@
 package com.hindu.pooja.feature.ramakoti
 
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.firstOrNull
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.util.Log
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.storage.FirebaseStorage
 import com.hindu.pooja.feature.ramakoti.data.CertificateInput
 import com.hindu.pooja.feature.ramakoti.data.CertificateRepository
 import com.hindu.pooja.feature.ramakoti.data.RamakotiExportUploader
 import com.hindu.pooja.feature.ramakoti.data.RamakotiExportUploader.ExportType
-import com.hindu.pooja.feature.ramakoti.data.RamakotiRepository
 import com.hindu.pooja.feature.ramakoti.prefs.RamakotiPreferences
-import com.hindu.pooja.feature.ramakoti.sync.RamakotiSyncManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,30 +37,35 @@ import kotlin.math.floor
 
 private const val BATCH_SIZE = 108
 private const val CRORE_SIZE = 10_000_000
+private const val TAG = "RamaVM"
 
+/** Single screen state (RUN-centric). */
 data class RamakotiUiState(
-    val totalCount: Long = 0L,
-    val lifetimeCount: Int = 0,
-    val currentBatchCount: Int = 0,
-    val currentBatchNumber: Int = 1,
-    val currentCrore: Int = 1,
+    val runId: String = "",
     val language: String = "en",
     val targetCount: Int = 10_000_000,
+
+    // RUN progress (fresh per run)
+    val runTotal: Int = 0,
+    val currentBatchCount: Int = 0,
+    val currentBatchNumber: Int = 1,
+
+    // Lifetime (for info header)
+    val lifetimeCount: Int = 0,
+    val currentCrore: Int = 1,
+
     val targetReached: Boolean = false,
     val isIncrementBusy: Boolean = false,
     val showCelebration: Boolean = false,
 
-    // certificate states
+    // Certificate states (tied to RUN)
     val isIssuingCertificate: Boolean = false,
     val certificateUrl: String? = null,
     val certificateError: String? = null,
-    val showNextTargetPrompt: Boolean = false,
 
-    // legacy/compat
-    val showTargetCompleteDialog: Boolean = false,
-    val lastExportUrl: String? = null,
-    val lastCertificateId: String? = null,
-    val lastLocalFile: java.io.File? = null,
+    // Secondary UI
+    val canPickNextTarget: Boolean = false,
+    val showNextTargetPrompt: Boolean = false,
 
     val error: String? = null
 )
@@ -67,113 +76,216 @@ class RamakotiViewModel @Inject constructor(
     private val prefs: RamakotiPreferences
 ) : ViewModel() {
 
-    // Use your singletons (matches your working setup)
     private val auth = FirebaseAuth.getInstance()
     private val db = FirebaseFirestore.getInstance()
     private val storage = FirebaseStorage.getInstance()
-
-    private val repo = RamakotiRepository(auth, db)
     private val certRepo = CertificateRepository()
-    private val sync = RamakotiSyncManager(auth, db)
 
     private val _ui = MutableStateFlow(RamakotiUiState())
     val ui: StateFlow<RamakotiUiState> = _ui
 
+    private var runListener: ListenerRegistration? = null
     private var metaListener: ListenerRegistration? = null
 
-    // serialize writes
+    // serialize increments
     private var pendingTaps = 0
     private var writeInProgress = false
 
-    // guards
-    private var lastIssuedForTarget = 0                 // from prefs.lastCertForTarget
-    private var lastPromptedPersisted = 0               // from prefs.lastPromptedForTarget
-
     init {
-        // Observe target changes → re-check auto-issue
+        // Adopt latest target & language from prefs
         viewModelScope.launch {
             prefs.targetCount.collectLatest { t ->
+                Log.d(TAG, "prefs.targetCount -> $t")
                 _ui.value = _ui.value.copy(targetCount = t)
-                maybeAutoIssue(_ui.value.lifetimeCount, t)
+                ensureRunAttached()
             }
         }
-        // Observe last issued guard
         viewModelScope.launch {
-            prefs.lastCertForTarget.collectLatest { last ->
-                lastIssuedForTarget = last
-                maybeAutoIssue(_ui.value.lifetimeCount, _ui.value.targetCount)
+            prefs.selectedLanguage.collectLatest { lang ->
+                Log.d(TAG, "prefs.selectedLanguage -> $lang")
+                _ui.value = _ui.value.copy(language = lang)
+                ensureRunAttached()
             }
         }
-        // NEW: observe persisted “prompted once” guard
         viewModelScope.launch {
-            prefs.lastPromptedForTarget.collectLatest { prompted ->
-                lastPromptedPersisted = prompted
-                // no immediate UI change; used inside maybeAutoIssue
+            prefs.currentRunId.collectLatest { id ->
+                Log.d(TAG, "prefs.currentRunId -> $id")
+                if (id != _ui.value.runId) {
+                    _ui.value = _ui.value.copy(runId = id)
+                    attachRunListener(id)
+                }
             }
         }
 
-        // Initial attach
-        refreshFromServer()
+        attachMetaListener()
     }
 
-    /** Call from the screen’s LaunchedEffect(Unit) to ensure live state after back/navigation. */
+    /** Called from screen’s LaunchedEffect(Unit). */
     fun refreshFromServer() {
+        Log.d(TAG, "refreshFromServer()")
+        ensureRunAttached()
+        attachMetaListener()
+    }
+
+    /** Decide which run to attach to (and create a new one only when needed). */
+    private fun ensureRunAttached() {
         viewModelScope.launch {
-            try {
-                // Ensure baseline docs exist
-                sync.ensureMetaInitialized()
+            val uid = auth.currentUser?.uid ?: return@launch
+            val prefRunId = prefs.currentRunId.firstOrNullSafe().orEmpty()
+            val target = _ui.value.targetCount
+            val lang = _ui.value.language
 
-                // (Re)start live listener for lifetime/meta
-                startMetaListener()
+            // If we already have a runId, verify it still exists & ACTIVE
+            if (prefRunId.isNotBlank()) {
+                val snap = db.collection("users").document(uid)
+                    .collection("ramakotiRuns").document(prefRunId).get().await()
+                if (snap.exists()) {
+                    val status = snap.getString("status") ?: "ACTIVE"
+                    if (status == "ACTIVE") {
+                        // If target/lang changed but runTotal == 0, update the run in place
+                        val runTotal = (snap.getLong("runTotal") ?: 0L).toInt()
+                        val stTarget = (snap.getLong("targetCount") ?: target.toLong()).toInt()
+                        val stLang = snap.getString("language") ?: lang
+                        if ((stTarget != target || stLang != lang) && runTotal == 0) {
+                            Log.d(TAG, "Active run with 0 total → updating target/lang in place")
+                            snap.reference.update(
+                                mapOf("targetCount" to target, "language" to lang)
+                            ).await()
+                        }
+                        attachRunListener(prefRunId)
+                        return@launch
+                    }
+                }
+                Log.d(TAG, "Stored runId=$prefRunId is not ACTIVE/missing → will adopt/create")
+            }
 
-                // One-shot journey load (language, etc.)
-                val j = repo.getJourney()
+            // Try to adopt the most recent ACTIVE run (avoid duplicates)
+            // (No orderBy -> avoids composite index requirement; you keep <=1 ACTIVE.)
+            val active = db.collection("users").document(uid)
+                .collection("ramakotiRuns")
+                .whereEqualTo("status", "ACTIVE")
+                .limit(1)
+                .get().await()
+
+            if (!active.isEmpty) {
+                val doc = active.documents.first()
+                val runId = doc.id
+                Log.d(TAG, "Adopting existing ACTIVE run: $runId")
+                prefs.setCurrentRunId(runId)
+                attachRunListener(runId)
+                return@launch
+            }
+
+            // No ACTIVE run → create new one
+            val newId = "run-${System.currentTimeMillis()}"
+            val ref = db.collection("users").document(uid)
+                .collection("ramakotiRuns").document(newId)
+            val data = mapOf(
+                "runId" to newId,
+                "status" to "ACTIVE",
+                "language" to lang,
+                "targetCount" to target,
+                "runTotal" to 0,
+                "createdAt" to FieldValue.serverTimestamp()
+            )
+            Log.d(TAG, "Creating new run: $newId, target=$target, lang=$lang")
+            ref.set(data).await()
+            prefs.setCurrentRunId(newId)
+            attachRunListener(newId)
+        }
+    }
+
+    private fun attachRunListener(runId: String) {
+        runListener?.remove()
+        if (runId.isBlank()) return
+        val uid = auth.currentUser?.uid ?: return
+        val ref = db.collection("users").document(uid)
+            .collection("ramakotiRuns").document(runId)
+
+        Log.d(TAG, "attachRunListener($runId)")
+        runListener = ref.addSnapshotListener { snap, err ->
+            if (err != null) {
+                Log.e(TAG, "runListener error", err)
+                _ui.value = _ui.value.copy(error = err.message)
+                return@addSnapshotListener
+            }
+            if (snap == null || !snap.exists()) {
+                Log.w(TAG, "runListener: doc missing for $runId")
                 _ui.value = _ui.value.copy(
-                    totalCount = j.totalCount,
-                    language = j.language
+                    runTotal = 0,
+                    currentBatchCount = 0,
+                    currentBatchNumber = 1,
+                    targetReached = false,
+                    canPickNextTarget = true
                 )
-            } catch (t: Throwable) {
-                _ui.value = _ui.value.copy(error = t.message ?: t.toString())
+                return@addSnapshotListener
+            }
+            val runTotal = (snap.getLong("runTotal") ?: 0L).toInt()
+            val target   = (snap.getLong("targetCount") ?: _ui.value.targetCount.toLong()).toInt()
+            val language = snap.getString("language") ?: _ui.value.language
+            val status   = snap.getString("status") ?: "ACTIVE"
+            val inBatch  = runTotal % BATCH_SIZE
+            val batchNo  = floor(runTotal.toDouble() / BATCH_SIZE).toInt() + 1
+
+            // UI completed ONLY when server value == target
+            val reachedExactly = runTotal == target
+            // Completion flow guard (safe even if overshoot)
+            val reachedOrBeyond = runTotal >= target
+
+            val certUrl  = snap.getString("certificateUrl")
+
+            Log.d(TAG, "runSnap: total=$runTotal target=$target status=$status reached=$reachedOrBeyond cert=${!certUrl.isNullOrBlank()}")
+
+            _ui.value = _ui.value.copy(
+                runId = runId,
+                language = language,
+                targetCount = target,
+                runTotal = runTotal,
+                currentBatchCount = inBatch,
+                currentBatchNumber = batchNo,
+                targetReached = reachedExactly,     // **server-driven**
+                isIssuingCertificate = false,
+                certificateUrl = certUrl,
+                certificateError = null,
+                canPickNextTarget = (status != "ACTIVE")
+            )
+
+            // Reached (or overshot) while still ACTIVE → finish exactly once
+            if (reachedOrBeyond && status == "ACTIVE") {
+                maybeCompleteRun(runId, runTotal, target, language)
             }
         }
     }
 
-    private fun startMetaListener() {
+    private fun attachMetaListener() {
+        metaListener?.remove()
         val uid = auth.currentUser?.uid ?: return
         val metaRef = db.collection("users").document(uid)
             .collection("ramakoti_meta").document("meta")
 
-        metaListener?.remove()
+        Log.d(TAG, "attachMetaListener()")
         metaListener = metaRef.addSnapshotListener { snap, err ->
             if (err != null) {
-                _ui.value = _ui.value.copy(error = err.message)
+                Log.e(TAG, "metaListener error", err)
                 return@addSnapshotListener
             }
             val life = snap?.getLong("lifetimeCount")?.toInt() ?: 0
-            val inBatch = life % BATCH_SIZE
-            val batchNo = floor(life.toDouble() / BATCH_SIZE).toInt() + 1
             val croreNo = floor(life.toDouble() / CRORE_SIZE).toInt() + 1
-            val reached = life >= _ui.value.targetCount
-
-            _ui.value = _ui.value.copy(
-                lifetimeCount = life,
-                totalCount = life.toLong(),
-                currentBatchCount = inBatch,
-                currentBatchNumber = batchNo,
-                currentCrore = croreNo,
-                targetReached = reached,
-                error = null
-            )
-            // Optionally persist batch state to journey doc
-            viewModelScope.launch { writeBatchStateToFirestore() }
-            maybeAutoIssue(life, _ui.value.targetCount)
+            _ui.value = _ui.value.copy(lifetimeCount = life, currentCrore = croreNo)
         }
     }
 
-    /** Single source of truth for any increment (button, volume, etc.) */
+    /** Increment: updates both RUN and LIFETIME atomically. */
     fun tickNext() {
-        // hard guard: never go past the selected target
-        if (_ui.value.targetReached) return
+        val s = _ui.value
+        if (s.runId.isBlank()) {
+            Log.w(TAG, "tickNext(): no runId; ignoring")
+            return
+        }
+        if (s.targetReached) {
+            Log.d(TAG, "tickNext(): target already reached; ignoring")
+            return
+        }
         pendingTaps++
         if (!writeInProgress) flushPending()
     }
@@ -190,30 +302,46 @@ class RamakotiViewModel @Inject constructor(
                     }
                     pendingTaps--
 
-                    // Atomic server-side increment
-                    sync.addCount(1)
+                    val uid = auth.currentUser?.uid ?: break
+                    val runId = _ui.value.runId
+                    if (runId.isBlank()) break
 
-                    // Optimistic local UI update (listener will confirm shortly)
-                    val newLife = _ui.value.lifetimeCount + 1
-                    val inBatch = newLife % BATCH_SIZE
+                    val runRef = db.collection("users").document(uid)
+                        .collection("ramakotiRuns").document(runId)
+                    val metaRef = db.collection("users").document(uid)
+                        .collection("ramakoti_meta").document("meta")
+
+                    Log.d(TAG, "write: increment start (run=$runId)")
+                    // Batch write (await so UI reflects server success)
+                    db.runBatch { b ->
+                        b.update(runRef, mapOf("runTotal" to FieldValue.increment(1)))
+                        b.set(
+                            metaRef,
+                            mapOf(
+                                "lifetimeCount" to FieldValue.increment(1),
+                                "updatedAt" to FieldValue.serverTimestamp()
+                            ),
+                            SetOptions.merge()
+                        )
+                    }.await()
+                    Log.d(TAG, "write: increment OK (run=$runId)")
+
+                    // Optimistic UI *without* flipping completion; snapshot will do that.
+                    val newRunTotal = _ui.value.runTotal + 1
+                    val inBatch = newRunTotal % BATCH_SIZE
                     val rolled = inBatch == 0
-                    val batchNo = floor(newLife.toDouble() / BATCH_SIZE).toInt() + 1
-                    val croreNo = floor(newLife.toDouble() / CRORE_SIZE).toInt() + 1
-                    val reached = newLife >= _ui.value.targetCount
+                    val batchNo = floor(newRunTotal.toDouble() / BATCH_SIZE).toInt() + 1
 
                     _ui.value = _ui.value.copy(
-                        lifetimeCount = newLife,
-                        totalCount = newLife.toLong(),
+                        runTotal = newRunTotal,
                         currentBatchCount = if (rolled) 0 else inBatch,
                         currentBatchNumber = batchNo,
-                        currentCrore = croreNo,
-                        targetReached = reached,
+                        // targetReached stays server-driven → do NOT set here
                         showCelebration = rolled
                     )
-
-                    if (reached) maybeAutoIssue(newLife, _ui.value.targetCount)
                 }
             } catch (t: Throwable) {
+                Log.e(TAG, "flushPending() failure", t)
                 _ui.value = _ui.value.copy(error = t.message ?: t.toString())
             } finally {
                 writeInProgress = false
@@ -222,40 +350,44 @@ class RamakotiViewModel @Inject constructor(
         }
     }
 
-    /** Called by the UI after showing the celebration for 108 completion. */
     fun clearCelebration() {
         _ui.value = _ui.value.copy(showCelebration = false)
     }
 
-    // -------- Certificate flow --------
+    /** Complete this run exactly once: mark COMPLETED + generate certificate + history. */
+    private fun maybeCompleteRun(runId: String, runTotal: Int, target: Int, language: String) {
+        if (_ui.value.isIssuingCertificate) return
+        Log.d(TAG, "maybeCompleteRun(runId=$runId total=$runTotal target=$target)")
 
-    private fun maybeAutoIssue(life: Int, target: Int, force: Boolean = false) {
-        if (life < target) return
-        if (target <= 0) return
-
-        // If a certificate already exists for this target, prompt only once per target (persisted)
-        if (!force && lastIssuedForTarget == target) {
-            if (lastPromptedPersisted != target) {
-                _ui.value = _ui.value.copy(showNextTargetPrompt = true)
-            }
-            return
-        }
-
-        _ui.value = _ui.value.copy(
-            isIssuingCertificate = true,
-            certificateError = null,
-            certificateUrl = null
-        )
+        _ui.value = _ui.value.copy(isIssuingCertificate = true, certificateError = null)
 
         viewModelScope.launch {
             try {
                 val user = auth.currentUser ?: error("Not signed in")
+                val runRef = db.collection("users").document(user.uid)
+                    .collection("ramakotiRuns").document(runId)
+
+                // If certificate already present (race w/ other client), skip generation
+                val existing = runRef.get().await()
+                existing.getString("certificateUrl")?.let { already ->
+                    if (already.isNotBlank()) {
+                        Log.d(TAG, "Run already has certificate; skipping generation")
+                        _ui.value = _ui.value.copy(
+                            isIssuingCertificate = false,
+                            certificateUrl = already,
+                            canPickNextTarget = true
+                        )
+                        return@launch
+                    }
+                }
+
                 val milestone = when (target) {
                     100_000   -> "Completed 1 Lakh Sri Rama Namas"
                     1_000_000 -> "Completed 10 Lakh Sri Rama Namas"
                     else      -> "Completed 1 Crore Sri Rama Namas"
                 }
 
+                // Generate locally
                 val result = certRepo.generateAndOptionallyUpload(
                     context = appContext,
                     uid = user.uid,
@@ -263,13 +395,14 @@ class RamakotiViewModel @Inject constructor(
                         devoteeName = user.displayName ?: "Devotee",
                         countText = milestone,
                         dateText = SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(Date()),
-                        language = _ui.value.language,
+                        language = language,
                         verificationUrl = "",
                         templateBitmap = null
                     ),
                     uploadToStorage = false
                 )
 
+                // Upload + record
                 val url = RamakotiExportUploader.uploadAndRecord(
                     auth = auth,
                     storage = storage,
@@ -277,25 +410,53 @@ class RamakotiViewModel @Inject constructor(
                     localFileUri = result.localPdf.toUri(),
                     fileName = result.localPdf.name,
                     type = ExportType.CERTIFICATE,
-                    extraMeta = mapOf("certificateId" to result.certificateId, "targetCount" to target)
+                    extraMeta = mapOf(
+                        "certificateId" to result.certificateId,
+                        "targetCount" to target,
+                        "runId" to runId,
+                        "language" to language
+                    )
                 )
+                Log.d(TAG, "Certificate uploaded: $url (id=${result.certificateId})")
 
-                // mark guards
-                prefs.markCertIssuedFor(target)
-                lastIssuedForTarget = target
+                // Atomically mark the run COMPLETED (if still ACTIVE)
+                db.runTransaction { tx ->
+                    val snap = tx.get(runRef)
+                    if ((snap.getString("status") ?: "ACTIVE") == "ACTIVE") {
+                        tx.update(
+                            runRef, mapOf(
+                                "status" to "COMPLETED",
+                                "certificateUrl" to url,
+                                "certificateId" to result.certificateId,
+                                "completedAt" to Timestamp.now()
+                            )
+                        )
+                    }
+                    null
+                }.await()
+
+                // (Optional) add a history doc used by Profile screen
+                db.collection("users").document(user.uid)
+                    .collection("ramakotiHistory")
+                    .add(
+                        mapOf(
+                            "totalAtCompletion" to runTotal,
+                            "targetCount" to target,
+                            "language" to language,
+                            "certificateId" to result.certificateId,
+                            "certificateUrl" to url,
+                            "completedAt" to FieldValue.serverTimestamp()
+                        )
+                    ).await()
 
                 _ui.value = _ui.value.copy(
                     isIssuingCertificate = false,
                     certificateUrl = url,
-                    certificateError = null,
-                    lastExportUrl = url,
-                    lastCertificateId = result.certificateId,
-                    lastLocalFile = result.localPdf,
-                    showNextTargetPrompt = true
+                    canPickNextTarget = true
                 )
-                // Also persist that we've shown/handled the prompt for this target
-                // (the actual toggle to false happens when user taps a dialog button)
+                Log.d(TAG, "Run COMPLETED + history recorded")
             } catch (t: Throwable) {
+                Log.e(TAG, "maybeCompleteRun() failed", t)
                 _ui.value = _ui.value.copy(
                     isIssuingCertificate = false,
                     certificateError = t.message ?: t.toString()
@@ -304,9 +465,31 @@ class RamakotiViewModel @Inject constructor(
         }
     }
 
-    fun retryCertificate() {
-        val s = _ui.value
-        maybeAutoIssue(s.lifetimeCount, s.targetCount, force = true)
+    /** Mark any existing ACTIVE run as ABANDONED and start a fresh one. Use this for “Set New Target”. */
+    suspend fun abandonActiveAndStartNew(target: Int, language: String) {
+        val uid = auth.currentUser?.uid ?: return
+        val runsRef = db.collection("users").document(uid).collection("ramakotiRuns")
+
+        // Close all ACTIVE runs (should be at most 1, but keep this safe)
+        val actives = runsRef.whereEqualTo("status", "ACTIVE").get().await()
+        for (doc in actives.documents) {
+            Log.d(TAG, "Abandoning active run ${doc.id}")
+            doc.reference.update("status", "ABANDONED").await()
+        }
+
+        val newId = "run-${System.currentTimeMillis()}"
+        Log.d(TAG, "Starting new run $newId target=$target lang=$language")
+        runsRef.document(newId).set(
+            mapOf(
+                "runId" to newId,
+                "status" to "ACTIVE",
+                "language" to language,
+                "targetCount" to target,
+                "runTotal" to 0,
+                "createdAt" to FieldValue.serverTimestamp()
+            )
+        ).await()
+        prefs.setCurrentRunId(newId)
     }
 
     fun openCertificate(context: Context) {
@@ -320,38 +503,18 @@ class RamakotiViewModel @Inject constructor(
         _ui.value = _ui.value.copy(certificateError = null)
     }
 
-    /** Screen passes nav lambda here for "Choose next target"; Not now passes default. */
-    fun onNextTargetDecision(accept: Boolean, onNavigateToPicker: () -> Unit = {}) {
-        viewModelScope.launch {
-            // Persist that we already prompted for THIS target → won't reopen after process death
-            prefs.setLastPromptedForTarget(_ui.value.targetCount)
-            _ui.value = _ui.value.copy(showNextTargetPrompt = false)
-            if (accept) onNavigateToPicker()
-        }
-    }
-
-    // -------- Optional: persist batch state also to journey doc --------
-    private suspend fun writeBatchStateToFirestore() {
-        val uid = auth.currentUser?.uid ?: return
-        val s = _ui.value
-        val userDoc = db.collection("users").document(uid)
-        val stateDoc = userDoc.collection("ramakoti").document("state")
-        val data = mapOf(
-            "totalCount" to s.lifetimeCount,
-            "currentBatchCount" to s.currentBatchCount,
-            "currentBatchNumber" to s.currentBatchNumber,
-            "language" to s.language
-        )
-        stateDoc.set(data, SetOptions.merge()).await()
-    }
-
-    fun dismissTargetDialog() {
-        _ui.value = _ui.value.copy(showTargetCompleteDialog = false)
+    fun onNextTargetDecision(accept: Boolean, onNavigateToPicker: () -> Unit) {
+        _ui.value = _ui.value.copy(showNextTargetPrompt = false)
+        if (accept) onNavigateToPicker()
     }
 
     override fun onCleared() {
         super.onCleared()
+        runListener?.remove()
         metaListener?.remove()
-        metaListener = null
     }
 }
+
+/* ---------- tiny Flow helper ---------- */
+suspend fun <T> Flow<T>.firstOrNullSafe(): T? =
+    try { this.firstOrNull() } catch (_: Throwable) { null }

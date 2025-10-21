@@ -28,15 +28,20 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import com.hindu.pooja.R
 import com.hindu.pooja.ui.navigation.Screen
 import com.hindu.pooja.viewmodel.DonationRecord
 import com.hindu.pooja.viewmodel.ProfileViewModel
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 /* =====================  Donation constants  ===================== */
 /** Change only these three if you ever switch UPI */
@@ -77,6 +82,84 @@ fun ProfileScreen(
 
     val quickAmounts = listOf("₹51", "₹101", "₹501", "₹1001", "₹2001", "₹5001")
 
+    /* ---------- Ramakoti Achievements (merged: runs + history) ---------- */
+    val uid = remember { FirebaseAuth.getInstance().currentUser?.uid }
+    var achievements by remember { mutableStateOf<List<RamakotiAchievement>>(emptyList()) }
+    var achLoading by remember { mutableStateOf(true) }
+
+    // Internal holders for the two sources
+    var runsList by remember { mutableStateOf<List<RamakotiAchievement>>(emptyList()) }
+    var historyList by remember { mutableStateOf<List<RamakotiAchievement>>(emptyList()) }
+
+    fun recomputeMerged() {
+        // Merge, dedupe, sort desc by completedAt
+        val merged = (runsList + historyList)
+            .distinctBy {
+                when {
+                    it.certificateUrl.isNotBlank() -> "cert:${it.certificateUrl}"
+                    it.completedAt != null && it.targetCount != null ->
+                        "pair:${it.targetCount}:${it.completedAt.time}"
+                    else -> "fallback:${it.totalAtCompletion}:${it.targetCount ?: -1}"
+                }
+            }
+            .sortedByDescending { it.completedAt?.time ?: 0L }
+        achievements = merged
+    }
+
+    LaunchedEffect(uid) {
+        if (uid == null) {
+            achievements = emptyList()
+            achLoading = false
+            return@LaunchedEffect
+        }
+        val db = FirebaseFirestore.getInstance()
+
+        // Runs (new flow): users/{uid}/ramakotiRuns where status == COMPLETED
+        db.collection("users").document(uid)
+            .collection("ramakotiRuns")
+            .whereEqualTo("status", "COMPLETED")
+            .orderBy("completedAt", Query.Direction.DESCENDING)
+            .addSnapshotListener { snap, err ->
+                if (err != null) {
+                    achLoading = false
+                    return@addSnapshotListener
+                }
+                runsList = snap?.documents?.map { d ->
+                    RamakotiAchievement(
+                        totalAtCompletion = (d.getLong("targetCount") ?: 0L).toInt(), // display-only
+                        targetCount       = (d.getLong("targetCount") ?: 0L).toInt().takeIf { it > 0 },
+                        completedAt       = d.getTimestamp("completedAt")?.toDate(),
+                        certificateUrl    = d.getString("certificateUrl") ?: "",
+                        language          = d.getString("language") ?: "en"
+                    )
+                } ?: emptyList()
+                achLoading = false
+                recomputeMerged()
+            }
+
+        // History (older flow): users/{uid}/ramakotiHistory
+        db.collection("users").document(uid)
+            .collection("ramakotiHistory")
+            .orderBy("completedAt", Query.Direction.DESCENDING)
+            .addSnapshotListener { snap, err ->
+                if (err != null) {
+                    achLoading = false
+                    return@addSnapshotListener
+                }
+                historyList = snap?.documents?.map { d ->
+                    RamakotiAchievement(
+                        totalAtCompletion = (d.getLong("totalAtCompletion") ?: 0L).toInt(),
+                        targetCount       = (d.getLong("targetCount") ?: 0L).toInt().takeIf { it > 0 },
+                        completedAt       = d.getTimestamp("completedAt")?.toDate(),
+                        certificateUrl    = d.getString("certificateUrl") ?: "",
+                        language          = d.getString("language") ?: "en"
+                    )
+                } ?: emptyList()
+                achLoading = false
+                recomputeMerged()
+            }
+    }
+
     Scaffold { padding ->
         LazyColumn(
             modifier = Modifier
@@ -99,18 +182,17 @@ fun ProfileScreen(
             if (showDonateBanner) {
                 item {
                     DonateMiniBanner(
-                        onDonate = {
-                            Log.d(TAG, "Banner → Donate clicked (no preset amount)")
-                            donate(null)
-                        },
+                        onDonate = { donate(null) },
                         onDetails = {
-                            Log.d(TAG, "Banner → Details clicked (opening chooser, no preset amount)")
-                            openUpiChooser(context, DONATION_UPI_ID, DONATION_PAYEE, null, DONATION_NOTE)
+                            openUpiChooser(
+                                context,
+                                DONATION_UPI_ID,
+                                DONATION_PAYEE,
+                                null,
+                                DONATION_NOTE
+                            )
                         },
-                        onDismiss = {
-                            Log.d(TAG, "Banner → Dismiss")
-                            showDonateBanner = false
-                        }
+                        onDismiss = { showDonateBanner = false }
                     )
                 }
             }
@@ -186,14 +268,93 @@ fun ProfileScreen(
                     amounts = quickAmounts,
                     onAmountClick = { label ->
                         val amount = label.filter { it.isDigit() }
-                        Log.d(TAG, "Quick amount tapped: label=$label parsed=$amount")
                         donate(amount)
                     },
                     onUpiTap = {
-                        Log.d(TAG, "UPI ID tapped → open chooser (no preset amount)")
                         openUpiChooser(context, DONATION_UPI_ID, DONATION_PAYEE, null, DONATION_NOTE)
                     }
                 )
+            }
+
+            /* ---------- My Ramakoti Achievements ---------- */
+            item {
+                Text("My Ramakoti Achievements", style = MaterialTheme.typography.titleLarge)
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    "Completed targets with certificate links.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            if (achLoading) {
+                item {
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 24.dp),
+                        contentAlignment = Alignment.Center
+                    ) { CircularProgressIndicator() }
+                }
+            } else if (achievements.isEmpty()) {
+                item {
+                    Text(
+                        "No completed targets yet — keep going!",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            } else {
+                items(achievements) { ach ->
+                    Card(Modifier.fillMaxWidth()) {
+                        Column(
+                            Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                titleFor(ach),
+                                style = MaterialTheme.typography.titleMedium,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            ach.completedAt?.let { date ->
+                                val fmt = remember {
+                                    SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault())
+                                }
+                                Text(
+                                    "Completed on ${fmt.format(date)}",
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                            if (!ach.language.isNullOrBlank()) {
+                                Text(
+                                    "Language: ${ach.language}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+
+                            Spacer(Modifier.height(8.dp))
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                if (ach.certificateUrl.isNotBlank()) {
+                                    OutlinedButton(
+                                        onClick = {
+                                            val intent = Intent(
+                                                Intent.ACTION_VIEW,
+                                                Uri.parse(ach.certificateUrl)
+                                            )
+                                            context.startActivity(intent)
+                                        }
+                                    ) { Text("View Certificate") }
+                                }
+                                // Start a new journey → go to picker
+                                TextButton(
+                                    onClick = { navController.navigate("ramakoti/language") }
+                                ) { Text("Set New Target") }
+                            }
+                        }
+                    }
+                }
             }
 
             /* ---------- Recent donations ---------- */
@@ -214,7 +375,36 @@ fun ProfileScreen(
     }
 }
 
-/* =====================  UI bits  ===================== */
+/* =====================  Achievements model + helpers  ===================== */
+
+private data class RamakotiAchievement(
+    val totalAtCompletion: Int,
+    val targetCount: Int?,          // may be null in older entries
+    val completedAt: Date?,
+    val certificateUrl: String,
+    val language: String?
+)
+
+private fun titleFor(a: RamakotiAchievement): String {
+    val target = a.targetCount ?: inferTargetFromTotal(a.totalAtCompletion)
+    return when (target) {
+        100_000     -> "1 Lakh Sri Rama Namas — Completed"
+        1_000_000   -> "10 Lakh Sri Rama Namas — Completed"
+        10_000_000  -> "1 Crore Sri Rama Namas — Completed"
+        else        -> "Target $target — Completed"
+    }
+}
+
+private fun inferTargetFromTotal(total: Int): Int {
+    return when {
+        total >= 10_000_000 -> 10_000_000
+        total >= 1_000_000  -> 1_000_000
+        total >= 100_000    -> 100_000
+        else -> total
+    }
+}
+
+/* =====================  Donation UI & helpers  ===================== */
 
 @Composable
 private fun DonateMiniBanner(
@@ -292,7 +482,6 @@ private fun DonationCard(
             }
 
             Spacer(Modifier.height(12.dp))
-            // QR (put donation_qr.jpg/png in res/drawable)
             Image(
                 painter = painterResource(R.drawable.donation_qr),
                 contentDescription = "UPI QR",
@@ -449,10 +638,19 @@ private fun rememberUpiDonationLauncher(
                             context.startActivity(chooser)
                         } catch (_: ActivityNotFoundException) {
                             Log.e(TAG, "startDonation: no UPI app found")
-                            Toast.makeText(context, "No UPI app found. Install Google Pay / PhonePe / Paytm.", Toast.LENGTH_LONG).show()
+                            Toast.makeText(
+                                context,
+                                "No UPI app found. Install Google Pay / PhonePe / Paytm.",
+                                Toast.LENGTH_LONG
+                            ).show()
                             db.collection("userProfiles").document(uid)
                                 .collection("donations").document(tr)
-                                .update(mapOf("status" to "CANCELLED", "updatedAtMs" to System.currentTimeMillis()))
+                                .update(
+                                    mapOf(
+                                        "status" to "CANCELLED",
+                                        "updatedAtMs" to System.currentTimeMillis()
+                                    )
+                                )
                                 .addOnSuccessListener { Log.d(TAG, "fallback: marked $tr as CANCELLED") }
                                 .addOnFailureListener { e -> Log.e(TAG, "fallback: failed to mark CANCELLED", e) }
                         } catch (e: Exception) {
@@ -460,7 +658,12 @@ private fun rememberUpiDonationLauncher(
                             Toast.makeText(context, "Could not start UPI: ${e.message}", Toast.LENGTH_LONG).show()
                             db.collection("userProfiles").document(uid)
                                 .collection("donations").document(tr)
-                                .update(mapOf("status" to "FAILURE", "updatedAtMs" to System.currentTimeMillis()))
+                                .update(
+                                    mapOf(
+                                        "status" to "FAILURE",
+                                        "updatedAtMs" to System.currentTimeMillis()
+                                    )
+                                )
                                 .addOnSuccessListener { Log.d(TAG, "fallback: marked $tr as FAILURE") }
                                 .addOnFailureListener { ex -> Log.e(TAG, "fallback: failed to mark FAILURE", ex) }
                         }
@@ -488,7 +691,11 @@ private fun openUpiChooser(
     try {
         context.startActivity(chooser)
     } catch (_: ActivityNotFoundException) {
-        Toast.makeText(context, "No UPI app found. Install Google Pay / PhonePe / Paytm.", Toast.LENGTH_LONG).show()
+        Toast.makeText(
+            context,
+            "No UPI app found. Install Google Pay / PhonePe / Paytm.",
+            Toast.LENGTH_LONG
+        ).show()
     }
 }
 

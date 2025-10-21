@@ -2,7 +2,8 @@ package com.hindu.pooja.ui.navigation
 
 import androidx.compose.ui.Modifier
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
@@ -32,14 +33,18 @@ import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 import org.json.JSONObject
 
-// Phase 2 additions
+// Phase 2
 import com.hindu.pooja.feature.profile.ui.JourneyScreen
 import com.hindu.pooja.feature.profile.ui.CertificatesScreen
 import com.hindu.pooja.feature.profile.ui.ReflectionsScreen
 import com.hindu.pooja.feature.ramakoti.ui.LanguageSelectionScreen
 import com.hindu.pooja.feature.ramakoti.ui.CertificateScreen
 
-// Language guard (one-shot read to avoid race)
+// Language guard
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
 import kotlinx.coroutines.flow.first
 import com.hindu.pooja.feature.ramakoti.data.LanguagePreferenceManager
 
@@ -56,7 +61,7 @@ fun HinduPoojaNavHost(
         startDestination = start,
         modifier = modifier
     ) {
-        /* ---------------- PHASE 1 ROUTES (unchanged) ---------------- */
+        /* ---------------- Base routes ---------------- */
         composable(Screen.FirstTimeProfile.route) {
             FirstTimeProfileScreen(navController, onCompletedRoute = Screen.Home.route)
         }
@@ -84,9 +89,9 @@ fun HinduPoojaNavHost(
         composable(Screen.Login.route) { LoginScreen(navController = navController) }
         composable(Screen.Splash.route) { SplashScreen(navController = navController) }
 
-        /* ---------------- RAMAKOTI & RAMAYANA ---------------- */
+        /* ---------------- RAMAKOTI ---------------- */
 
-        // Back-compat: if any old caller still uses "featured/ramakoti"
+        // Back-compat: if any old caller still uses this route
         composable("featured/ramakoti") {
             LaunchedEffect(Unit) {
                 navController.navigate(Screen.Ramakoti.route) {
@@ -96,7 +101,7 @@ fun HinduPoojaNavHost(
             }
         }
 
-        // ✅ Canonical Ramakoti entry with per-user language guard
+        // Entry with per-user language guard
         composable(Screen.Ramakoti.route) {
             val ctx = LocalContext.current
             val langMgr = remember { LanguagePreferenceManager.getInstance(ctx) }
@@ -104,13 +109,12 @@ fun HinduPoojaNavHost(
 
             LaunchedEffect(Unit) {
                 val uid = FirebaseAuth.getInstance().currentUser?.uid
-                lang = langMgr.languageFlowFor(uid).first()  // "" if unset for this user
+                lang = langMgr.languageFlowFor(uid).first()  // "" if unset
             }
 
             when (lang) {
-                null -> { /* optional placeholder while reading */ }
+                null -> { /* could show lightweight placeholder */ }
                 "" -> {
-                    // No language for THIS user → go to picker
                     LaunchedEffect("to-picker") {
                         navController.navigate("ramakoti/language") {
                             launchSingleTop = true
@@ -118,7 +122,6 @@ fun HinduPoojaNavHost(
                     }
                 }
                 else -> {
-                    // Language exists for this user → proceed to intro
                     RamakotiIntroScreen(
                         navController = navController,
                         onNextRoute = "ramakoti/writer"
@@ -129,21 +132,22 @@ fun HinduPoojaNavHost(
 
         // Writer screen
         composable("ramakoti/writer") {
-            val vm: com.hindu.pooja.feature.ramakoti.RamakotiViewModel = hiltViewModel()
             RamakotiWriterScreen(
-                vm = vm,
-                onPickNextTarget = {
-                    navController.navigate("ramakoti/language") { launchSingleTop = true }
-                }
+                onPickNextTarget = { navController.navigate("ramakoti/language") }
             )
         }
 
-        // Certificate preview
+        // Language selection
+        composable("ramakoti/language") { LanguageSelectionScreen(navController) }
+
+        // Certificate preview (manual preview entry)
         composable("ramakoti/certificate") {
             CertificateScreen(milestoneCountText = "1 Crore Sri Rama Namas Completed")
         }
 
-        /* ---------------- WIKI + QUIZZES (unchanged) ---------------- */
+        /* ---------------- WIKI + QUIZZES ---------------- */
+
+        // Bala Kanda — simple wiki reader
         composable(Screen.BalaKandaWikiSimple.route) {
             val ctx = LocalContext.current
             val tts = remember { TtsHelper(ctx) }
@@ -160,6 +164,26 @@ fun HinduPoojaNavHost(
                 onLastPage = { navController.navigate(Screen.BalaKandaQuiz.route) }
             )
         }
+
+        // **NEW** Ayodhya Kanda — simple wiki reader (this fixes the crash from Home)
+        composable("ramayana/ayodhya/wiki") {
+            val ctx = LocalContext.current
+            val tts = remember { TtsHelper(ctx) }
+            val module = remember { AyodhyaLessonRepo.loadTeWikiSimple(ctx) }
+            val lessons = remember(module) { module.lessons }
+
+            WikiReaderScreen(
+                lessons = lessons,
+                initialIndex = 0,
+                ttsHelper = tts,
+                title = "అయోధ్యకాండము కథ",
+                languageCode = "te",
+                onBack = { navController.popBackStack() },
+                onLastPage = { navController.navigate(Screen.AyodhyaKandaQuiz.route) }
+            )
+        }
+
+        // Quizzes
         composable(Screen.BalaKandaQuiz.route) {
             val repo = remember { BalaKandaQuizRepo.default() }
             BalaKandaQuizScreen(repo, { navController.popBackStack() }, { navController.popBackStack() })
@@ -171,7 +195,7 @@ fun HinduPoojaNavHost(
 
         composable(Screen.Donations.route) { Text("Donations screen (wire your UPI flow here)") }
 
-        /* ---------------- POOJAS / VRATHAMS / DETAILS / GAMES (unchanged) ---------------- */
+        /* ---------------- Poojas / Vrathams / Details / Games ---------------- */
         composable(
             route = Screen.Poojas.route,
             arguments = listOf(navArgument("fileName") { type = NavType.StringType })
@@ -223,69 +247,12 @@ fun HinduPoojaNavHost(
             GameResultScreen(levelName = levelName, navController = navController)
         }
 
-        composable(
-            route = Screen.WikiReader.route,
-            arguments = listOf(
-                navArgument("file") { type = NavType.StringType },
-                navArgument("title") { type = NavType.StringType },
-                navArgument("lang") { type = NavType.StringType; defaultValue = "te" },
-                navArgument("index") { type = NavType.IntType; defaultValue = 0 }
-            )
-        ) { backStackEntry ->
-            val ctx = LocalContext.current
-            val encFile = backStackEntry.arguments?.getString("file").orEmpty()
-            val encTitle = backStackEntry.arguments?.getString("title").orEmpty()
-            val lang = backStackEntry.arguments?.getString("lang") ?: "te"
-            val initialIndex = backStackEntry.arguments?.getInt("index") ?: 0
-            val file = URLDecoder.decode(encFile, StandardCharsets.UTF_8.name())
-            val screenTitle = URLDecoder.decode(encTitle, StandardCharsets.UTF_8.name())
-            val tts = remember { TtsHelper(ctx) }
-            val lessons = remember(file) { loadAshtottaraLessonsFromAsset(ctx, file) }
-
-            WikiReaderScreen(
-                lessons = lessons,
-                initialIndex = initialIndex,
-                ttsHelper = tts,
-                title = screenTitle,
-                languageCode = lang,
-                onBack = { navController.popBackStack() },
-                onLastPage = { }
-            )
-        }
-
-        composable("ramayana/ayodhya/wiki") {
-            val ctx = LocalContext.current
-            val tts = remember { TtsHelper(ctx) }
-            val module = remember { AyodhyaLessonRepo.loadTeWikiSimple(ctx) }
-            val lessons = remember(module) { module.lessons }
-
-            WikiReaderScreen(
-                lessons = lessons,
-                initialIndex = 0,
-                ttsHelper = tts,
-                title = "అయోధ్యకాండము కథ",
-                languageCode = "te",
-                onBack = { navController.popBackStack() },
-                onLastPage = { navController.navigate(Screen.AyodhyaKandaQuiz.route) }
-            )
-        }
-
-        /* ---------------- PHASE 2 ADDITIONS ---------------- */
+        /* ---------------- Phase 2 extras ---------------- */
         composable("profile/journey") {
-            JourneyScreen(onOpenCertificates = {
-                navController.navigate("profile/certificates")
-            })
+            JourneyScreen(onOpenCertificates = { navController.navigate("profile/certificates") })
         }
         composable("profile/certificates") { CertificatesScreen() }
         composable("profile/reflections") { ReflectionsScreen() }
-
-        // Language selection (picker)
-        composable("ramakoti/language") { LanguageSelectionScreen(navController) }
-
-        // Certificate preview
-        composable("ramakoti/certificate") {
-            CertificateScreen(milestoneCountText = "1 Crore Sri Rama Namas Completed")
-        }
     }
 }
 

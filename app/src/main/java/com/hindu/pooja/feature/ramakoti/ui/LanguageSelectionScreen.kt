@@ -1,7 +1,7 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
 package com.hindu.pooja.feature.ramakoti.ui
-import com.hindu.pooja.ui.ramakoti.LanguageChipRow
+
 import android.Manifest
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -14,12 +14,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.hindu.pooja.feature.ramakoti.data.LanguagePreferenceManager
 import com.hindu.pooja.feature.ramakoti.prefs.RamakotiPreferences
 import com.hindu.pooja.feature.ramakoti.reminders.ReminderScheduler
+import com.hindu.pooja.ui.navigation.Screen
+import com.hindu.pooja.ui.ramakoti.LanguageChipRow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 @Composable
 fun LanguageSelectionScreen(
@@ -29,23 +34,21 @@ fun LanguageSelectionScreen(
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    // ✅ Singletons (constructors are private)
     val langMgr   = remember { LanguagePreferenceManager.getInstance(ctx) }
     val prefs     = remember { RamakotiPreferences.getInstance(ctx) }
     val scheduler = remember { ReminderScheduler(ctx) }
+    val db        = remember { FirebaseFirestore.getInstance() }
+    val auth      = remember { FirebaseAuth.getInstance() }
 
-    // Local UI state
     var lang by remember { mutableStateOf("en") }
-    var target by remember { mutableStateOf(10_000_000) } // 1 Crore default
+    var target by remember { mutableStateOf(10_000_000) }
 
-    // Android 13+ notifications permission
     val notifPerm = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { /* no-op */ }
 
-    // Load saved choices for current (or null) user
     LaunchedEffect(Unit) {
-        val uid = FirebaseAuth.getInstance().currentUser?.uid
+        val uid = auth.currentUser?.uid
         lang = langMgr.languageFlowFor(uid).first().ifBlank { "en" }
         target = prefs.targetCount.first()
     }
@@ -62,10 +65,7 @@ fun LanguageSelectionScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text("Choose your preferred language", style = MaterialTheme.typography.titleMedium)
-            LanguageChipRow(
-                language = lang,
-                onChange = { code -> lang = code }
-            )
+            LanguageChipRow(language = lang, onChange = { lang = it })
 
             Spacer(Modifier.height(8.dp))
 
@@ -80,27 +80,41 @@ fun LanguageSelectionScreen(
 
             Button(onClick = {
                 scope.launch {
-                    val uid = FirebaseAuth.getInstance().currentUser?.uid
+                    val uid = auth.currentUser?.uid ?: return@launch
 
-                    // Persist choices
-                    langMgr.setLanguageFor(uid, lang) // per-user
-                    prefs.setTargetCount(target)       // device scope (your current usage)
+                    // Persist per-user language & selected target (same as today)
+                    langMgr.setLanguageFor(uid, lang)
+                    prefs.setTargetCount(target)
 
-                    // Reset prompt/cert guards so old-target prompt won't reappear
-                    prefs.clearLastPromptedForTarget()
-                    prefs.markCertIssuedFor(0)
+                    // Create a NEW RUN document → resets Writer to 0/108 for this run
+                    val runId = "run-${UUID.randomUUID()}"
+                    val runDoc = db.collection("users").document(uid)
+                        .collection("ramakotiRuns").document(runId)
 
-                    // Enable daily reminder at 07:00 by default
+                    val runData = hashMapOf(
+                        "runId" to runId,
+                        "uid" to uid,
+                        "language" to lang,
+                        "targetCount" to target,
+                        "runTotal" to 0,                // shows 0/108, 0/target
+                        "status" to "ACTIVE",           // ACTIVE | COMPLETED | CANCELLED
+                        "startedAt" to Timestamp.now()
+                    )
+                    runDoc.set(runData).addOnSuccessListener {
+                        // Save as current run
+                        scope.launch { prefs.setCurrentRunId(runId) }
+                    }
+
+                    // Enable a default reminder at 07:00
                     prefs.setReminderEnabled(true)
                     scheduler.scheduleDaily(hour24 = 7, minute = 0)
 
-                    // Ask POST_NOTIFICATIONS on Android 13+
                     if (Build.VERSION.SDK_INT >= 33) {
                         notifPerm.launch(Manifest.permission.POST_NOTIFICATIONS)
                     }
 
-                    // Go straight to writer
-                    navController.navigate("ramakoti/writer") {
+                    // Go through your canonical entry so Intro shows if you still keep it
+                    navController.navigate(Screen.Ramakoti.route) {
                         popUpTo("ramakoti/language") { inclusive = true }
                         launchSingleTop = true
                     }

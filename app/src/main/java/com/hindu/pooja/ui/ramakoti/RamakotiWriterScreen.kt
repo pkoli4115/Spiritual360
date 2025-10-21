@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -33,21 +34,18 @@ import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-// Import your BlessingCardScreen
-import com.hindu.pooja.feature.ramakoti.ui.BlessingCardScreen
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RamakotiWriterScreen(
     vm: RamakotiViewModel = hiltViewModel(),
     reminderVm: ReminderVm = hiltViewModel(),
-    onPickNextTarget: (() -> Unit)? = null // pass { navController.navigate("ramakoti/language") }
+    onPickNextTarget: (() -> Unit)? = null
 ) {
     val ui by vm.ui.collectAsState()
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    // Re-attach Firestore listeners / one-shot loads every time we land here
+    // Make sure Firestore listeners are attached whenever we land here
     LaunchedEffect(Unit) { vm.refreshFromServer() }
 
     /* ---------- SoundPool (tap chime) ---------- */
@@ -67,17 +65,12 @@ fun RamakotiWriterScreen(
     }
     DisposableEffect(Unit) { onDispose { soundPool?.release() } }
 
-    // -------- Blessing → Celebration flow controller --------
-    // When a batch completes (ui.showCelebration == true), we first show BlessingCard,
-    // then show the celebration dialog, then clear celebration in VM.
-    var showBlessing by remember { mutableStateOf(false) }
-    var showPostBlessingCelebration by remember { mutableStateOf(false) }
-
-    // Gate the sequence whenever a new batch completion arrives
-    LaunchedEffect(ui.showCelebration) {
-        if (ui.showCelebration) {
-            showBlessing = true
-            showPostBlessingCelebration = false
+    // Localized mantra text shown inside filled cells
+    val mantra = remember(ui.language) {
+        when (ui.language.lowercase()) {
+            "hi" -> "जय श्री राम"
+            "te" -> "జై శ్రీ రామ్"
+            else -> "Jai Sri Ram"
         }
     }
 
@@ -106,14 +99,14 @@ fun RamakotiWriterScreen(
                 .fillMaxSize()
                 .background(Color(0xFFFFF7EA))
         ) {
-            // Header line
+            // Header line (RUN progress)
             Text(
-                text = "Total: ${ui.lifetimeCount} • Batch ${ui.currentBatchNumber} (${ui.currentBatchCount}/108) • Target: ${ui.lifetimeCount} / ${ui.targetCount}",
+                text = "Run: ${ui.runTotal} • Batch ${ui.currentBatchNumber} (${ui.currentBatchCount}/108) • Target: ${ui.runTotal} / ${ui.targetCount}",
                 modifier = Modifier.padding(16.dp),
                 style = MaterialTheme.typography.bodyMedium
             )
 
-            // 12 x 9 = 108 grid
+            // 12 x 9 = 108 grid for RUN
             val cells = remember { (1..108).toList() }
             LazyVerticalGrid(
                 columns = GridCells.Fixed(12),
@@ -125,11 +118,15 @@ fun RamakotiWriterScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(cells) { index ->
-                    GridCell(filled = index <= ui.currentBatchCount, size = 28.dp)
+                    GridCell(
+                        filled = index <= ui.currentBatchCount,
+                        size = 28.dp,
+                        text = if (index <= ui.currentBatchCount) mantra else ""
+                    )
                 }
             }
 
-            // Batch progress
+            // Batch progress (RUN)
             Text(
                 text = "Progress: ${ui.currentBatchCount} / 108",
                 modifier = Modifier.padding(start = 16.dp, top = 10.dp, bottom = 6.dp),
@@ -143,138 +140,96 @@ fun RamakotiWriterScreen(
                     .height(4.dp)
             )
 
-            // Target progress
+            // Target progress (RUN)
             Spacer(Modifier.height(16.dp))
             Text(
-                "Steps toward 1 Lakh",
+                "Steps toward target",
                 modifier = Modifier.align(Alignment.CenterHorizontally),
                 style = MaterialTheme.typography.titleMedium
             )
             LinearProgressIndicator(
-                progress = (ui.lifetimeCount.toFloat() / ui.targetCount.toFloat()).coerceIn(0f, 1f),
+                progress = (ui.runTotal.toFloat() / ui.targetCount.toFloat()).coerceIn(0f, 1f),
                 modifier = Modifier
                     .padding(horizontal = 16.dp, vertical = 8.dp)
                     .fillMaxWidth()
                     .height(6.dp)
             )
             Text(
-                "${ui.lifetimeCount} / ${ui.targetCount}",
+                "${ui.runTotal} / ${ui.targetCount}",
                 modifier = Modifier.align(Alignment.CenterHorizontally),
                 style = MaterialTheme.typography.bodyMedium
             )
 
             Spacer(Modifier.height(12.dp))
 
-            // Button label + behavior based on certificate states
-            val (btnLabel, enabled, onClick) = remember(ui.isIssuingCertificate, ui.certificateUrl, ui.certificateError, ui.targetReached, ui.isIncrementBusy) {
-                when {
-                    ui.isIssuingCertificate -> Triple("Generating Certificate…", false, {})
-                    ui.certificateUrl != null -> Triple("View Certificate", true, { vm.openCertificate(ctx) })
-                    ui.certificateError != null -> Triple("Retry", true, { vm.retryCertificate() })
-                    ui.targetReached -> Triple("Target Completed", false, {})
-                    else -> Triple("Jai Sri Ram", !ui.isIncrementBusy, {
-                        soundPool?.play(soundId, 1f, 1f, 1, 0, 1f)
-                        vm.tickNext()
-                    })
-                }
+            // Primary button
+            val btnLabel = when {
+                ui.isIssuingCertificate -> "Generating Certificate…"
+                ui.targetReached && ui.certificateUrl != null -> "View Certificate"
+                ui.targetReached -> "Target Completed"
+                else -> "Jai Sri Ram"
+            }
+
+            val enabled = when {
+                ui.isIssuingCertificate -> false
+                ui.targetReached && ui.certificateUrl == null -> false
+                ui.targetReached && ui.certificateUrl != null -> true
+                else -> !ui.isIncrementBusy
             }
 
             Button(
-                onClick = onClick,
+                onClick = {
+                    when {
+                        ui.isIssuingCertificate -> Unit
+                        ui.targetReached && ui.certificateUrl != null -> vm.openCertificate(ctx)
+                        else -> {
+                            soundPool?.play(soundId, 1f, 1f, 1, 0, 1f)
+                            vm.tickNext()
+                        }
+                    }
+                },
                 enabled = enabled,
                 modifier = Modifier
                     .padding(16.dp)
                     .fillMaxWidth()
                     .height(54.dp)
-            ) {
-                Text(btnLabel)
+            ) { Text(btnLabel) }
+
+            // Secondary: available after completion
+            if (ui.canPickNextTarget) {
+                OutlinedButton(
+                    onClick = { onPickNextTarget?.invoke() },
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp, vertical = 4.dp)
+                        .fillMaxWidth()
+                        .height(48.dp)
+                ) { Text("Set new target") }
             }
         }
     }
 
-    // ---------------- Blessing → Celebration sequence ----------------
-
-    // 1) Blessing Card (shown first when a batch completes)
-    if (ui.showCelebration && showBlessing) {
-        // Use a full-screen dialog to host the BlessingCardScreen + controls
-        androidx.compose.ui.window.Dialog(onDismissRequest = {
-            // If dismissed, still continue to celebration
-            showBlessing = false
-            showPostBlessingCelebration = true
-        }) {
-            Surface(
-                shape = RoundedCornerShape(16.dp),
-                tonalElevation = 4.dp,
-                modifier = Modifier.fillMaxWidth().padding(12.dp)
-            ) {
-                Column(Modifier.padding(16.dp)) {
-                    // Blessing message for the just-completed batch
-                    val message = "Completed ${ui.currentBatchNumber - 1} × 108 Sri Rama Namas"
-                    BlessingCardScreen(
-                        devoteeName = "Devotee", // or plumb from profile/auth if you prefer
-                        message = message,
-                        language = ui.language,
-                        verificationUrl = "" // not needed for blessing card
-                    )
-                    Spacer(Modifier.height(12.dp))
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End
-                    ) {
-                        TextButton(onClick = {
-                            showBlessing = false
-                            showPostBlessingCelebration = true
-                        }) { Text("Continue") }
-                    }
-                }
-            }
+    // Blessing then celebration on 108
+    if (ui.showCelebration) {
+        var showBlessing by remember { mutableStateOf(true) }
+        if (showBlessing) {
+            BlessingCardDialog(onClose = { showBlessing = false })
+        } else {
+            AlertDialog(
+                onDismissRequest = { vm.clearCelebration() },
+                title = { Text("Batch Completed!") },
+                text = { Text("You completed ${ui.currentBatchNumber - 1} batches of 108!") },
+                confirmButton = { TextButton(onClick = { vm.clearCelebration() }) { Text("OK") } }
+            )
         }
     }
 
-    // 2) Celebration dialog (shown AFTER blessing)
-    if (ui.showCelebration && !showBlessing && showPostBlessingCelebration) {
-        AlertDialog(
-            onDismissRequest = {
-                showPostBlessingCelebration = false
-                vm.clearCelebration()
-            },
-            title = { Text("Batch Completed!") },
-            text = { Text("You completed ${ui.currentBatchNumber - 1} full batches of 108!") },
-            confirmButton = {
-                TextButton(onClick = {
-                    showPostBlessingCelebration = false
-                    vm.clearCelebration()
-                }) { Text("OK") }
-            }
-        )
-    }
-
-    // 3) Certificate error
+    // Certificate error
     ui.certificateError?.let { msg ->
         AlertDialog(
             onDismissRequest = { vm.dismissCertError() },
             title = { Text("Certificate") },
             text = { Text(msg) },
             confirmButton = { TextButton(onClick = { vm.dismissCertError() }) { Text("OK") } }
-        )
-    }
-
-    // 4) Prompt to continue to next target (wired to navigation)
-    if (ui.showNextTargetPrompt) {
-        AlertDialog(
-            onDismissRequest = { vm.onNextTargetDecision(false) {} },
-            title = { Text("Continue your Ramakoti?") },
-            text = { Text("Would you like to pick the next target and continue your Ramakoti journey?") },
-            dismissButton = {
-                TextButton(onClick = { vm.onNextTargetDecision(false) {} }) { Text("Not now") }
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    vm.onNextTargetDecision(true) {
-                        onPickNextTarget?.invoke()
-                    }
-                }) { Text("Choose next target") }
-            }
         )
     }
 
@@ -290,24 +245,47 @@ fun RamakotiWriterScreen(
 }
 
 @Composable
-private fun GridCell(filled: Boolean, size: Dp) {
+private fun GridCell(
+    filled: Boolean,
+    size: Dp,
+    text: String = ""
+) {
     val shape = RoundedCornerShape(6.dp)
     Box(
         modifier = Modifier
             .size(size)
             .clip(shape)
             .background(if (filled) Color(0xFFFFDCA8) else Color(0xFFFDF6EE))
-            .border(BorderStroke(1.dp, Color(0xFFE7D7C7)), shape)
+            .border(BorderStroke(1.dp, Color(0xFFE7D7C7)), shape),
+        contentAlignment = Alignment.Center
+    ) {
+        if (text.isNotBlank()) {
+            // Tiny label; we keep it readable within 28dp
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelSmall,
+                maxLines = 1,
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
+
+@Composable
+private fun BlessingCardDialog(onClose: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onClose,
+        title = { Text("Blessings") },
+        text = { Text("May Sri Rama’s grace be with you. Keep going!") },
+        confirmButton = { TextButton(onClick = onClose) { Text("Continue") } }
     )
 }
 
-/** Small helper VM to obtain ReminderScheduler via Hilt inside the Composable scope. */
 @HiltViewModel
 class ReminderVm @Inject constructor(
     val scheduler: ReminderScheduler
 ) : androidx.lifecycle.ViewModel()
 
-/** 24-hour TimePicker that saves to DataStore and schedules the alarm (uses a regular CoroutineScope). */
 private fun showTimePickerDialog(
     context: android.content.Context,
     prefs: RamakotiPreferences,
@@ -335,7 +313,7 @@ private fun showTimePickerDialog(
         },
         hourNow,
         minuteNow,
-        true // 24-hour mode
+        true
     )
     dialog.show()
 }

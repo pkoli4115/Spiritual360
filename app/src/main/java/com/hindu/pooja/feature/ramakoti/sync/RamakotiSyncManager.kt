@@ -1,145 +1,70 @@
 package com.hindu.pooja.feature.ramakoti.sync
 
+import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.tasks.await
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import javax.inject.Inject
-import javax.inject.Singleton
 
-/**
- * Persists the per-day count and a stable "meta" doc (lifetime & batches).
- *
- * Day doc :  /users/{uid}/ramakoti/{yyyy-MM-dd}
- * Meta doc:  /users/{uid}/ramakoti_meta/meta
- */
-@Singleton
-class RamakotiSyncManager @Inject constructor(
+private const val TAG = "RamaSync"
+
+class RamakotiSyncManager(
     private val auth: FirebaseAuth,
     private val db: FirebaseFirestore
 ) {
 
-    data class AddCountResult(
-        val todayCountAfter: Int,
-        val completedBatches: Int,
-        val justCompleted108: Boolean
-    )
-
-    private fun uidOrNull() = auth.currentUser?.uid
-
-    private fun dayKey(ts: Long = System.currentTimeMillis()): String {
-        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-        sdf.timeZone = java.util.TimeZone.getTimeZone("UTC")
-        return sdf.format(Date(ts))
-    }
-
-    /**
-     * (Optional) Call once when the Ramakoti screen opens.
-     * Ensures the meta doc exists so external code that does "update" won't crash.
-     */
     suspend fun ensureMetaInitialized() {
-        val uid = uidOrNull() ?: return
+        val uid = auth.currentUser?.uid ?: run {
+            Log.w(TAG, "ensureMetaInitialized: no user"); return
+        }
         val metaRef = db.collection("users").document(uid)
             .collection("ramakoti_meta").document("meta")
 
-        metaRef.set(
-            mapOf(
-                "lifetimeCount" to FieldValue.increment(0),
-                "batches" to FieldValue.increment(0),
+        val snap = metaRef.get().await()
+        if (!snap.exists()) {
+            Log.d(TAG, "Creating lifetime meta for uid=$uid")
+            val init = mapOf(
+                "lifetimeCount" to 0,
+                "batches" to 0,
                 "updatedAt" to FieldValue.serverTimestamp()
-            ),
-            SetOptions.merge()
-        ).await()
+            )
+            metaRef.set(init, SetOptions.merge()).await()
+        } else {
+            Log.d(TAG, "Meta already exists for uid=$uid")
+        }
     }
 
-    /**
-     * Increment today's count by [n]; also upsert lifetime meta and compute celebration.
-     */
-    suspend fun addCount(n: Int): AddCountResult {
-        val uid = uidOrNull() ?: return AddCountResult(0, 0, false)
-        if (n <= 0) return AddCountResult(0, 0, false)
-
-        val key = dayKey()
-        val dayRef  = db.collection("users").document(uid)
-            .collection("ramakoti").document(key)
+    suspend fun addCount(delta: Int) {
+        if (delta == 0) return
+        val uid = auth.currentUser?.uid ?: run {
+            Log.w(TAG, "addCount($delta): no user"); return
+        }
         val metaRef = db.collection("users").document(uid)
             .collection("ramakoti_meta").document("meta")
 
-        var result = AddCountResult(0, 0, false)
+        ensureMetaInitialized()
 
         db.runTransaction { tx ->
-            // ---- Day doc (create/merge) ----
-            val daySnap = tx.get(dayRef)
-            val before = (daySnap.getLong("count") ?: 0L).toInt()
-            val after  = before + n
+            val cur = tx.get(metaRef)
+            val oldLife = cur.getLong("lifetimeCount") ?: 0L
+            val newLife = oldLife + delta
 
-            if (!daySnap.exists()) {
-                tx.set(dayRef, mapOf(
-                    "count" to after,
-                    "lastUpdated" to FieldValue.serverTimestamp()
-                ))
-            } else {
-                tx.update(dayRef, mapOf(
-                    "count" to after,
-                    "lastUpdated" to FieldValue.serverTimestamp()
-                ))
-            }
+            val oldBlocks = (oldLife / 108L).toInt()
+            val newBlocks = (newLife / 108L).toInt()
+            val addBatches = (newBlocks - oldBlocks).coerceAtLeast(0)
 
-            // detect 108 completions in this call
-            val completedBatchesNow =
-                (after / 108 - before / 108).coerceAtLeast(0)
-
-            // ---- Meta doc (create/merge) ----
-            tx.set(
-                metaRef,
-                mapOf(
-                    "updatedAt" to FieldValue.serverTimestamp(),
-                    "lifetimeCount" to FieldValue.increment(n.toLong())
-                ),
-                SetOptions.merge()
+            val updates = hashMapOf<String, Any>(
+                "lifetimeCount" to newLife,
+                "updatedAt" to FieldValue.serverTimestamp()
             )
-
-            if (completedBatchesNow > 0) {
-                tx.set(
-                    metaRef,
-                    mapOf(
-                        "batches" to FieldValue.increment(completedBatchesNow.toLong()),
-                        "lastFinishedAt" to FieldValue.serverTimestamp()
-                    ),
-                    SetOptions.merge()
-                )
+            if (addBatches > 0) {
+                updates["batches"] = FieldValue.increment(addBatches.toLong())
+                updates["lastFinishedAt"] = FieldValue.serverTimestamp()
             }
-
-            result = AddCountResult(
-                todayCountAfter = after,
-                completedBatches = completedBatchesNow,
-                justCompleted108 = completedBatchesNow > 0
-            )
+            tx.set(metaRef, updates, SetOptions.merge())
             null
         }.await()
-
-        return result
-    }
-
-    /**
-     * Reset ONLY today's grid; lifetime remains a historical total.
-     */
-    suspend fun clearAllForToday() {
-        val uid = uidOrNull() ?: return
-        val key = dayKey()
-        val dayRef = db.collection("users").document(uid)
-            .collection("ramakoti").document(key)
-
-        dayRef.set(
-            mapOf(
-                "count" to 0,
-                "lastUpdated" to FieldValue.serverTimestamp()
-            ),
-            SetOptions.merge()
-        ).await()
+        Log.d(TAG, "addCount($delta) OK")
     }
 }
