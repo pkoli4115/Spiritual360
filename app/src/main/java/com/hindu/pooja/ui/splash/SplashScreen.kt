@@ -1,7 +1,6 @@
 package com.hindu.pooja.ui.screens
 
 import android.net.Uri
-import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -120,7 +119,7 @@ private fun PoweredByQtiLabsRow(
         Text("Powered by", color = labelColor, fontSize = 14.sp)
         Spacer(Modifier.height(6.dp))
         Image(
-            painter = painterResource(id = R.drawable.qtilabs),
+            painter = painterResource(id = R.drawable.`qtilabs`),
             contentDescription = "QTI Labs",
             modifier = Modifier
                 .height(36.dp)

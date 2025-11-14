@@ -14,7 +14,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -23,6 +22,7 @@ import com.google.accompanist.flowlayout.FlowRow
 import com.hindu.pooja.R
 import com.hindu.pooja.ui.kids.findit.model.HiddenObjectsLevel
 import com.hindu.pooja.util.AudioPlayer
+import com.hindu.pooja.util.rememberSafePainter
 import kotlinx.coroutines.launch
 
 @Composable
@@ -50,9 +50,7 @@ fun FindItGameScreen(
     }
 
     DisposableEffect(Unit) {
-        onDispose {
-            AudioPlayer.stopBackground()
-        }
+        onDispose { AudioPlayer.stopBackground() }
     }
 
     levelData?.let { level ->
@@ -78,10 +76,13 @@ fun FindItGameScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text("⏳ Time: $timeLeft sec", style = MaterialTheme.typography.bodyLarge)
-                Text("🔍 Found: ${foundObjects.size}/${level.objects.size}", style = MaterialTheme.typography.bodyLarge)
+                Text(
+                    "🔍 Found: ${foundObjects.size}/${level.objects.size}",
+                    style = MaterialTheme.typography.bodyLarge
+                )
             }
 
-            // ✅ Object names with wrapping
+            // Object names with wrapping
             FlowRow(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -99,10 +100,8 @@ fun FindItGameScreen(
                 }
             }
 
-            // ✅ Background image with tap detection and coordinate mapping
+            // Background image with tap detection and coordinate mapping
             @Suppress("BoxWithConstraintsScope")
-
-
             BoxWithConstraints(
                 modifier = Modifier
                     .fillMaxSize()
@@ -139,22 +138,21 @@ fun FindItGameScreen(
                         }
                     }
             ) {
-                val imageResId = when (level.sceneImage.lowercase()) {
-                    "shiva" -> R.drawable.shiva
-                    "ganesha" -> R.drawable.datta
-                    "temple" -> R.drawable.default_pooja_image
-                    else -> R.drawable.family_pooja
+                // Map simple keywords to drawable names; otherwise use the JSON value as-is.
+                val mappedName = when (level.sceneImage.lowercase()) {
+                    "shiva" -> "shiva"
+                    "ganesha" -> "datta"
+                    "temple" -> "default_pooja_image"
+                    else -> level.sceneImage // supports filenames like "sankasti_ganapathi.png" or webp/jpg
                 }
 
                 Image(
-                    painter = painterResource(id = imageResId),
+                    painter = rememberSafePainter(mappedName),
                     contentDescription = null,
                     contentScale = ContentScale.Fit,
                     modifier = Modifier
                         .fillMaxSize()
-                        .onGloballyPositioned {
-                            imageSize = it.size
-                        }
+                        .onGloballyPositioned { imageSize = it.size }
                 )
             }
         }

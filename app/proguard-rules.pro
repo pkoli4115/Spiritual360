@@ -12,7 +12,7 @@
 # --- KOTLINX SERIALIZATION ---
 -keep class kotlinx.serialization.** { *; }
 -keepattributes *Annotation*
-
+-keep class com.google.firebase.appcheck.** { *; }
 # --- KEEP CONSTRUCTORS ---
 -keepclassmembers class * {
     public <init>(...);

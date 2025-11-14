@@ -1,0 +1,53 @@
+PS D:\Prasanth\AndroidStudioProjects\HinduPoojaApp> keytool -genkeypair `
+>>   -v `
+>>   -keystore D:\Prasanth\AndroidStudioProjects\HinduPoojaApp\KEYS\debug\ramakoti-debug.jks `
+>>   -storetype JKS `
+>>   -storepass android `
+>>   -keypass android `
+>>   -alias androiddebugkey `
+>>   -keyalg RSA `
+>>   -keysize 2048 `
+>>   -validity 10000 `
+>>   -dname "CN=Debug, OU=QTI Labs, O=QTI Labs, L=Hyderabad, ST=Telangana, C=IN"
+>>
+Generating 2,048 bit RSA key pair and self-signed certificate (SHA256withRSA) with a validity of 10,000 days
+        for: CN=Debug, OU=QTI Labs, O=QTI Labs, L=Hyderabad, ST=Telangana, C=IN
+[Storing D:\Prasanth\AndroidStudioProjects\HinduPoojaApp\KEYS\debug\ramakoti-debug.jks]
+
+Warning:
+The JKS keystore uses a proprietary format. It is recommended to migrate to PKCS12 which is an industry standard format using "keytool -importkeystore -srckeystore D:\Prasanth\AndroidStudioProjects\HinduPoojaApp\KEYS\debug\ramakoti-debug.jks -destkeystore D:\Prasanth\AndroidStudioProjects\HinduPoojaApp\KEYS\debug\ramakoti-debug.jks -deststoretype pkcs12".
+PS D:\Prasanth\AndroidStudioProjects\HinduPoojaApp> keytool -list -v -keystore D:\Prasanth\AndroidStudioProjects\HinduPoojaApp\KEYS\debug\ramakoti-debug.jks -alias androiddebugkey -storepass android
+>>
+Alias name: androiddebugkey
+Creation date: Nov 6, 2025
+Entry type: PrivateKeyEntry
+Certificate chain length: 1
+Certificate[1]:
+Owner: CN=Debug, OU=QTI Labs, O=QTI Labs, L=Hyderabad, ST=Telangana, C=IN
+Issuer: CN=Debug, OU=QTI Labs, O=QTI Labs, L=Hyderabad, ST=Telangana, C=IN
+Serial number: 46b1ef9de2e7546f
+Valid from: Thu Nov 06 19:37:28 IST 2025 until: Mon Mar 24 19:37:28 IST 2053
+Certificate fingerprints:
+         SHA1: F2:1B:7F:AE:4D:1D:C3:B5:4A:50:6A:CB:85:BC:68:70:73:11:B6:CE
+         SHA256: 76:F4:3B:A9:2B:F7:42:F6:51:25:61:A5:73:16:A7:B8:73:63:75:BB:BD:F8:FF:A5:AF:54:42:69:F6:76:2E:75
+Signature algorithm name: SHA256withRSA
+Subject Public Key Algorithm: 2048-bit RSA key
+Version: 3
+
+Extensions:
+
+#1: ObjectId: 2.5.29.14 Criticality=false
+SubjectKeyIdentifier [
+KeyIdentifier [
+0000: 32 B7 62 BF A1 16 A7 91   33 82 C4 28 1D F4 50 75  2.b.....3..(..Pu
+0010: 6C FE 0D C8                                        l...
+]
+]
+
+
+Warning:
+The JKS keystore uses a proprietary format. It is recommended to migrate to PKCS12 which is an industry standard format using "keytool -importkeystore -srckeystore D:\Prasanth\AndroidStudioProjects\HinduPoojaApp\KEYS\debug\ramakoti-debug.jks -destkeystore D:\Prasanth\AndroidStudioProjects\HinduPoojaApp\KEYS\debug\ramakoti-debug.jks -deststoretype pkcs12".
+PS D:\Prasanth\AndroidStudioProjects\HinduPoojaApp>
+
+
+FB Debug: 8ht/rk0dw7VKUGrLhbxocHMRts4=

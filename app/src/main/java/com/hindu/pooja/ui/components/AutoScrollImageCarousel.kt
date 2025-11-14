@@ -1,54 +1,53 @@
 package com.hindu.pooja.ui.login.components
-import androidx.compose.ui.layout.ContentScale
 
-import androidx.compose.animation.core.*
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.layout.ContentScale
+import com.hindu.pooja.util.rememberSafePainter
 import kotlinx.coroutines.delay
-import com.hindu.pooja.R
-
 
 @Composable
 fun AutoScrollImageCarousel(
     imageNames: List<String>,
     modifier: Modifier = Modifier
 ) {
+    // Nothing to show → no modulo crash
+    if (imageNames.isEmpty()) {
+        Box(modifier = modifier)
+        return
+    }
+
     var currentIndex by remember { mutableStateOf(0) }
 
-    LaunchedEffect(Unit) {
+    // auto-advance
+    LaunchedEffect(imageNames) {
         while (true) {
             delay(4000L)
             currentIndex = (currentIndex + 1) % imageNames.size
         }
     }
 
-    val alphaAnim by animateFloatAsState(
+    val alpha by animateFloatAsState(
         targetValue = 1f,
-        animationSpec = tween(1000)
+        animationSpec = tween(600),
+        label = "carouselAlpha$currentIndex"
     )
 
     Box(modifier = modifier) {
+        val name = imageNames[currentIndex]
         Image(
-            painter = painterResource(id = getImageResId(imageNames[currentIndex])),
+            painter = rememberSafePainter(name),
             contentDescription = null,
             modifier = Modifier
                 .fillMaxSize()
-                .alpha(alphaAnim)
-            )
-    }
-}
-
-private fun getImageResId(name: String): Int {
-    return when (name) {
-        "datta" -> R.drawable.datta
-        "ganesh_family" -> R.drawable.ganesh_family
-        "lakshmi_vishnu" -> R.drawable.lakshmi_vishnu
-        "family_pooja" -> R.drawable.family_pooja
-        else -> error("Image not found: $name")
+                .alpha(alpha),
+            contentScale = ContentScale.Crop
+        )
     }
 }

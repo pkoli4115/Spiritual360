@@ -25,9 +25,12 @@ import com.facebook.FacebookSdk
 import com.facebook.appevents.AppEventsLogger
 import com.facebook.CallbackManager
 
-// ---- Ramakoti audio key bus (single-file helper) ----
+// Ramakoti audio key bus
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
+
+// In-app updates
+import com.hindu.pooja.util.UpdateManager
 
 enum class VolumeEvent { UP, DOWN }
 
@@ -47,7 +50,6 @@ object RamakotiAudioKeyBus {
         return true
     }
 }
-// -----------------------------------------------------
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -61,7 +63,7 @@ class MainActivity : ComponentActivity() {
     private var splashReady = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // Android 12+ system splash (with compat on older versions)
+        // Android 12+ system splash
         val splash: SplashScreen = installSplashScreen()
         splash.setKeepOnScreenCondition { !splashReady }
 
@@ -77,24 +79,33 @@ class MainActivity : ComponentActivity() {
             HinduPoojaAppContent()
         }
 
-        // Release the system splash once content is set up
         splashReady = true
+    }
+
+    override fun onStart() {
+        super.onStart()
+        // Prompt updates when user opens the app.
+        // Set preferImmediate=true only for critical releases you want to block on.
+        UpdateManager.checkAndPrompt(this, preferImmediate = false)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Resume any in-progress IMMEDIATE update flow (required by Play)
+        UpdateManager.resumeIfNeeded(this)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         fbCallbackManager.onActivityResult(requestCode, resultCode, data)
+        UpdateManager.onActivityResult(requestCode, resultCode)
     }
 
     // Handle volume keys via onKeyDown (avoid restricted dispatchKeyEvent)
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
         when (keyCode) {
-            KeyEvent.KEYCODE_VOLUME_UP -> {
-                if (RamakotiAudioKeyBus.emit(VolumeEvent.UP)) return true
-            }
-            KeyEvent.KEYCODE_VOLUME_DOWN -> {
-                if (RamakotiAudioKeyBus.emit(VolumeEvent.DOWN)) return true
-            }
+            KeyEvent.KEYCODE_VOLUME_UP -> if (RamakotiAudioKeyBus.emit(VolumeEvent.UP)) return true
+            KeyEvent.KEYCODE_VOLUME_DOWN -> if (RamakotiAudioKeyBus.emit(VolumeEvent.DOWN)) return true
         }
         return super.onKeyDown(keyCode, event)
     }

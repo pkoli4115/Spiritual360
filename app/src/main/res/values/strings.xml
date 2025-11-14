@@ -39,7 +39,7 @@
     <string name="nav_featured" translatable="false">Featured</string>
     <string name="nav_kids" translatable="false">Kids</string>
     <string name="nav_profile" translatable="false">Profile</string>
-
+    <string name="default_web_client_id" translatable="false">102522233118-cl0altu5u4rinmb3a88ajsa3b1ii7op7.apps.googleusercontent.com</string>
     <!-- Facebook Login -->
     <string name="facebook_app_id" translatable="false">1145171540885194</string>
     <string name="facebook_client_token" translatable="false">06e38f35b0c2670aeb4266074d2550e3</string>

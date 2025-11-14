@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.hindu.pooja">
 
-    <!-- Optional but helpful so a UPI chooser can discover apps -->
+    <!-- Optional: UPI chooser discovery -->
     <queries>
         <intent>
             <action android:name="android.intent.action.VIEW" />
@@ -11,11 +11,8 @@
 
     <!-- Permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
-    <!-- Android 13+; request via runtime dialog before posting notifications -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <!-- Re-schedule alarms after reboot -->
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <!-- For AlarmManager#setExact… on Android 12+ (user may need to grant in system settings) -->
+    <uses-permission android:name="android.permission/RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
 
     <application
@@ -26,7 +23,7 @@
         android:theme="@style/Theme.HinduPoojaApp"
         android:enableOnBackInvokedCallback="true">
 
-        <!-- Main launcher activity -->
+        <!-- Launcher -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -37,12 +34,10 @@
             </intent-filter>
         </activity>
 
-        <!-- Ramakoti reminders: receives the PendingIntent from AlarmManager -->
+        <!-- Ramakoti: reminders -->
         <receiver
             android:name="com.hindu.pooja.feature.ramakoti.reminders.ReminderReceiver"
             android:exported="false" />
-
-        <!-- Re-schedule reminders on device reboot (needs exported=true for BOOT_COMPLETED) -->
         <receiver
             android:name="com.hindu.pooja.feature.ramakoti.reminders.BootReceiver"
             android:exported="true">
@@ -51,7 +46,7 @@
             </intent-filter>
         </receiver>
 
-        <!-- Facebook SDK configuration -->
+        <!-- Facebook SDK -->
         <meta-data
             android:name="com.facebook.sdk.ApplicationId"
             android:value="@string/facebook_app_id" />
@@ -59,13 +54,12 @@
             android:name="com.facebook.sdk.ClientToken"
             android:value="@string/facebook_client_token" />
 
-        <!-- Facebook Content Provider (appId appended at end) -->
         <provider
             android:name="com.facebook.FacebookContentProvider"
             android:authorities="com.facebook.app.FacebookContentProvider1145171540885194"
             android:exported="true" />
 
-        <!-- FileProvider for sharing PDFs/exports -->
+        <!-- FileProvider for PDFs/exports -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
@@ -76,7 +70,7 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
-        <!-- Facebook Login Activities -->
+        <!-- Facebook login activities -->
         <activity
             android:name="com.facebook.FacebookActivity"
             android:exported="false"
@@ -88,7 +82,6 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <!-- Must match strings.xml: fb{APP_ID}, e.g. fb1145171540885194 -->
                 <data android:scheme="@string/fb_login_protocol_scheme" />
             </intent-filter>
         </activity>

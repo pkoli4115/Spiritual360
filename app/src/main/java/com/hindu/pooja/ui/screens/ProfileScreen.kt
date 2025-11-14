@@ -43,8 +43,10 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+// ✅ NEW import for the version badge
+import com.hindu.pooja.ui.common.AppVersionBadge
+
 /* =====================  Donation constants  ===================== */
-/** Change only these three if you ever switch UPI */
 private const val DONATION_UPI_ID = "9121011887@ybl"
 private const val DONATION_PAYEE = "Koli Prasanth"
 private const val DONATION_NOTE  = "Donation to Spiritual360 App"
@@ -70,10 +72,8 @@ fun ProfileScreen(
     val error by viewModel.lastError.collectAsState()
     val donations by viewModel.donations.collectAsState()
 
-    // Show the donate banner until dismissed
     var showDonateBanner by rememberSaveable { mutableStateOf(true) }
 
-    // UPI launcher that logs to Firestore and updates status
     val donate = rememberUpiDonationLauncher(
         upiId = DONATION_UPI_ID,
         payeeName = DONATION_PAYEE,
@@ -87,12 +87,10 @@ fun ProfileScreen(
     var achievements by remember { mutableStateOf<List<RamakotiAchievement>>(emptyList()) }
     var achLoading by remember { mutableStateOf(true) }
 
-    // Internal holders for the two sources
     var runsList by remember { mutableStateOf<List<RamakotiAchievement>>(emptyList()) }
     var historyList by remember { mutableStateOf<List<RamakotiAchievement>>(emptyList()) }
 
     fun recomputeMerged() {
-        // Merge, dedupe, sort desc by completedAt
         val merged = (runsList + historyList)
             .distinctBy {
                 when {
@@ -114,7 +112,6 @@ fun ProfileScreen(
         }
         val db = FirebaseFirestore.getInstance()
 
-        // Runs (new flow): users/{uid}/ramakotiRuns where status == COMPLETED
         db.collection("users").document(uid)
             .collection("ramakotiRuns")
             .whereEqualTo("status", "COMPLETED")
@@ -126,7 +123,7 @@ fun ProfileScreen(
                 }
                 runsList = snap?.documents?.map { d ->
                     RamakotiAchievement(
-                        totalAtCompletion = (d.getLong("targetCount") ?: 0L).toInt(), // display-only
+                        totalAtCompletion = (d.getLong("targetCount") ?: 0L).toInt(),
                         targetCount       = (d.getLong("targetCount") ?: 0L).toInt().takeIf { it > 0 },
                         completedAt       = d.getTimestamp("completedAt")?.toDate(),
                         certificateUrl    = d.getString("certificateUrl") ?: "",
@@ -137,7 +134,6 @@ fun ProfileScreen(
                 recomputeMerged()
             }
 
-        // History (older flow): users/{uid}/ramakotiHistory
         db.collection("users").document(uid)
             .collection("ramakotiHistory")
             .orderBy("completedAt", Query.Direction.DESCENDING)
@@ -259,7 +255,7 @@ fun ProfileScreen(
                 }
             }
 
-            /* ---------- Donation card (UPI link + QR + quick amounts) ---------- */
+            /* ---------- Donation card ---------- */
             item {
                 DonationCard(
                     upiId = DONATION_UPI_ID,
@@ -347,7 +343,6 @@ fun ProfileScreen(
                                         }
                                     ) { Text("View Certificate") }
                                 }
-                                // Start a new journey → go to picker
                                 TextButton(
                                     onClick = { navController.navigate("ramakoti/language") }
                                 ) { Text("Set New Target") }
@@ -371,6 +366,18 @@ fun ProfileScreen(
             }
 
             item { Spacer(Modifier.height(24.dp)) }
+
+            // ✅ NEW: Version badge at the bottom (centered)
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    AppVersionBadge()
+                }
+            }
         }
     }
 }
@@ -379,7 +386,7 @@ fun ProfileScreen(
 
 private data class RamakotiAchievement(
     val totalAtCompletion: Int,
-    val targetCount: Int?,          // may be null in older entries
+    val targetCount: Int?,
     val completedAt: Date?,
     val certificateUrl: String,
     val language: String?
@@ -702,7 +709,7 @@ private fun openUpiChooser(
 private fun buildUpiUri(
     upiId: String,
     payeeName: String,
-    amount: String?, // null => no &am
+    amount: String?,
     note: String,
     tr: String = "HP-" + System.currentTimeMillis()
 ): Uri {
@@ -746,7 +753,7 @@ private fun mapUpiStatus(raw: String?): String {
     }
 }
 
-/* ---------- Quick amount pills (unique name to avoid conflicts) ---------- */
+/* ---------- Quick amount pills ---------- */
 @Composable
 private fun QuickAmountPills(
     labels: List<String>,

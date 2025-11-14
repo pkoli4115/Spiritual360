@@ -11,11 +11,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.hindu.pooja.data.PoojaLoader
 import com.hindu.pooja.ui.navigation.Screen
+import com.hindu.pooja.util.rememberSafePainter
 import java.net.URLEncoder
 
 @Composable
@@ -24,9 +24,7 @@ fun VrathamsScreen(
     navController: NavController
 ) {
     val context = LocalContext.current
-    val poojaList = remember {
-        PoojaLoader.loadPoojaIndex(context, fileName)
-    }
+    val poojaList = remember { PoojaLoader.loadPoojaIndex(context, fileName) }
 
     Column(modifier = Modifier.padding(16.dp)) {
         Text(
@@ -37,11 +35,6 @@ fun VrathamsScreen(
 
         LazyColumn {
             items(poojaList) { pooja ->
-                val imageResId = context.resources.getIdentifier(
-                    pooja.image.substringBeforeLast('.'),
-                    "drawable",
-                    context.packageName
-                )
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -53,7 +46,7 @@ fun VrathamsScreen(
                 ) {
                     Row(modifier = Modifier.padding(12.dp)) {
                         Image(
-                            painter = painterResource(id = imageResId),
+                            painter = rememberSafePainter(pooja.image), // handles .png/.webp/.jpg + case
                             contentDescription = pooja.name,
                             modifier = Modifier.size(64.dp)
                         )
