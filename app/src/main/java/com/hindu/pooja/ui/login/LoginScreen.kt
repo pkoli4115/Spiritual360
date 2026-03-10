@@ -1,6 +1,11 @@
 package com.hindu.pooja.ui.login
-import com.hindu.pooja.BuildConfig
-
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.ui.draw.clip
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
@@ -83,7 +88,6 @@ fun LoginScreen(
 
     // -------- One-time environment summary + App Check token ----------
     LaunchedEffect(Unit) {
-        logEnvSummary(context)
         logFacebookKeyHashes(context)
         // Quick App Check token probe (non-forced)
         FirebaseAppCheck.getInstance().getToken(false)
@@ -181,46 +185,143 @@ fun LoginScreen(
             Log.d(TAG, "LoginScreen disposed (Facebook callback remains registered in CallbackManager)")
         }
     }
-
-    // ---------------- UI ----------------
+// ---------------- UI ----------------
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Brush.verticalGradient(listOf(Saffron, Cream)))
     ) {
+        val infiniteTransition = rememberInfiniteTransition(label = "bannerGlow")
+
+        val glowAlpha1 by infiniteTransition.animateFloat(
+            initialValue = 0.14f,
+            targetValue = 0.34f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(1800),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "glowAlpha1"
+        )
+
+        val glowAlpha2 by infiniteTransition.animateFloat(
+            initialValue = 0.08f,
+            targetValue = 0.20f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(2400),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "glowAlpha2"
+        )
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            DrawIndianFlag(Modifier.fillMaxWidth().height(120.dp))
+            DrawIndianFlag(Modifier.fillMaxWidth().height(100.dp))
 
             Spacer(Modifier.height(20.dp))
-            Image(
-                painter = painterResource(id = R.drawable.applauncher),
-                contentDescription = null,
-                modifier = Modifier.size(140.dp),
-                contentScale = ContentScale.Fit
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                // Soft divine aura
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(
+                            Brush.radialGradient(
+                                colors = listOf(
+                                    Color(0xFFFFD54F).copy(alpha = glowAlpha1),
+                                    Color(0xFFFFE082).copy(alpha = glowAlpha2),
+                                    Color.Transparent
+                                )
+                            )
+                        )
+                )
+
+                // Sparkles around banner
+                Canvas(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .clip(RoundedCornerShape(24.dp))
+                ) {
+                    val sparkles = listOf(
+                        Offset(size.width * 0.14f, size.height * 0.20f),
+                        Offset(size.width * 0.86f, size.height * 0.18f),
+                        Offset(size.width * 0.12f, size.height * 0.78f),
+                        Offset(size.width * 0.88f, size.height * 0.70f),
+                        Offset(size.width * 0.52f, size.height * 0.10f)
+                    )
+
+                    sparkles.forEachIndexed { index, center ->
+                        val alpha = if (index % 2 == 0) glowAlpha1 else glowAlpha2
+
+                        drawCircle(
+                            color = Color(0xFFFFF3B0).copy(alpha = alpha),
+                            radius = 7f,
+                            center = center
+                        )
+
+                        drawLine(
+                            color = Color(0xFFFFF8DC).copy(alpha = alpha),
+                            start = Offset(center.x - 12f, center.y),
+                            end = Offset(center.x + 12f, center.y),
+                            strokeWidth = 2f
+                        )
+
+                        drawLine(
+                            color = Color(0xFFFFF8DC).copy(alpha = alpha),
+                            start = Offset(center.x, center.y - 12f),
+                            end = Offset(center.x, center.y + 12f),
+                            strokeWidth = 2f
+                        )
+                    }
+                }
+
+                Image(
+                    painter = painterResource(id = R.drawable.applauncher),
+                    contentDescription = "Ramakoti Banner",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(210.dp)
+                        .clip(RoundedCornerShape(18.dp)),
+                    contentScale = ContentScale.Crop
+                )
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            Text(
+                text = "Digital Sri Rama Nama Writing",
+                color = Color(0xFF7A4A1A),
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium
             )
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(10.dp))
+
             Text(
-                "Spiritual360",
-                color = Color(0xFF6A1B09),
-                fontSize = 20.sp,
+                text = "Jai Shri Ram ✨",
+                color = Color(0xFF8B4513),
+                fontSize = 18.sp,
                 fontWeight = FontWeight.SemiBold
             )
 
-            Spacer(Modifier.height(28.dp))
+            Spacer(Modifier.height(22.dp))
 
             Surface(
-                color = Color.White.copy(alpha = 0.85f),
-                shape = RoundedCornerShape(16.dp),
+                color = Color.White.copy(alpha = 0.90f),
+                shape = RoundedCornerShape(18.dp),
                 tonalElevation = 6.dp,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .shadow(8.dp, RoundedCornerShape(16.dp))
+                    .shadow(10.dp, RoundedCornerShape(18.dp))
             ) {
                 Column(
                     Modifier.padding(24.dp),
@@ -240,13 +341,15 @@ fun LoginScreen(
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(50.dp),
+                                .height(54.dp),
                             shape = RoundedCornerShape(30.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color.White)
+                            colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+                            border = BorderStroke(1.dp, Color(0xFFE0E0E0)),
+                            elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
                         ) {
                             Icon(
-                                painterResource(id = R.drawable.ic_google_logo),
-                                null,
+                                painter = painterResource(id = R.drawable.ic_google_logo),
+                                contentDescription = null,
                                 tint = Color.Unspecified,
                                 modifier = Modifier.size(22.dp)
                             )
@@ -275,8 +378,8 @@ fun LoginScreen(
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1877F2))
                         ) {
                             Icon(
-                                painterResource(id = R.drawable.ic_facebook_logo),
-                                null,
+                                painter = painterResource(id = R.drawable.ic_facebook_logo),
+                                contentDescription = null,
                                 tint = Color.Unspecified,
                                 modifier = Modifier.size(22.dp)
                             )
@@ -288,10 +391,12 @@ fun LoginScreen(
             }
 
             Spacer(Modifier.weight(1f))
+
             Text("Powered by", style = MaterialTheme.typography.labelLarge)
+
             Image(
-                painterResource(id = R.drawable.qtilabs),
-                null,
+                painter = painterResource(id = R.drawable.qtilabs),
+                contentDescription = null,
                 modifier = Modifier
                     .height(40.dp)
                     .clickable {
@@ -360,6 +465,7 @@ private fun ensureMinimalProfileAndRoute(nav: NavController, done: () -> Unit) {
         done()
         return
     }
+
     val doc = FirebaseFirestore.getInstance().collection("users").document(u.uid)
     val data = mapOf(
         "uid" to u.uid,
@@ -368,7 +474,9 @@ private fun ensureMinimalProfileAndRoute(nav: NavController, done: () -> Unit) {
         "photoUrl" to (u.photoUrl?.toString() ?: ""),
         "updatedAt" to Timestamp.now()
     )
+
     Log.d(TAG, "Writing minimal profile for uid=${u.uid}")
+
     doc.set(data, SetOptions.merge())
         .addOnSuccessListener {
             Log.i(TAG, "Profile write SUCCESS → navigate Home")
@@ -381,31 +489,13 @@ private fun ensureMinimalProfileAndRoute(nav: NavController, done: () -> Unit) {
         .addOnFailureListener { e ->
             Log.e(TAG, "Profile write FAILED: ${e.javaClass.simpleName}: ${e.message}", e)
             done()
-            // Still allow navigation to avoid trapping user on login
             nav.navigate(Screen.Home.route) {
                 popUpTo(0) { inclusive = true }
                 launchSingleTop = true
             }
         }
 }
-
 /* ---------- Extra diagnostics ---------- */
-
-private fun logEnvSummary(context: Context) {
-    val pkg = context.packageName
-    val appId = try { context.packageName } catch (_: Throwable) { "?" }
-    val isDebug = BuildConfig.DEBUG
-    val buildType = BuildConfig.BUILD_TYPE
-    val devOnly = BuildConfig.DEV_ONLY
-    Log.i(TAG, "===== Env Summary =====")
-    Log.i(TAG, "packageName=$pkg appId=$appId")
-    Log.i(TAG, "BuildConfig: DEBUG=$isDebug BUILD_TYPE=$buildType DEV_ONLY=$devOnly")
-    Log.i(TAG, "Version: code=${BuildConfig.BUILD_ID} name=${BuildConfig.GIT_SHA}@${BuildConfig.BUILD_TIME}")
-    // Web client id presence
-    val webClient = runCatching { context.getString(R.string.default_web_client_id) }.getOrNull()
-    Log.i(TAG, "default_web_client_id present=${!webClient.isNullOrBlank()} value='${safeEllipsize(webClient)}'")
-    Log.i(TAG, "=======================")
-}
 
 private fun logFacebookKeyHashes(context: Context) {
     try {

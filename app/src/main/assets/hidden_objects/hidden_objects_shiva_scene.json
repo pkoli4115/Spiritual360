@@ -1,14 +1,13 @@
 {
   "sceneImage": "shiva",
-  "title": "Shiva Meditation Scene",
-  "hintLimit": 3,
-  "timeLimitSeconds": 60,
+  "title": "Shiva - Hidden Objects",
+  "timeLimitSeconds": 90,
   "objects": [
-    { "name": "Snake", "x": 280, "y": 150 },
-    { "name": "Trishul", "x": 620, "y": 180 },
-    { "name": "Shiva Linga", "x": 630, "y": 300 },
-    { "name": "Tiger Skin", "x": 360, "y": 400 },
-    { "name": "Rudraksha", "x": 300, "y": 120 },
-    { "name": "Third Eye", "x": 340, "y": 80 }
+    { "name": "Tiger Skin", "x": 500, "y": 860 },
+    { "name": "Trishul", "x": 830, "y": 240 },
+    { "name": "Rudraksha", "x": 500, "y": 500 },
+    { "name": "Snake", "x": 480, "y": 345 },
+    { "name": "Shiva Linga", "x": 820, "y": 680 },
+    { "name": "Third Eye", "x": 500, "y": 265 }
   ]
 }

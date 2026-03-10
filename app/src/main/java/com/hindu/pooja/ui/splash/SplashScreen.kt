@@ -65,7 +65,7 @@ fun SplashScreen(
         // Center icon
         Image(
             painter = painterResource(id = R.drawable.applauncher),
-            contentDescription = "Spiritual360",
+            contentDescription = "eRamakoti",
             modifier = Modifier
                 .size(172.dp)
                 .align(Alignment.Center),

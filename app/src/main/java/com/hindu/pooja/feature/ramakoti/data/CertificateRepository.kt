@@ -1,17 +1,18 @@
 package com.hindu.pooja.feature.ramakoti.data
 
 import android.content.Context
-import android.graphics.Bitmap
 import com.hindu.pooja.feature.ramakoti.util.PdfGenerator
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
 
 data class CertificateInput(
     val devoteeName: String,
-    val countText: String,      // e.g., "Completed 1 Crore Sri Rama Namas"
-    val dateText: String,       // "dd MMM yyyy"
-    val language: String,       // "en" | "te" | "hi"
-    val verificationUrl: String = "", // may be blank -> offline payload
-    val templateBitmap: Bitmap? = null
+    val countText: String,
+    val dateText: String,
+    val language: String,
+    val verificationUrl: String = "",
+    val templateBitmap: android.graphics.Bitmap? = null
 )
 
 data class CertificateResult(
@@ -22,17 +23,18 @@ data class CertificateResult(
 class CertificateRepository {
 
     /**
-     * Generates the certificate PDF to app cache.
-     * Upload is handled by RamakotiExportUploader (call that separately).
+     * Heavy work must happen on IO to avoid UI freeze.
      */
     suspend fun generateAndOptionallyUpload(
         context: Context,
         uid: String,
         input: CertificateInput,
-        uploadToStorage: Boolean = false // ignored on purpose; kept for API compatibility
-    ): CertificateResult {
-        // PdfGenerator already builds a non-empty payload if verificationUrl is blank
+        uploadToStorage: Boolean = false
+    ): CertificateResult = withContext(Dispatchers.IO) {
         val out = PdfGenerator.createCertificatePdf(context, input)
-        return CertificateResult(localPdf = out.file, certificateId = out.certificateId)
+        CertificateResult(
+            localPdf = out.file,
+            certificateId = out.certificateId
+        )
     }
 }

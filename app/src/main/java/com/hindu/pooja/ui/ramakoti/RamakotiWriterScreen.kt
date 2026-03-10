@@ -1,5 +1,5 @@
 package com.hindu.pooja.feature.ramakoti.ui
-
+import androidx.compose.foundation.shape.CircleShape
 import android.app.TimePickerDialog
 import android.media.AudioAttributes
 import android.media.SoundPool
@@ -47,7 +47,8 @@ fun RamakotiWriterScreen(
     val ui by vm.ui.collectAsState()
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
-
+    val prefs = remember { RamakotiPreferences.getInstance(ctx) }
+    val reminderEnabled by prefs.reminderEnabled.collectAsState(initial = false)
     // Ensure Firestore listeners are attached whenever we land here
     LaunchedEffect(Unit) { vm.refreshFromServer() }
 
@@ -96,15 +97,37 @@ fun RamakotiWriterScreen(
             CenterAlignedTopAppBar(
                 title = { Text("Ramakoti") },
                 actions = {
-                    IconButton(onClick = {
-                        showTimePickerDialog(
-                            context = ctx,
-                            prefs = RamakotiPreferences.getInstance(ctx),
-                            scheduler = reminderVm.scheduler,
-                            scope = scope
-                        )
-                    }) {
-                        Icon(Icons.Outlined.Notifications, contentDescription = "Set reminder")
+                    Box(
+                        modifier = Modifier.padding(end = 8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (reminderEnabled) {
+                            Box(
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .background(
+                                        color = Color(0xFFFFE8C7),
+                                        shape = CircleShape
+                                    )
+                            )
+                        }
+
+                        IconButton(
+                            onClick = {
+                                showTimePickerDialog(
+                                    context = ctx,
+                                    prefs = prefs,
+                                    scheduler = reminderVm.scheduler,
+                                    scope = scope
+                                )
+                            }
+                        ) {
+                            Icon(
+                                Icons.Outlined.Notifications,
+                                contentDescription = "Set reminder",
+                                tint = if (reminderEnabled) Color(0xFFB87333) else LocalContentColor.current
+                            )
+                        }
                     }
                 }
             )
@@ -181,7 +204,7 @@ fun RamakotiWriterScreen(
 
             // Primary button (localized label when actively writing)
             val btnLabel = when {
-                ui.isIssuingCertificate -> "Generating Certificate…"
+                ui.isIssuingCertificate -> "Generating..."
                 ui.targetReached && ui.certificateUrl != null -> "View Certificate"
                 ui.targetReached -> "Target Completed"
                 else -> RamakotiLanguages.writerButtonLabel(effectiveLang)
@@ -239,7 +262,84 @@ fun RamakotiWriterScreen(
             )
         }
     }
+    @Composable
+    fun CertificateGeneratingOverlay(
+        step: Int,
+        stepLabel: String
+    ) {
+        val progress = when (step) {
+            1 -> 0.25f
+            2 -> 0.70f
+            3 -> 0.95f
+            else -> 0f
+        }
 
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0x99000000)),
+            contentAlignment = Alignment.Center
+        ) {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                modifier = Modifier.padding(32.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(28.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    CircularProgressIndicator()
+
+                    Spacer(Modifier.height(20.dp))
+
+                    Text(
+                        text = "Generating your certificate",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+
+                    Spacer(Modifier.height(10.dp))
+
+                    LinearProgressIndicator(
+                        progress = progress,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(8.dp)
+                    )
+
+                    Spacer(Modifier.height(10.dp))
+
+                    Text(
+                        text = "Step $step of 3",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Color.Gray
+                    )
+
+                    Spacer(Modifier.height(6.dp))
+
+                    Text(
+                        text = stepLabel.ifBlank { "Please wait..." },
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Gray
+                    )
+
+                    Spacer(Modifier.height(12.dp))
+
+                    Text(
+                        text = "Sri Rama Jayam",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color(0xFFB87333)
+                    )
+                }
+            }
+        }
+    }
+    // Certificate generation overlay
+    if (ui.isIssuingCertificate) {
+        CertificateGeneratingOverlay(
+            step = ui.certificateStep,
+            stepLabel = ui.certificateStepLabel
+        )
+    }
     // Certificate error
     ui.certificateError?.let { msg ->
         AlertDialog(

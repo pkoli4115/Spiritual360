@@ -44,7 +44,7 @@ object RamakotiPdfGenerator {
 
         // Watermark background
         runCatching {
-            val wm = fadedGrayscale(context, R.drawable.ramakoti_pdf_bg)
+            val wm = fadedGrayscale(context, R.drawable.ramakoti_certificate_bg)
             c.drawBitmap(wm, 0f, 0f, null)
             wm.recycle()
         }

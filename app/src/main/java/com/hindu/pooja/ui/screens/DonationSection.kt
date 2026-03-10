@@ -22,7 +22,7 @@ import com.hindu.pooja.R
 object DonationConfig {
     const val upiId: String = "9121011887@ybl"      // your UPI ID
     const val payeeName: String = "Koli Prasanth"
-    const val note: String = "Donation to Spiritual360 App"
+    const val note: String = "Donation to eRamakoti App"
     val qrRes: Int = R.drawable.donation_qr         // jpg/png in res/drawable
 }
 
@@ -51,14 +51,7 @@ fun DonationSection(
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.clickable {
-                launchUpiChooserIntent(
-                    context = context,
-                    upiId = DonationConfig.upiId,
-                    payeeName = DonationConfig.payeeName,
-                    amount = null, // user will type the amount
-                    note = DonationConfig.note
-                )
-            }
+                 }
         )
         Spacer(Modifier.height(6.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -142,45 +135,6 @@ fun DonationAmountPills(
                 Spacer(Modifier.height(8.dp))
             }
         }
-    }
-}
-
-private fun buildUpiUri(
-    upiId: String,
-    payeeName: String,
-    amount: String?, // null => no &am param
-    note: String,
-    tr: String = "HP-" + System.currentTimeMillis()
-): Uri {
-    val sb = StringBuilder()
-        .append("upi://pay")
-        .append("?pa=").append(upiId)
-        .append("&pn=").append(Uri.encode(payeeName))
-    if (!amount.isNullOrBlank()) sb.append("&am=").append(Uri.encode(amount))
-    sb.append("&tn=").append(Uri.encode(note))
-        .append("&tr=").append(Uri.encode(tr))
-        .append("&cu=INR")
-    return Uri.parse(sb.toString())
-}
-
-private fun launchUpiChooserIntent(
-    context: android.content.Context,
-    upiId: String,
-    payeeName: String,
-    amount: String?, // pass null to let user type amount
-    note: String
-) {
-    val uri = buildUpiUri(upiId, payeeName, amount, note)
-    val base = Intent(Intent.ACTION_VIEW, uri)
-    val chooser = Intent.createChooser(base, "Pay with UPI")
-    try {
-        context.startActivity(chooser)
-    } catch (_: ActivityNotFoundException) {
-        Toast.makeText(
-            context,
-            "No UPI app found. Install Google Pay, PhonePe, or Paytm.",
-            Toast.LENGTH_LONG
-        ).show()
     }
 }
 

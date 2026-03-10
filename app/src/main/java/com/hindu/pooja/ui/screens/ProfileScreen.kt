@@ -49,7 +49,7 @@ import com.hindu.pooja.ui.common.AppVersionBadge
 /* =====================  Donation constants  ===================== */
 private const val DONATION_UPI_ID = "9121011887@ybl"
 private const val DONATION_PAYEE = "Koli Prasanth"
-private const val DONATION_NOTE  = "Donation to Spiritual360 App"
+private const val DONATION_NOTE  = "Donation to eRamakoti App"
 private const val TAG = "DonateFlow"
 
 @Composable
@@ -704,24 +704,6 @@ private fun openUpiChooser(
             Toast.LENGTH_LONG
         ).show()
     }
-}
-
-private fun buildUpiUri(
-    upiId: String,
-    payeeName: String,
-    amount: String?,
-    note: String,
-    tr: String = "HP-" + System.currentTimeMillis()
-): Uri {
-    val sb = StringBuilder()
-        .append("upi://pay")
-        .append("?pa=").append(upiId)
-        .append("&pn=").append(Uri.encode(payeeName))
-    if (!amount.isNullOrBlank()) sb.append("&am=").append(Uri.encode(amount))
-    sb.append("&tn=").append(Uri.encode(note))
-        .append("&tr=").append(Uri.encode(tr))
-        .append("&cu=INR")
-    return Uri.parse(sb.toString())
 }
 
 private fun shareText(context: android.content.Context, title: String, text: String) {

@@ -7,36 +7,36 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import androidx.navigation.compose.rememberNavController
+import com.facebook.CallbackManager
+import com.facebook.FacebookSdk
+import com.facebook.appevents.AppEventsLogger
 import com.hindu.pooja.ui.navigation.BottomNavItem
 import com.hindu.pooja.ui.navigation.BottomNavigationBar
 import com.hindu.pooja.ui.navigation.HinduPoojaNavHost
+import com.hindu.pooja.ui.navigation.Screen
 import com.hindu.pooja.ui.theme.HinduPoojaTheme
+import com.hindu.pooja.util.UpdateManager
 import dagger.hilt.android.AndroidEntryPoint
-import com.hindu.pooja.R
-
-// Facebook
-import com.facebook.FacebookSdk
-import com.facebook.appevents.AppEventsLogger
-import com.facebook.CallbackManager
-
-// Ramakoti audio key bus
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
-
-// In-app updates
-import com.hindu.pooja.util.UpdateManager
 
 enum class VolumeEvent { UP, DOWN }
 
 object RamakotiAudioKeyBus {
-    @Volatile private var active: Boolean = false
-    fun setActive(enabled: Boolean) { active = enabled }
+    @Volatile
+    private var active: Boolean = false
+
+    fun setActive(enabled: Boolean) {
+        active = enabled
+    }
 
     val events = MutableSharedFlow<VolumeEvent>(
         replay = 0,
@@ -63,14 +63,12 @@ class MainActivity : ComponentActivity() {
     private var splashReady = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // Android 12+ system splash
         val splash: SplashScreen = installSplashScreen()
         splash.setKeepOnScreenCondition { !splashReady }
 
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
-        // Facebook SDK init
         FacebookSdk.sdkInitialize(applicationContext)
         AppEventsLogger.activateApp(application)
         fbCallbackManager = CallbackManager.Factory.create()
@@ -84,14 +82,11 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
-        // Prompt updates when user opens the app.
-        // Set preferImmediate=true only for critical releases you want to block on.
         UpdateManager.checkAndPrompt(this, preferImmediate = false)
     }
 
     override fun onResume() {
         super.onResume()
-        // Resume any in-progress IMMEDIATE update flow (required by Play)
         UpdateManager.resumeIfNeeded(this)
     }
 
@@ -101,7 +96,6 @@ class MainActivity : ComponentActivity() {
         UpdateManager.onActivityResult(requestCode, resultCode)
     }
 
-    // Handle volume keys via onKeyDown (avoid restricted dispatchKeyEvent)
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
         when (keyCode) {
             KeyEvent.KEYCODE_VOLUME_UP -> if (RamakotiAudioKeyBus.emit(VolumeEvent.UP)) return true
@@ -117,10 +111,8 @@ fun HinduPoojaAppContent() {
         val navController = rememberNavController()
 
         val bottomNavItems = listOf(
-            BottomNavItem("home", R.drawable.ic_home, R.string.nav_home),
-            BottomNavItem("featured", R.drawable.ic_star, R.string.nav_featured),
-            BottomNavItem("kids", R.drawable.ic_kids, R.string.nav_kids),
-            BottomNavItem("profile", R.drawable.ic_profile, R.string.nav_profile)
+            BottomNavItem(Screen.Home.route, R.drawable.ic_home, R.string.nav_home),
+            BottomNavItem(Screen.Profile.route, R.drawable.ic_profile, R.string.nav_profile)
         )
 
         val currentBackStackEntry by navController.currentBackStackEntryFlow

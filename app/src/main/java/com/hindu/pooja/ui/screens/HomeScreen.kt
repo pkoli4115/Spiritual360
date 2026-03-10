@@ -1,5 +1,6 @@
 package com.hindu.pooja.ui.screens
-
+import com.hindu.pooja.ui.kids.flashcards.FlashCardRoutes
+import android.annotation.SuppressLint
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
@@ -10,6 +11,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -31,6 +33,7 @@ import com.hindu.pooja.ui.navigation.Screen
 import com.hindu.pooja.viewmodel.ProfileViewModel
 import kotlinx.coroutines.delay
 
+@SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 fun HomeScreen(
     navController: NavController,
@@ -67,6 +70,27 @@ fun HomeScreen(
     val upiId = DonationConfig.upiId
     val payeeName = DonationConfig.payeeName
     val note = DonationConfig.note
+
+    // Kids quick items for Home-only mini row
+    val kidsQuickItems = remember {
+        listOf(
+            KidsQuickItem(
+                id = "find_it",
+                title = "Devotional Find-It Game",
+                subtitle = "Tap to find hidden sacred objects.",
+            ),
+            KidsQuickItem(
+                id = "know_gods",
+                title = "Know the Gods",
+                subtitle = "Flip cards to learn deities & forms.",
+            ),
+            KidsQuickItem(
+                id = "sloka_meanings",
+                title = "Sloka / Aarti Meanings",
+                subtitle = "Understand meanings behind daily slokas.",
+            )
+        )
+    }
 
     @Suppress("UNUSED_VARIABLE")
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
@@ -116,7 +140,7 @@ fun HomeScreen(
                         )
                     }
                     item {
-                        // ✅ FIX: This route now exists in the nav graph
+                        // Ayodhya Kanda — reader
                         FeaturedAyodhyaCard(
                             onOpen = { navController.navigate("ramayana/ayodhya/wiki") }
                         )
@@ -146,18 +170,62 @@ fun HomeScreen(
                 }
             }
 
-            // Find-It CTA
+            // Find-It CTA (big orange button)
             item {
                 Button(
-                    onClick = { navController.navigate("find_it_game/hidden_objects_shiva_scene.json") },
+                    onClick = {
+                        navController.navigate(
+                            Screen.FindItGame.createRoute("hidden_objects_shiva_scene.json")
+                        )
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 12.dp)
-                ) { Text("🎯 Try Devotional Find-It Game") }
-                Spacer(modifier = Modifier.height(8.dp))
+                ) {
+                    Text("🎯 Try Devotional Find-It Game")
+                }
+                Spacer(modifier = Modifier.height(16.dp))
             }
 
-            // Content sections
+            // ---- Kids mini-section on Home (horizontal cards) ----
+            item {
+                KidsHomeSectionHeader(
+                    onViewAll = { navController.navigate(Screen.Kids.route) }
+                )
+                Spacer(Modifier.height(8.dp))
+            }
+
+            item {
+                LazyRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentPadding = PaddingValues(horizontal = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(kidsQuickItems) { kidsItem ->
+                        KidsQuickCard(
+                            item = kidsItem,
+                            onClick = {
+                                when (kidsItem.id) {
+                                    "find_it" -> navController.navigate(
+                                        Screen.FindItGame.createRoute("hidden_objects_shiva_scene.json")
+                                    )
+
+                                    "know_gods" -> navController.navigate(
+                                        FlashCardRoutes.knowGods()
+                                    )
+
+                                    "sloka_meanings" -> navController.navigate(
+                                        FlashCardRoutes.slokaMeanings()
+                                    )
+                                }
+                            }
+                        )
+                    }
+                }
+                Spacer(Modifier.height(16.dp))
+            }
+
+            // ---- Existing Pooja sections ----
             categoryData.forEach { (title, poojaList) ->
                 val filteredItems = if (title == "Daily Poojas") {
                     poojaList.filter { it.scrollable == true }
@@ -180,9 +248,15 @@ fun HomeScreen(
                             },
                             onViewAllClick = {
                                 val route = when (title) {
-                                    "Daily Poojas" -> Screen.Poojas.createRoute("daily_index_te.json")
-                                    "Vrathams / Nomulu" -> Screen.Vrathams.createRoute("vrathams_index_te.json")
-                                    "Ashtottaras" -> Screen.Ashtottaras.createRoute("ashtottaras_index_te.json")
+                                    "Daily Poojas" ->
+                                        Screen.Poojas.createRoute("daily_index_te.json")
+
+                                    "Vrathams / Nomulu" ->
+                                        Screen.Vrathams.createRoute("vrathams_index_te.json")
+
+                                    "Ashtottaras" ->
+                                        Screen.Ashtottaras.createRoute("ashtottaras_index_te.json")
+
                                     else -> "unknown_list"
                                 }
                                 navController.navigate(route)
@@ -274,7 +348,7 @@ private fun FeaturedBalaKandaCard(onOpen: () -> Unit) {
         ) {
             Text("Bala Kanda — Lessons", style = MaterialTheme.typography.titleMedium)
             Text(
-                "Child-friendly Telugu lessons + quiz (simple reader view).",
+                "Read child-friendly Telugu lessons and take the quiz.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 3,
@@ -304,7 +378,7 @@ private fun FeaturedAyodhyaCard(onOpen: () -> Unit) {
         ) {
             Text("Ayodhya Kanda — Lessons", style = MaterialTheme.typography.titleMedium)
             Text(
-                "Ayodhyakanda in Telugu (reader view) with TTS.",
+                "Read Ayodhyakanda in Telugu (reader view) with TTS.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 3,
@@ -314,6 +388,76 @@ private fun FeaturedAyodhyaCard(onOpen: () -> Unit) {
             Button(onClick = onOpen, modifier = Modifier.fillMaxWidth()) {
                 Text("Open Ayodhya Kanda")
             }
+        }
+    }
+}
+
+/* ---------------- Kids mini-section helpers ---------------- */
+
+private data class KidsQuickItem(
+    val id: String,
+    val title: String,
+    val subtitle: String
+)
+
+@Composable
+private fun KidsHomeSectionHeader(onViewAll: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "Kids",
+            color = MaterialTheme.colorScheme.primary,
+            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold)
+        )
+        Text(
+            text = "View All  ➜",
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier
+                .clickable { onViewAll() }
+                .padding(4.dp)
+        )
+    }
+}
+
+@Composable
+private fun KidsQuickCard(
+    item: KidsQuickItem,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .width(260.dp)
+            .height(140.dp)
+            .clickable { onClick() },
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFFEDE0FF) // soft lavender similar to kids tiles
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = item.title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = item.subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 }
@@ -354,48 +498,5 @@ fun ShimmerPlaceholderRow() {
                     )
             )
         }
-    }
-}
-
-/* ---------------- UPI helpers ---------------- */
-
-private fun buildUpiUri(
-    upiId: String,
-    payeeName: String,
-    amount: String?,
-    note: String,
-    tr: String = "HP-" + System.currentTimeMillis()
-): Uri {
-    val sb = StringBuilder()
-        .append("upi://pay")
-        .append("?pa=").append(upiId)
-        .append("&pn=").append(Uri.encode(payeeName))
-    if (!amount.isNullOrBlank()) sb.append("&am=").append(Uri.encode(amount))
-    sb.append("&tn=").append(Uri.encode(note))
-        .append("&tr=").append(Uri.encode(tr))
-        .append("&cu=INR")
-    return Uri.parse(sb.toString())
-}
-
-private fun launchUpiChooserIntent(
-    context: android.content.Context,
-    upiId: String,
-    payeeName: String,
-    amount: String?,
-    note: String
-) {
-    val uri = buildUpiUri(upiId, payeeName, amount, note)
-    val base = Intent(Intent.ACTION_VIEW, uri)
-    val chooser = Intent.createChooser(base, "Pay with UPI")
-    try {
-        context.startActivity(chooser)
-    } catch (_: ActivityNotFoundException) {
-        Toast.makeText(
-            context,
-            "No UPI app found. Please install Google Pay, PhonePe, or Paytm.",
-            Toast.LENGTH_LONG
-        ).show()
-    } catch (e: Exception) {
-        Toast.makeText(context, "Could not open UPI. ${e.message}", Toast.LENGTH_LONG).show()
     }
 }

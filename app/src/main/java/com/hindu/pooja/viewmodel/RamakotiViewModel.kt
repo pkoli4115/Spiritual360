@@ -44,7 +44,6 @@ data class RamakotiUiState(
     val runId: String = "",
     val language: String = "en",
     val targetCount: Int = 10_000_000,
-
     // RUN progress (fresh per run)
     val runTotal: Int = 0,
     val currentBatchCount: Int = 0,
@@ -60,6 +59,8 @@ data class RamakotiUiState(
 
     // Certificate states (tied to RUN)
     val isIssuingCertificate: Boolean = false,
+    val certificateStep: Int = 0,
+    val certificateStepLabel: String = "",
     val certificateUrl: String? = null,
     val certificateError: String? = null,
 
@@ -388,8 +389,12 @@ class RamakotiViewModel @Inject constructor(
         if (_ui.value.isIssuingCertificate) return
         Log.d(TAG, "maybeCompleteRun(runId=$runId total=$runTotal target=$target)")
 
-        _ui.value = _ui.value.copy(isIssuingCertificate = true, certificateError = null)
-
+        _ui.value = _ui.value.copy(
+            isIssuingCertificate = true,
+            certificateError = null,
+            certificateStep = 1,
+            certificateStepLabel = "Preparing certificate..."
+        )
         viewModelScope.launch {
             try {
                 val user = auth.currentUser ?: error("Not signed in")
@@ -411,9 +416,13 @@ class RamakotiViewModel @Inject constructor(
                 }
 
                 val milestone = when (target) {
-                    100_000   -> "Completed 1 Lakh Sri Rama Namas"
+                    10 -> "Completed 10 Sri Rama Namas"
+                    100 -> "Completed 100 Sri Rama Namas"
+                    1000 -> "Completed 1000 Sri Rama Namas"
+                    100_000 -> "Completed 1 Lakh Sri Rama Namas"
                     1_000_000 -> "Completed 10 Lakh Sri Rama Namas"
-                    else      -> "Completed 1 Crore Sri Rama Namas"
+                    10_000_000 -> "Completed 1 Crore Sri Rama Namas"
+                    else -> "Completed $target Sri Rama Namas"
                 }
 
                 // Generate locally
@@ -432,6 +441,10 @@ class RamakotiViewModel @Inject constructor(
                 )
 
                 // Upload + record
+                _ui.value = _ui.value.copy(
+                    certificateStep = 2,
+                    certificateStepLabel = "Uploading securely..."
+                )
                 val url = RamakotiExportUploader.uploadAndRecord(
                     auth = auth,
                     storage = storage,
@@ -449,6 +462,10 @@ class RamakotiViewModel @Inject constructor(
                 Log.d(TAG, "Certificate uploaded: $url (id=${result.certificateId})")
 
                 // Atomically mark the run COMPLETED (if still ACTIVE)
+                _ui.value = _ui.value.copy(
+                    certificateStep = 3,
+                    certificateStepLabel = "Finalizing completion..."
+                )
                 db.runTransaction { tx ->
                     val snap = tx.get(runRef)
                     if ((snap.getString("status") ?: "ACTIVE") == "ACTIVE") {
@@ -481,14 +498,18 @@ class RamakotiViewModel @Inject constructor(
                 _ui.value = _ui.value.copy(
                     isIssuingCertificate = false,
                     certificateUrl = url,
-                    canPickNextTarget = true
+                    canPickNextTarget = true,
+                    certificateStep = 0,
+                    certificateStepLabel = ""
                 )
                 Log.d(TAG, "Run COMPLETED + history recorded")
             } catch (t: Throwable) {
                 Log.e(TAG, "maybeCompleteRun() failed", t)
                 _ui.value = _ui.value.copy(
                     isIssuingCertificate = false,
-                    certificateError = t.message ?: t.toString()
+                    certificateError = t.message ?: t.toString(),
+                    certificateStep = 0,
+                    certificateStepLabel = ""
                 )
             }
         }

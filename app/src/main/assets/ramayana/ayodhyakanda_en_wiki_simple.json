@@ -1,0 +1,102 @@
+{
+  "id": "ayodhyakanda_en_wiki_simple",
+  "title": {
+    "en": "Ramayana — Ayodhyakanda (Wikipedia summary story — Telugu, full text)"
+  },
+  "version": "1.0.0",
+  "created_at": "2025-10-06T00:00:00+05:30",
+  "languages": ["te"],
+  "tts": {
+    "default_language": "te",
+    "source": "Telugu Wikipedia",
+    "url": "https://te.wikipedia.org/wiki/అయోధ్యకాండ",
+    "license": "CC BY-SA 3.0",
+    "available_languages": ["te"]
+  },
+  "lessons": [
+    {
+      "id": "01",
+      "order": 1,
+      "title": "Lesson 01 — Introduction",
+      "content": "The story of Ayodhyakanda is briefly narrated here."
+    },
+    {
+      "id": "02",
+      "order": 2,
+      "title": "Lesson 02 — Preparations for Rama's Coronation",
+      "content": "The virtuous, righteous, and radiant Rama became the beloved of the people of Ayodhya. Dasharatha decided to hand over the kingdom to his eldest son Rama and retire himself. All arrangements for the coronation were completed on the auspicious Chaitra Pushya day. The citizens were delighted, and the whole city was celebrating. Sage Vashistha appointed Rama for the coronation ritual and instructed Sita and Rama to observe fasting, saying the coronation would be held the next day. Sita and Rama worshipped Lord Narayana, performed rituals, and fasted with steadfast minds. The citizens adorned the city beautifully and continued their festivities."
+    },
+    {
+      "id": "03",
+      "order": 3,
+      "title": "Lesson 03 — Mandhara’s Poisonous Advice to Kaikeyi",
+      "content": "Kaikeyi, Rama’s stepmother, loved him dearly. Upon hearing the news of his coronation, Kaikeyi was pleased. However, her maid Mandhara poisoned her mind, saying: \"If Rama becomes king, Kausalya will become the queen mother and your status will weaken. Therefore, make Bharata king and send Rama away.\" Mandhara’s words stuck with Kaikeyi. Mandhara reminded her that Dasharatha had granted two wishes during the Devasura war and advised her to use those boons now."
+    },
+    {
+      "id": "04",
+      "order": 4,
+      "title": "Lesson 04 — Kaikeyi’s Demands",
+      "content": "When Dasharatha entered the inner chambers, he found Kaikeyi, shorn of ornaments, sorrowful in her anger. Persuading her, Dasharatha swore by Rama and his earned merit to grant her request. Seizing the opportunity, Kaikeyi invoked the two boons Dasharatha had previously granted in the Devasura war: (1) Bharata’s coronation, (2) fourteen years of exile for Rama. Hearing this, Dasharatha collapsed in grief, called it unrighteous, argued that Bharata would never agree, and pleaded with Kaikeyi to withdraw her demands. Yet she stood firm.\n\nThe next day, Vashistha and Sumantra came to conduct the coronation. Dasharatha, heartbroken and speechless, was compelled by Kaikeyi to summon Rama and, in Dasharatha’s presence, revealed the boons. Rama, undisturbed, agreed to depart for exile as per his father’s vow, and requested that Bharata be invited and crowned."
+    },
+    {
+      "id": "05",
+      "order": 5,
+      "title": "Lesson 05 — Sita, Rama, and Lakshmana’s Resolve for Exile",
+      "content": "Kausalya and Lakshmana tried to stop Rama from going into exile, but Rama was resolute. Lakshmana declared that if a confused king’s word must be followed, then defending his brother against all would be his own duty. Kausalya, as a mother, refused to permit Rama’s exile; Lakshmana should uphold the father's word, and Kausalya should follow her husband's dharma. Rama persuaded them both and prepared for exile.\n\nSita insisted she too would join Rama in exile. Though Rama tried to dissuade her saying forest life would be harsh for a princess, Sita persisted, citing astrological predictions favoring her exile, and insisted that with Rama by her side, she would have no fears. If not taken along, Rama would be a coward who failed to protect his wife. After persuading her mother and debating with her brother, Sita joined Rama. Lakshmana, taking leave from his mother and intending to serve his brother and sister-in-law, also set out with them."
+    },
+    {
+      "id": "06",
+      "order": 6,
+      "title": "Lesson 06 — Departure to the Forest",
+      "content": "Sita, Rama, and Lakshmana distributed their wealth to everyone. Rama gave his ornaments to Suyajna, and Sita gave hers to Suyajna’s wife. They bid farewell to their parents. Kaikeyi strictly forced them to wear tree-bark garments. Sumitra instructed Lakshmana to serve his brother. Sumantra drove them away in a chariot. The royal family mourned, and Dasharatha lay on the ground, weeping. Sumitra consoled Kausalya. The people of Ayodhya followed, refusing to turn back.\n\nSpending their first night on the banks of the Tamasa river, Sita, Rama, and Lakshmana stealthily departed Kosala in the night so the citizens would not follow. Crossing the Vedashruti, Gomati, and Syandika rivers, they reached the banks of the Ganga at Shrungiberapuram, where they rested under a tree."
+    },
+    {
+      "id": "07",
+      "order": 7,
+      "title": "Lesson 07 — Hospitality of Guha",
+      "content": "Guha, the king of hunters of that place, greeted Rama and his companions with warm hospitality, offering his kingdom to Rama. Since Rama was under the vow of exile, he refused the offered delicacies and asked for fodder only for the royal horses. Sita and Rama slept on the ground. Lakshmana was distressed at their plight.\n\nRama convinced Sumantra to return to Ayodhya. Guha arranged for a boat to help Sita, Rama, and Lakshmana cross the Ganga. Sita prayed to River Ganga for protection as they departed."
+    },
+    {
+      "id": "08",
+      "order": 8,
+      "title": "Lesson 08 — Residence at Chitrakuta",
+      "content": "Traveling further, Sita, Rama, and Lakshmana reached Bharadwaja’s hermitage at Prayaga, where the Ganga and Yamuna meet. The sage welcomed them and suggested living there, but since it was near habitation, Rama preferred not to stay. On Bharadwaja’s recommendation, they built a raft, crossed the Yamuna, and Sita prayed to a great banyan tree on the way. Proceeding deep into the forest, they reached the picturesque Chitrakuta, where Lakshmana constructed a strong leaf hut. Rama bathed in the Malyavati river and performed auspicious rituals. Their life there began."
+    },
+    {
+      "id": "09",
+      "order": 9,
+      "title": "Lesson 09 — Death of Dasharatha",
+      "content": "Sumantra, after taking leave of Guha, returned sorrowfully to Ayodhya and explained everything to Dasharatha. The king was heartbroken and mournful.\n\nIn his youth, Dasharatha was skilled in sound-shooting archery. One night, mistaking the sound of a pot gathering water for that of an elephant at a lake, he shot an arrow and unwittingly killed a sage’s son, who was fetching water for his blind parents. Dasharatha confessed his mistake to the parents. They wailed over their son’s body, and the father cursed that Dasharatha too would die of grief for his own son.\n\nDasharatha recounted this fateful curse to Kausalya and Sumitra and lamented that he was suffering its result. He died, grieving for Rama."
+    },
+    {
+      "id": "10",
+      "order": 10,
+      "title": "Lesson 10 — Bharata’s Grief",
+      "content": "Ayodhya was plunged deeper into sorrow. Sage Vashistha immediately sent word to Bharata, who was at his uncle’s house in Girivraja, to return for coronation. Bharata, disturbed by a bad dream, was brought to Ayodhya without knowing what had happened. Kaikeyi hurried him to prepare for his coronation, and revealed that Dasharatha had died and Sita, Rama, and Lakshmana had gone to the forest. She claimed it was all for Bharata’s benefit.\n\nEnraged and mortified at his mother’s actions, Bharata vehemently rebuked her and resolved to bring Rama back, have him crowned, and serve him as his younger brother. He assured the ministers that he knew nothing of the intrigue, begged Kausalya for forgiveness, conducted his father’s funeral rites, and observed mourning for twelve days. On the fourteenth day, the royal officials requested him to accept kingship, but Bharata bowed to them, refused, and declared that Rama alone was the true king. He insisted on bringing Rama back to Ayodhya, crowning him, and would go to the forest himself against his mother’s wishes."
+    },
+    {
+      "id": "11",
+      "order": 11,
+      "title": "Lesson 11 — Bharata’s Journey to Chitrakuta",
+      "content": "To make Rama king, Bharata started for Chitrakuta with his entire retinue. On the way, he performed tarpanam for his father with Ganga water, met Guha, learned all that had happened, and mourned. Crossing the Ganga, he reached Bharadwaja’s hermitage, pleased the sage, and learned that Rama, Sita, and Lakshmana were at Chitrakuta.\n\nIn Chitrakuta, Rama and Sita enjoyed the scenery by the Mandakini river. Upon hearing great commotion, Lakshmana climbed a tree and saw a vast army, recognized Bharata by his banner, and worried they came to seize the kingdom and attack. Rama convinced Lakshmana of Bharata's righteousness, calming his doubts.\n\nLeaving the army at a distance, Bharata, Shatrughna, Guha, Sage Vashistha, Sumantra, and ministers approached Rama’s hut. Bharata and Shatrughna, overcome by grief, fell at Rama, Sita, and Lakshmana’s feet and wept."
+    },
+    {
+      "id": "12",
+      "order": 12,
+      "title": "Lesson 12 — Observing the Father's Command",
+      "content": "Rama lifted Bharata and asked after his welfare. On hearing of his father's death, Rama fainted. Reviving, he mourned deeply and performed funeral rites for Dasharatha with Mandakini water. Later, Dasharatha’s wives arrived at the hut. Rama and Lakshmana prostrated at their mothers’ feet, and Sita greeted them with tears. \n\nBharata, filled with humility, fell at Rama’s feet and pleaded: 'I am your servant. I do not deserve the kingship that is yours. Kindly take back your throne and bless us.' Rama replied, 'Father gave you the kingdom and me the vow of exile. We must both fulfill our assigned duties.'\n\nDespite everyone's various appeals, Rama stood firm, determined to keep his father’s command and avoid any blame for untruthfulness toward him."
+    },
+    {
+      "id": "13",
+      "order": 13,
+      "title": "Lesson 13 — The Kingdom of Rama’s Footwear",
+      "content": "Disappointed by Rama's resolve, Bharata spread blades of grass on the ground and laid on them, resolving not to eat or drink until Rama relented. Rama gently comforted Bharata, urging him not to deny him the blessing of fulfilling his father’s debt. Distressed, Bharata asked Rama for clear direction regarding dharma. Rama instructed Bharata in the duties of kingship, telling him to forget Kaikeyi’s mistake and serve his mother piously.\n\nBharata requested Rama’s sandals to rule as his proxy. Rama agreed, and Bharata pledged to eat only roots and fruit, live outside Ayodhya, and rule in Rama’s name for fourteen years. If he did not see Rama at the end of that period, he would enter fire. He took leave of all, placed the sandals on his head, and returned to Ayodhya, reporting everything to Sage Bharadwaja on the way.\n\nBharata sent everyone back to Ayodhya but remained at Nandigrama himself. He offered all royal honors to Rama’s sandals, wore tree-bark garments, and ruled in his brother’s name for fourteen years."
+    },
+    {
+      "id": "14",
+      "order": 14,
+      "title": "Lesson 14 — Atri, Anasuya, and Sita",
+      "content": "Rama’s heart was troubled, and he found Chitrakuta no longer peaceful. Moreover, he saw that the sages there were fearful of demons Khara and Dushana.\n\nSita, Rama, and Lakshmana visited Sage Atri’s hermitage, where Sita bowed before Anasuya, the sage’s wife. Anasuya instructed Sita on the duties of a devoted wife and gifted her a garland of wondrous flowers, sandalwood paste, and fine ornaments. At Anasuya’s request, Sita narrated her own swayamvara and marriage. Anasuya was delighted, and Sita, adorned in the gifts, offered her respects again.\n\nThey bid farewell and, as the sun entered the thick clouds, Sita, Rama, and Lakshmana continued into the deeper forest."
+    }
+  ]
+}

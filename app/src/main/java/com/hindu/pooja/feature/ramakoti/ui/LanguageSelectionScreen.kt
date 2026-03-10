@@ -17,6 +17,7 @@ import androidx.navigation.NavHostController
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.hindu.pooja.BuildConfig
 import com.hindu.pooja.feature.ramakoti.i18n.RamakotiLanguages
 import com.hindu.pooja.feature.ramakoti.prefs.LanguagePreferenceManager
 import com.hindu.pooja.feature.ramakoti.prefs.RamakotiPreferences
@@ -34,31 +35,48 @@ fun LanguageSelectionScreen(
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    val langMgr   = remember { LanguagePreferenceManager.getInstance(ctx) }
-    val prefs     = remember { RamakotiPreferences.getInstance(ctx) }
+    val langMgr = remember { LanguagePreferenceManager.getInstance(ctx) }
+    val prefs = remember { RamakotiPreferences.getInstance(ctx) }
     val scheduler = remember { ReminderScheduler(ctx) }
-    val db        = remember { FirebaseFirestore.getInstance() }
-    val auth      = remember { FirebaseAuth.getInstance() }
+    val db = remember { FirebaseFirestore.getInstance() }
+    val auth = remember { FirebaseAuth.getInstance() }
 
-    var lang by remember { mutableStateOf("en") }
+    var lang by remember { mutableStateOf("") }
     var target by remember { mutableStateOf(10_000_000) }
 
-    // Dropdown UI state
     var langExpanded by remember { mutableStateOf(false) }
     var targetExpanded by remember { mutableStateOf(false) }
 
     val notifPerm = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { /* no-op */ }
+    ) { }
 
-    LaunchedEffect(Unit) {
-        val uid = auth.currentUser?.uid
-        lang = langMgr.languageFlowFor(uid).first().ifBlank { "en" }
-        target = prefs.targetCount.first()
-    }
+    val targetOptions = listOf(10, 100_000, 1_000_000, 10_000_000)
+
+    val targetLabels = mapOf(
+        10 to "10 (Test)",
+        100_000 to "1 Lakh",
+        1_000_000 to "10 Lakh",
+        10_000_000 to "1 Crore"
+    )
+
+        LaunchedEffect(Unit) {
+            val uid = auth.currentUser?.uid
+            lang = langMgr.languageFlowFor(uid).first().ifBlank { "" }
+            val savedTarget = prefs.targetCount.first()
+            target = if (savedTarget in targetOptions) {
+                savedTarget
+            } else {
+                10
+            }
+        }
 
     Scaffold(
-        topBar = { CenterAlignedTopAppBar(title = { Text("Select Language & Target") }) }
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = { Text("Select Language & Target") }
+            )
+        }
     ) { padding ->
         Column(
             modifier = modifier
@@ -68,8 +86,10 @@ fun LanguageSelectionScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // LANGUAGE DROPDOWN
-            Text("Choose your preferred language", style = MaterialTheme.typography.titleMedium)
+            Text(
+                "Choose your preferred language",
+                style = MaterialTheme.typography.titleMedium
+            )
 
             ExposedDropdownMenuBox(
                 expanded = langExpanded,
@@ -77,18 +97,21 @@ fun LanguageSelectionScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 val selectedLabel = RamakotiLanguages.defaults
-                    .firstOrNull { it.code == lang }?.label ?: "English"
+                    .firstOrNull { it.code == lang }?.label ?: "Select language"
 
                 OutlinedTextField(
                     readOnly = true,
                     value = selectedLabel,
                     onValueChange = {},
                     label = { Text("Language") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = langExpanded) },
+                    trailingIcon = {
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = langExpanded)
+                    },
                     modifier = Modifier
                         .menuAnchor()
                         .fillMaxWidth()
                 )
+
                 ExposedDropdownMenu(
                     expanded = langExpanded,
                     onDismissRequest = { langExpanded = false }
@@ -105,14 +128,9 @@ fun LanguageSelectionScreen(
                 }
             }
 
-            // TARGET DROPDOWN
-            Text("Select your Ramakoti target", style = MaterialTheme.typography.titleMedium)
-
-            val targetOptions = listOf(100_000, 1_000_000, 10_000_000)
-            val targetLabels = mapOf(
-                100_000 to "1 Lakh",
-                1_000_000 to "10 Lakh",
-                10_000_000 to "1 Crore"
+            Text(
+                "Select your Ramakoti target",
+                style = MaterialTheme.typography.titleMedium
             )
 
             ExposedDropdownMenuBox(
@@ -125,11 +143,14 @@ fun LanguageSelectionScreen(
                     value = targetLabels[target] ?: target.toString(),
                     onValueChange = {},
                     label = { Text("Target") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = targetExpanded) },
+                    trailingIcon = {
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = targetExpanded)
+                    },
                     modifier = Modifier
                         .menuAnchor()
                         .fillMaxWidth()
                 )
+
                 ExposedDropdownMenu(
                     expanded = targetExpanded,
                     onDismissRequest = { targetExpanded = false }
@@ -148,48 +169,50 @@ fun LanguageSelectionScreen(
 
             Spacer(Modifier.height(12.dp))
 
-            Button(onClick = {
-                scope.launch {
-                    val uid = auth.currentUser?.uid ?: return@launch
+            Button(
+                onClick = {
+                    scope.launch {
+                        val uid = auth.currentUser?.uid ?: return@launch
 
-                    // Persist per-user language & selected target (same behavior)
-                    langMgr.setLanguageFor(uid, lang)
-                    prefs.setTargetCount(target)
+                        langMgr.setLanguageFor(uid, lang)
+                        prefs.setTargetCount(target)
 
-                    // Create a NEW RUN document → resets Writer to 0/108 for this run
-                    val runId = "run-${UUID.randomUUID()}"
-                    val runDoc = db.collection("users").document(uid)
-                        .collection("ramakotiRuns").document(runId)
+                        val runId = "run-${UUID.randomUUID()}"
+                        val runDoc = db.collection("users").document(uid)
+                            .collection("ramakotiRuns").document(runId)
 
-                    val runData = hashMapOf(
-                        "runId" to runId,
-                        "uid" to uid,
-                        "language" to lang,
-                        "targetCount" to target,
-                        "runTotal" to 0,
-                        "status" to "ACTIVE",
-                        "startedAt" to Timestamp.now()
-                    )
-                    runDoc.set(runData).addOnSuccessListener {
-                        // Save as current run
-                        scope.launch { prefs.setCurrentRunId(runId) }
-                    }
+                        val runData = hashMapOf(
+                            "runId" to runId,
+                            "uid" to uid,
+                            "language" to lang,
+                            "targetCount" to target,
+                            "runTotal" to 0,
+                            "status" to "ACTIVE",
+                            "startedAt" to Timestamp.now()
+                        )
 
-                    // Enable a default reminder at 07:00
-                    prefs.setReminderEnabled(true)
-                    scheduler.scheduleDaily(hour24 = 7, minute = 0)
+                        runDoc.set(runData).addOnSuccessListener {
+                            scope.launch {
+                                prefs.setCurrentRunId(runId)
+                            }
+                        }
 
-                    if (Build.VERSION.SDK_INT >= 33) {
-                        notifPerm.launch(Manifest.permission.POST_NOTIFICATIONS)
-                    }
+                        prefs.setReminderEnabled(true)
+                        scheduler.scheduleDaily(hour24 = 7, minute = 0)
 
-                    // Go through canonical entry so Intro (if any) shows
-                    navController.navigate(Screen.Ramakoti.route) {
-                        popUpTo("ramakoti/language") { inclusive = true }
-                        launchSingleTop = true
+                        if (Build.VERSION.SDK_INT >= 33) {
+                            notifPerm.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        }
+
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.RamakotiLanguage.route) { inclusive = true }
+                            launchSingleTop = true
+                        }
                     }
                 }
-            }) { Text("Continue") }
+            ) {
+                Text("Continue")
+            }
         }
     }
 }

@@ -1,0 +1,54 @@
+{
+  "id": "ramayana_stories",
+  "title": "Ramayana & Mahabharata Stories",
+  "cards": [
+    {
+      "id": "sita_swayamvar",
+      "image": "ramayana_bow_card",
+      "question": "Which event is shown when Rama breaks the mighty bow?",
+      "options": [
+        "Sita's Swayamvar",
+        "Ravana's coronation",
+        "Hanuman's meeting with Rama"
+      ],
+      "answer": "Sita's Swayamvar",
+      "explanation": "Rama breaks Lord Shiva's bow during Sita's Swayamvar and wins her hand in marriage."
+    },
+    {
+      "id": "forest_exile",
+      "image": "ramayana_forest_card",
+      "question": "Why did Rama go to the forest for 14 years?",
+      "options": [
+        "To learn archery",
+        "To obey his father's promise",
+        "To fight a demon king"
+      ],
+      "answer": "To obey his father's promise",
+      "explanation": "Rama accepted exile to honor his father's promise to Kaikeyi and uphold dharma."
+    },
+    {
+      "id": "kurukshetra",
+      "image": "mahabharata_kurukshetra_card",
+      "question": "Which great war is fought on the battlefield of Kurukshetra?",
+      "options": [
+        "Ramayana War",
+        "Mahabharata War",
+        "Lanka War"
+      ],
+      "answer": "Mahabharata War",
+      "explanation": "The Mahabharata war between Pandavas and Kauravas was fought at Kurukshetra."
+    },
+    {
+      "id": "dice_game",
+      "image": "mahabharata_dice_card",
+      "question": "What leads to the Pandavas losing their kingdom in Mahabharata?",
+      "options": [
+        "A bow competition",
+        "A dice game",
+        "A horse sacrifice"
+      ],
+      "answer": "A dice game",
+      "explanation": "The Pandavas lose their kingdom and go to exile after Duryodhana cheats in a dice game."
+    }
+  ]
+}

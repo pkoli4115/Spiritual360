@@ -35,10 +35,10 @@
     "scrollable": true
   },
   {
-    "id": "adi_varahi_stotram",
-    "name": "ఆది వారాహీ స్తోత్రం",
-    "image": "varahidevi.png",
-    "file": "ashtottara/dattatreya_stotram_narada.json",
+    "id": "sri_lalita_sahasranamalu_full_te",
+    "name": "్రీ లలితా సహస్రనామ స్తోత్ర – ఉత్తరపీఠిక",
+    "image": "lakshmi_ashtottara_te.png",
+    "file": "poojas/sri_lalita_sahasranamalu_full_te.json",
     "scrollable": true
   }
 ]

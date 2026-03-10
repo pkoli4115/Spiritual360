@@ -1,7 +1,7 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
 package com.hindu.pooja.feature.ramakoti.ui
-
+import android.net.Uri
 import android.content.Context
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
@@ -158,7 +158,7 @@ fun CertificateScreen(
                                     auth = auth,
                                     storage = storage,
                                     db = db,
-                                    localFileUri = local.toURI().toString().toUri(),
+                                    localFileUri = Uri.fromFile(local),
                                     fileName = local.name,
                                     type = ExportType.CERTIFICATE,
                                     extraMeta = mapOf("certificateId" to result.certificateId)

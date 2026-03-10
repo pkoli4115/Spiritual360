@@ -1,0 +1,50 @@
+{
+  "id": "sloka_meanings",
+  "title": "Sloka & Aarti Meanings",
+  "cards": [
+    {
+      "id": "vakratunda",
+      "image": "ganesha_card",
+      "question": "What does 'Vakratunda Mahakaya' describe?",
+      "options": [
+        "Krishna playing the flute",
+        "Ganesha with a curved trunk and great body",
+        "Hanuman flying over the ocean"
+      ],
+      "answer": "Ganesha with a curved trunk and great body",
+      "explanation": "'Vakratunda Mahakaya' describes Lord Ganesha with a curved trunk and a mighty form."
+    },
+    {
+      "id": "asato_ma",
+      "image": "shiva_card",
+      "question": "In 'Asato mā sadgamaya', what are we praying for?",
+      "options": [
+        "Victory in battle",
+        "Guidance from untruth to truth",
+        "More wealth and fame"
+      ],
+      "answer": "Guidance from untruth to truth",
+      "explanation": "The line 'Asato mā sadgamaya' prays for guidance from untruth towards truth."
+    },
+    {
+      "id": "saraswati_namastubhyam",
+      "image": "lakshmi_card",
+      "question": "Who is praised in 'Saraswati namastubhyam'?",
+      "options": ["Lakshmi", "Parvati", "Saraswati"],
+      "answer": "Saraswati",
+      "explanation": "The sloka 'Saraswati namastubhyam' praises Goddess Saraswati, the deity of knowledge and learning."
+    },
+    {
+      "id": "hanuman_chalisa",
+      "image": "hanuman_card",
+      "question": "In Hanuman Chalisa, why is Hanuman called 'Mahabali'?",
+      "options": [
+        "Because he is very wealthy",
+        "Because he has great strength and courage",
+        "Because he rules many kingdoms"
+      ],
+      "answer": "Because he has great strength and courage",
+      "explanation": "Hanuman is called 'Mahabali' because of his immense strength, courage, and devotion."
+    }
+  ]
+}

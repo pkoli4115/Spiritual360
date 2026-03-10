@@ -1,8 +1,6 @@
 package com.hindu.pooja.ui.navigation
 
 import android.net.Uri
-import com.hindu.pooja.feature.quiz.AyodhyaKandaQuizRepo
-import com.hindu.pooja.feature.quiz.BalaKandaQuizScreen
 
 sealed class Screen(val route: String) {
     // Tabs
@@ -20,8 +18,12 @@ sealed class Screen(val route: String) {
     object PersonalDetails : Screen("personal_details")
     object Splash : Screen("splash")
 
-    // ✅ Normalized Ramakoti route
-    object Ramakoti : Screen("ramakoti")
+    // Ramakoti core
+    object Ramakoti : Screen("ramakoti") // legacy alias if still referenced elsewhere
+    object RamakotiIntro : Screen("ramakoti/intro")
+    object RamakotiLanguage : Screen("ramakoti/language")
+    object RamakotiWriter : Screen("ramakoti/writer")
+    object RamakotiCertificate : Screen("ramakoti/certificate")
 
     // eLearning
     object BalaKandaFlip : Screen("featured/balakanda")
@@ -39,12 +41,15 @@ sealed class Screen(val route: String) {
     object Poojas : Screen("poojas/{fileName}") {
         fun createRoute(fileName: String) = "poojas/$fileName"
     }
+
     object Vrathams : Screen("vrathams/{fileName}") {
         fun createRoute(fileName: String) = "vrathams/$fileName"
     }
+
     object Ashtottaras : Screen("ashtottaras/{fileName}") {
         fun createRoute(fileName: String) = "ashtottaras/$fileName"
     }
+
     object PoojaDetail : Screen("pooja_detail/{fileName}") {
         fun createRoute(fileName: String) = "pooja_detail/${Uri.encode(fileName)}"
     }
@@ -53,8 +58,13 @@ sealed class Screen(val route: String) {
     object FindItGame : Screen("find_it_game/{levelFile}") {
         fun createRoute(levelFile: String) = "find_it_game/${Uri.encode(levelFile)}"
     }
+
     object GameResult : Screen("game_result/{levelName}") {
         fun createRoute(levelName: String) = "game_result/${Uri.encode(levelName)}"
+    }
+
+    object FlashCards : Screen("flash_cards/{categoryId}") {
+        fun createRoute(categoryId: String): String = "flash_cards/$categoryId"
     }
 
     // Generic Wiki Reader

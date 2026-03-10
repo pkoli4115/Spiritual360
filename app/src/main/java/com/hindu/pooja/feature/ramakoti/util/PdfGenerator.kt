@@ -1,38 +1,102 @@
 package com.hindu.pooja.feature.ramakoti.util
 
 import android.content.Context
-import android.graphics.*
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.RectF
+import android.graphics.Typeface
 import android.graphics.pdf.PdfDocument
 import com.hindu.pooja.R
 import com.hindu.pooja.feature.ramakoti.data.CertificateInput
 import java.io.File
 import java.io.FileOutputStream
 import java.util.UUID
+import kotlin.math.max
 
 object PdfGenerator {
 
     data class CertificatePdf(val file: File, val certificateId: String)
 
-    private const val PAGE_W = 1240
-    private const val PAGE_H = 1754
+    /**
+     * Keep PDF page moderate.
+     * Large page size + large embedded bitmap = large PDF.
+     */
+    private const val PAGE_W = 842
+    private const val PAGE_H = 1191
+
+    private const val SIDE_MARGIN = 36f
     private val HEADER_RES = R.drawable.ramakoti_certificate_bg
 
-    private fun decodeBitmap(context: Context, resId: Int): Bitmap {
-        return BitmapFactory.decodeResource(context.resources, resId)
-            ?: throw IllegalArgumentException("Drawable $resId not found")
-    }
+    @Volatile
+    private var cachedHeaderBitmap: Bitmap? = null
 
-    /** Draw bitmap scaled to fit width, preserving aspect ratio. */
+    private fun getOrCreateHeaderBitmap(context: Context): Bitmap {
+        cachedHeaderBitmap?.let { existing ->
+            if (!existing.isRecycled) return existing
+        }
+
+        synchronized(this) {
+            cachedHeaderBitmap?.let { existing ->
+                if (!existing.isRecycled) return existing
+            }
+
+            val targetWidth = (PAGE_W - 2 * SIDE_MARGIN).toInt().coerceAtLeast(600)
+
+            val bounds = BitmapFactory.Options().apply {
+                inJustDecodeBounds = true
+            }
+            BitmapFactory.decodeResource(context.resources, HEADER_RES, bounds)
+
+            val srcWidth = max(bounds.outWidth, 1)
+            var sample = 1
+            while (srcWidth / (sample * 2) >= targetWidth) {
+                sample *= 2
+            }
+
+            val bitmap = BitmapFactory.decodeResource(
+                context.resources,
+                HEADER_RES,
+                BitmapFactory.Options().apply {
+                    inSampleSize = sample
+                    inPreferredConfig = Bitmap.Config.RGB_565
+                    inDither = true
+                }
+            ) ?: throw IllegalArgumentException("Drawable $HEADER_RES not found")
+
+            cachedHeaderBitmap = bitmap
+            return bitmap
+        }
+    }
+    private fun compressBitmapForPdf(bitmap: Bitmap): Bitmap {
+        val maxWidth = 1000
+
+        if (bitmap.width <= maxWidth) return bitmap
+
+        val ratio = maxWidth.toFloat() / bitmap.width
+        val newHeight = (bitmap.height * ratio).toInt()
+
+        val scaled = Bitmap.createScaledBitmap(bitmap, maxWidth, newHeight, true)
+
+        return scaled
+    }
     private fun Canvas.drawImageFitWidth(
         bitmap: Bitmap,
         left: Float,
         top: Float,
         maxWidth: Float
     ): RectF {
-        val aspectRatio = bitmap.width.toFloat() / bitmap.height
+        val aspectRatio = bitmap.width.toFloat() / bitmap.height.toFloat()
         val scaledHeight = maxWidth / aspectRatio
         val dest = RectF(left, top, left + maxWidth, top + scaledHeight)
-        drawBitmap(bitmap, null, dest, Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG))
+
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            isFilterBitmap = true
+            isDither = true
+        }
+        drawBitmap(bitmap, null, dest, paint)
         return dest
     }
 
@@ -41,106 +105,124 @@ object PdfGenerator {
         input: CertificateInput
     ): CertificatePdf {
         val certificateId = UUID.randomUUID().toString().replace("-", "")
+
         val qrPayload = if (input.verificationUrl.isBlank()) {
             buildString {
-                append("Hindu Pooja – Ramakoti Certificate\n")
+                append("Hindu Pooja - Ramakoti Certificate\n")
                 append("Devotee: ${input.devoteeName}\n")
                 append("Milestone: ${input.countText}\n")
                 append("Date: ${input.dateText}\n")
                 append("CertificateId: $certificateId")
             }
-        } else input.verificationUrl
+        } else {
+            input.verificationUrl
+        }
 
         val pdf = PdfDocument()
         val pageInfo = PdfDocument.PageInfo.Builder(PAGE_W, PAGE_H, 1).create()
         val page = pdf.startPage(pageInfo)
-        val c = page.canvas
+        val canvas = page.canvas
 
         // Background
-        c.drawColor(Color.parseColor("#F8EED8"))
+        canvas.drawColor(Color.parseColor("#F8EED8"))
 
         // Border
         val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.parseColor("#C59C50")
             style = Paint.Style.STROKE
-            strokeWidth = 6f
+            strokeWidth = 4f
         }
-        val inset = 24f
-        c.drawRect(inset, inset, PAGE_W - inset, PAGE_H - inset, borderPaint)
+        val inset = 20f
+        canvas.drawRect(inset, inset, PAGE_W - inset, PAGE_H - inset, borderPaint)
 
-        // Title at top
         val centerX = PAGE_W / 2f
-        val titleY = inset + 80f
+
         val titlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.parseColor("#2E2A1F")
-            textSize = 56f
+            textSize = 34f
             typeface = Typeface.create(Typeface.SERIF, Typeface.BOLD)
             textAlign = Paint.Align.CENTER
         }
-        c.drawText("RAMANAMA COMPLETION CERTIFICATE", centerX, titleY, titlePaint)
 
-        // Image below title
-        val imageTop = titleY + 40f
-        val bmp = decodeBitmap(context, HEADER_RES)
-        val imageRect = c.drawImageFitWidth(bmp, inset, imageTop, PAGE_W - 2 * inset)
-        bmp.recycle()
-
-        // Text styles
         val subPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.parseColor("#3C3526")
-            textSize = 36f
+            textSize = 24f
             typeface = Typeface.create(Typeface.SERIF, Typeface.NORMAL)
             textAlign = Paint.Align.CENTER
         }
+
         val namePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.parseColor("#2E2A1F")
-            textSize = 70f
+            textSize = 42f
             typeface = Typeface.create(Typeface.SERIF, Typeface.BOLD)
             textAlign = Paint.Align.CENTER
         }
+
         val mantraPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.parseColor("#5A503E")
-            textSize = 40f
+            textSize = 26f
             typeface = Typeface.create(Typeface.SERIF, Typeface.ITALIC)
             textAlign = Paint.Align.CENTER
         }
-        val smallPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+
+        val smallPaintLeft = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.parseColor("#6D6A5F")
-            textSize = 26f
+            textSize = 16f
             typeface = Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL)
             textAlign = Paint.Align.LEFT
         }
 
-        // Certificate content block
-        var y = imageRect.bottom + 80f
-        c.drawText("This is to certify that", centerX, y, subPaint)
-        y += 66f
-        c.drawText(input.devoteeName, centerX, y, namePaint)
-        y += 62f
-        c.drawText(input.countText, centerX, y, subPaint)
-        y += 56f
-        c.drawText("Om Sri Ramaya Namaha", centerX, y, mantraPaint)
+        // Title
+        var y = 82f
+        canvas.drawText("RAMANAMA COMPLETION CERTIFICATE", centerX, y, titlePaint)
+
+        // Header image
+        val imageTop = y + 28f
+        val headerBitmap = compressBitmapForPdf(getOrCreateHeaderBitmap(context))
+        val imageRect = canvas.drawImageFitWidth(
+            bitmap = headerBitmap,
+            left = SIDE_MARGIN,
+            top = imageTop,
+            maxWidth = PAGE_W - 2 * SIDE_MARGIN
+        )
+
+        // Main content
+        y = imageRect.bottom + 46f
+        canvas.drawText("This is to certify that", centerX, y, subPaint)
+
+        y += 46f
+        canvas.drawText(input.devoteeName.take(60), centerX, y, namePaint)
+
+        y += 44f
+        canvas.drawText(input.countText.take(80), centerX, y, subPaint)
+
+        y += 40f
+        canvas.drawText("Om Sri Ramaya Namaha", centerX, y, mantraPaint)
 
         // Footer
-        val footerY1 = PAGE_H - inset - 60f
-        val footerY2 = PAGE_H - inset - 28f
-        c.drawText("Date: ${input.dateText}", inset + 12f, footerY1, smallPaint)
-        c.drawText("Certificate ID: $certificateId", inset + 12f, footerY2, smallPaint)
+        val footerY1 = PAGE_H - 58f
+        val footerY2 = PAGE_H - 34f
+        canvas.drawText("Date: ${input.dateText}", inset + 8f, footerY1, smallPaintLeft)
+        canvas.drawText("Certificate ID: $certificateId", inset + 8f, footerY2, smallPaintLeft)
 
-        // QR code
+        // Smaller QR = smaller PDF
         runCatching {
-            val qr = QrCodeUtil.generate(qrPayload, sizePx = 360)
-            val left = PAGE_W - inset - 20f - qr.width
-            val top = PAGE_H - inset - 24f - qr.height
-            c.drawBitmap(qr, left, top, null)
+            val qr = QrCodeUtil.generate(qrPayload, sizePx = 160)
+            val left = PAGE_W - inset - qr.width - 14f
+            val top = PAGE_H - inset - qr.height - 14f
+            canvas.drawBitmap(qr, left, top, null)
             qr.recycle()
         }
 
         pdf.finishPage(page)
 
         val dir = File(context.cacheDir, "exports").apply { mkdirs() }
-        val out = File(dir, "ramakoti_certificate_${System.currentTimeMillis()}.pdf")
-        FileOutputStream(out).use { pdf.writeTo(it) }
+        val out = File(dir, "ramakoti_certificate_${certificateId}.pdf")
+
+        FileOutputStream(out).use { fos ->
+            pdf.writeTo(fos)
+            fos.flush()
+        }
         pdf.close()
 
         return CertificatePdf(out, certificateId)

@@ -1,0 +1,46 @@
+{
+  "id": "know_gods",
+  "title": "Know the Gods",
+  "cards": [
+    {
+      "id": "ganesha",
+      "image": "ganesha_card",
+      "question": "Who is this deity?",
+      "options": ["Ganesha", "Shiva", "Vishnu"],
+      "answer": "Ganesha",
+      "explanation": "Ganesha is the remover of obstacles and the god of new beginnings."
+    },
+    {
+      "id": "shiva",
+      "image": "shiva_card",
+      "question": "Who is known as the destroyer in the Hindu Trinity?",
+      "options": ["Brahma", "Vishnu", "Shiva"],
+      "answer": "Shiva",
+      "explanation": "Shiva is the destroyer and transformer in the Hindu Trinity."
+    },
+    {
+      "id": "krishna",
+      "image": "krishna_card",
+      "question": "Which deity is famous for playing the flute?",
+      "options": ["Rama", "Krishna", "Hanuman"],
+      "answer": "Krishna",
+      "explanation": "Lord Krishna is often shown playing the flute and spreading joy."
+    },
+    {
+      "id": "hanuman",
+      "image": "hanuman_card",
+      "question": "Who is the devoted bhakta of Lord Rama?",
+      "options": ["Hanuman", "Ganesha", "Shiva"],
+      "answer": "Hanuman",
+      "explanation": "Hanuman is the greatest devotee of Lord Rama and a symbol of strength and devotion."
+    },
+    {
+      "id": "lakshmi",
+      "image": "lakshmi_card",
+      "question": "Who is the goddess of wealth and prosperity?",
+      "options": ["Saraswati", "Lakshmi", "Parvati"],
+      "answer": "Lakshmi",
+      "explanation": "Goddess Lakshmi brings wealth, prosperity, and good fortune."
+    }
+  ]
+}
